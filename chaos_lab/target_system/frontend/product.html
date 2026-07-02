@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShopCore — Product Detail</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">ShopCore</a>
+      <nav class="header-nav">
+        <a href="orders.html" class="nav-link">Orders</a>
+        <a href="auth.html" id="auth-link" class="nav-link">Login</a>
+        <a href="cart.html" class="btn btn-primary">
+          Cart <span id="cart-count" class="badge">0</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="error-banner" class="error-banner hidden"></div>
+
+    <div class="product-detail-layout">
+      <div class="product-detail-img" id="detail-img">
+        📦
+      </div>
+      <div class="product-detail-info">
+        <div class="product-detail-cat" id="detail-cat">Category</div>
+        <h1 class="product-detail-title" id="detail-title">Loading Product...</h1>
+        <p class="product-detail-desc">
+          Experience premium build quality and top-of-the-line performance with this authentic ShopCore peripheral. Built for reliability and efficiency.
+        </p>
+        <div class="product-detail-price" id="detail-price">$0.00</div>
+        
+        <div class="product-detail-actions">
+          <div class="qty-control" style="border: 1px solid var(--border-dim); padding: 6px 12px; border-radius: var(--radius-md); background: var(--bg-surface);">
+            <span class="input-label" style="margin-right: 12px;">Qty</span>
+            <input type="number" id="detail-qty" value="1" min="1" max="99" class="input" style="width: 70px; padding: 6px; border: none; background: none; text-align: center;" />
+          </div>
+          <button class="btn btn-primary" id="add-detail-btn">Add to Cart</button>
+          <a href="index.html" class="btn btn-secondary">Back to Store</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { updateHeaderUI } from './api.js';
+    import { renderProductDetail } from './store.js';
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      await updateHeaderUI();
+      await renderProductDetail();
+    });
+  </script>
+</body>
+</html>

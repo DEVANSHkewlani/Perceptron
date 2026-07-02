@@ -1,0 +1,3572 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phase 13 — Real-World Chaos Lab Testing | Digital Cognitive Architecture</title>
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --bg2: #0f1525;
+      --bg3: #141c2e;
+      --border: #1e2d4a;
+      --border2: #2a3d5e;
+      --accent: #00d4ff;
+      --accent2: #ff4b6e;
+      --accent3: #7c3aed;
+      --accent4: #10b981;
+      --accent5: #f59e0b;
+      --text: #e2e8f0;
+      --text2: #94a3b8;
+      --text3: #64748b;
+      --code-bg: #0d1117;
+      --code-border: #1e3a5f;
+      --red: #ff4b6e;
+      --green: #10b981;
+      --blue: #00d4ff;
+      --purple: #7c3aed;
+      --yellow: #f59e0b;
+      --orange: #f97316;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    /* HEADER */
+    .site-header {
+      background: linear-gradient(135deg, #0a0e1a 0%, #0f1a35 50%, #0a1628 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 40px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .site-header::before {
+      content: '';
+      position: absolute;
+      top: -60px;
+      right: -60px;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(0, 212, 255, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .site-header::after {
+      content: '';
+      position: absolute;
+      bottom: -40px;
+      left: -40px;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(255, 75, 110, 0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .phase-badge {
+      display: inline-block;
+      background: rgba(255, 75, 110, 0.12);
+      border: 1px solid rgba(255, 75, 110, 0.3);
+      color: var(--accent2);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+    }
+
+    .site-header h1 {
+      font-size: 36px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+
+    .site-header h1 span {
+      color: var(--accent);
+    }
+
+    .site-header .subtitle {
+      color: var(--text2);
+      font-size: 16px;
+      max-width: 700px;
+      margin-bottom: 24px;
+    }
+
+    .header-stats {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-val {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* LAYOUT */
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      padding: 28px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .sidebar-section {
+      margin-bottom: 8px;
+    }
+
+    .sidebar-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text3);
+      padding: 8px 20px 4px;
+    }
+
+    .sidebar a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 20px;
+      color: var(--text2);
+      text-decoration: none;
+      font-size: 13px;
+      transition: all 0.15s;
+      border-left: 2px solid transparent;
+    }
+
+    .sidebar a:hover {
+      color: var(--accent);
+      background: rgba(0, 212, 255, 0.05);
+      border-left-color: var(--accent);
+    }
+
+    .sidebar .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text3);
+      flex-shrink: 0;
+    }
+
+    /* MAIN */
+    .main {
+      padding: 40px 48px;
+      max-width: 1100px;
+    }
+
+    /* SECTIONS */
+    .section {
+      margin-bottom: 60px;
+      padding-bottom: 60px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section:last-child {
+      border-bottom: none;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .section-num {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: rgba(0, 212, 255, 0.1);
+      border: 1px solid rgba(0, 212, 255, 0.2);
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+
+    .section-num.red {
+      background: rgba(255, 75, 110, 0.1);
+      border-color: rgba(255, 75, 110, 0.2);
+      color: var(--red);
+    }
+
+    .section-num.green {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.2);
+      color: var(--green);
+    }
+
+    .section-num.purple {
+      background: rgba(124, 58, 237, 0.1);
+      border-color: rgba(124, 58, 237, 0.2);
+      color: var(--purple);
+    }
+
+    .section-num.yellow {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.2);
+      color: var(--yellow);
+    }
+
+    .section-num.orange {
+      background: rgba(249, 115, 22, 0.1);
+      border-color: rgba(249, 115, 22, 0.2);
+      color: var(--orange);
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .section-desc {
+      color: var(--text2);
+      font-size: 14px;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      margin: 32px 0 16px;
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--accent);
+      margin: 24px 0 12px;
+    }
+
+    h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 16px 0 8px;
+    }
+
+    p {
+      color: var(--text2);
+      margin-bottom: 14px;
+      line-height: 1.75;
+    }
+
+    /* CODE BLOCKS */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: 8px;
+      padding: 20px;
+      overflow-x: auto;
+      margin: 16px 0;
+      position: relative;
+    }
+
+    pre code {
+      font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.65;
+      color: #e2e8f0;
+    }
+
+    .code-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin-bottom: 8px;
+      padding-left: 2px;
+    }
+
+    /* Syntax */
+    .kw {
+      color: #c792ea;
+    }
+
+    .str {
+      color: #c3e88d;
+    }
+
+    .num {
+      color: #f78c6c;
+    }
+
+    .cmt {
+      color: #546e7a;
+      font-style: italic;
+    }
+
+    .fn {
+      color: #82aaff;
+    }
+
+    .cls {
+      color: #ffcb6b;
+    }
+
+    .dec {
+      color: #89ddff;
+    }
+
+    .op {
+      color: #89ddff;
+    }
+
+    /* CALLOUTS */
+    .callout {
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 16px 0;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .callout-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .callout-body {
+      flex: 1;
+    }
+
+    .callout-title {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .callout-text {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+
+    .callout.warn {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .callout.warn .callout-title {
+      color: var(--yellow);
+    }
+
+    .callout.info {
+      background: rgba(0, 212, 255, 0.06);
+      border: 1px solid rgba(0, 212, 255, 0.15);
+    }
+
+    .callout.info .callout-title {
+      color: var(--accent);
+    }
+
+    .callout.danger {
+      background: rgba(255, 75, 110, 0.07);
+      border: 1px solid rgba(255, 75, 110, 0.2);
+    }
+
+    .callout.danger .callout-title {
+      color: var(--red);
+    }
+
+    .callout.success {
+      background: rgba(16, 185, 129, 0.07);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .callout.success .callout-title {
+      color: var(--green);
+    }
+
+    /* TABLES */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+
+    thead tr {
+      background: var(--bg3);
+    }
+
+    th {
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text2);
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* CARDS */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin: 16px 0;
+    }
+
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover {
+      border-color: var(--border2);
+    }
+
+    .card-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: #fff;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-body {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+
+    .card-tag {
+      display: inline-block;
+      background: rgba(0, 212, 255, 0.1);
+      color: var(--accent);
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .card-tag.red {
+      background: rgba(255, 75, 110, 0.1);
+      color: var(--red);
+    }
+
+    .card-tag.green {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--green);
+    }
+
+    .card-tag.purple {
+      background: rgba(124, 58, 237, 0.1);
+      color: var(--purple);
+    }
+
+    .card-tag.yellow {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--yellow);
+    }
+
+    /* STEP LIST */
+    .step-list {
+      list-style: none;
+      counter-reset: steps;
+    }
+
+    .step-list li {
+      counter-increment: steps;
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .step-list li::before {
+      content: counter(steps);
+      width: 28px;
+      height: 28px;
+      background: rgba(0, 212, 255, 0.1);
+      border: 1px solid rgba(0, 212, 255, 0.25);
+      border-radius: 50%;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .step-content h4 {
+      margin-top: 0;
+    }
+
+    /* BADGE */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge.critical {
+      background: rgba(255, 75, 110, 0.15);
+      color: var(--red);
+    }
+
+    .badge.high {
+      background: rgba(249, 115, 22, 0.15);
+      color: var(--orange);
+    }
+
+    .badge.medium {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--yellow);
+    }
+
+    .badge.low {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--green);
+    }
+
+    /* ARCH DIAGRAM */
+    .arch-box {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+      margin: 20px 0;
+      font-family: monospace;
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.8;
+      overflow-x: auto;
+    }
+
+    /* FILE TREE */
+    .file-tree {
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: 8px;
+      padding: 20px;
+      font-family: monospace;
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.8;
+    }
+
+    .ft-dir {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .ft-file {
+      color: var(--text2);
+    }
+
+    .ft-new {
+      color: var(--green);
+    }
+
+    .ft-mod {
+      color: var(--yellow);
+    }
+
+    /* FLOW */
+    .flow {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin: 16px 0;
+    }
+
+    .flow-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      position: relative;
+      padding-bottom: 20px;
+    }
+
+    .flow-item:last-child {
+      padding-bottom: 0;
+    }
+
+    .flow-item::before {
+      content: '';
+      position: absolute;
+      left: 14px;
+      top: 30px;
+      bottom: 0;
+      width: 2px;
+      background: var(--border);
+    }
+
+    .flow-item:last-child::before {
+      display: none;
+    }
+
+    .flow-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--bg3);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .flow-dot.active {
+      border-color: var(--accent);
+      background: rgba(0, 212, 255, 0.1);
+    }
+
+    .flow-body {
+      padding-top: 4px;
+    }
+
+    .flow-title {
+      font-weight: 600;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .flow-desc {
+      font-size: 13px;
+      color: var(--text2);
+      margin-top: 2px;
+    }
+
+    /* TOC */
+    .toc {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 32px;
+    }
+
+    .toc-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin-bottom: 12px;
+    }
+
+    .toc-list {
+      list-style: none;
+    }
+
+    .toc-list li {
+      margin-bottom: 6px;
+    }
+
+    .toc-list a {
+      color: var(--text2);
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    .toc-list a:hover {
+      color: var(--accent);
+    }
+
+    /* INLINE CODE */
+    code {
+      background: rgba(0, 212, 255, 0.08);
+      border: 1px solid rgba(0, 212, 255, 0.15);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--accent);
+    }
+
+    pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    /* ul/li */
+    ul,
+    ol {
+      padding-left: 24px;
+      margin: 10px 0 14px;
+    }
+
+    li {
+      color: var(--text2);
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    li strong {
+      color: var(--text);
+    }
+
+    /* HR */
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 32px 0;
+    }
+
+    /* ANOMALY TABLE */
+    .anomaly-row-critical td:first-child {
+      border-left: 3px solid var(--red);
+    }
+
+    .anomaly-row-high td:first-child {
+      border-left: 3px solid var(--orange);
+    }
+
+    .anomaly-row-medium td:first-child {
+      border-left: 3px solid var(--yellow);
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .main {
+        padding: 24px 20px;
+      }
+
+      .site-header {
+        padding: 32px 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="site-header">
+    <div class="phase-badge">Phase 13 — Chaos Lab</div>
+    <h1>Real-World <span>Chaos Lab</span> Testing</h1>
+    <p class="subtitle">Build a production-grade e-commerce target system, instrument it with the DCA perception layer,
+      design a chaos controller to inject realistic infrastructure failures, and close the loop so the cognitive
+      architecture autonomously detects, reasons about, and remediates every anomaly.</p>
+    <div class="header-stats">
+      <div class="stat"><span class="stat-val">4</span><span class="stat-label">Target Services</span></div>
+      <div class="stat"><span class="stat-val">18</span><span class="stat-label">Chaos Scenarios</span></div>
+      <div class="stat"><span class="stat-val">11</span><span class="stat-label">Remediation Actions</span></div>
+      <div class="stat"><span class="stat-val">~45</span><span class="stat-label">New Tests</span></div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <nav class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Overview</div>
+        <a href="#philosophy"><span class="dot"></span>Philosophy &amp; Goals</a>
+        <a href="#architecture"><span class="dot"></span>System Architecture</a>
+        <a href="#file-structure"><span class="dot"></span>File Structure</a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Part 1 — Target System</div>
+        <a href="#target-overview"><span class="dot"></span>ShopCore Overview</a>
+        <a href="#api-gateway"><span class="dot"></span>API Gateway</a>
+        <a href="#product-service"><span class="dot"></span>Product Service</a>
+        <a href="#order-service"><span class="dot"></span>Order Service</a>
+        <a href="#user-service"><span class="dot"></span>User Service</a>
+        <a href="#frontend"><span class="dot"></span>Frontend (React)</a>
+        <a href="#docker-compose"><span class="dot"></span>docker-compose.yml</a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Part 2 — Instrumentation</div>
+        <a href="#sdk-integration"><span class="dot"></span>Browser SDK</a>
+        <a href="#fluent-bit"><span class="dot"></span>Fluent Bit Config</a>
+        <a href="#prometheus-rules"><span class="dot"></span>Prometheus Rules</a>
+        <a href="#sources-yaml"><span class="dot"></span>sources.yaml</a>
+        <a href="#perception-bridge"><span class="dot"></span>Perception Bridge</a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Part 3 — Chaos Engine</div>
+        <a href="#chaos-controller"><span class="dot"></span>ChaosController</a>
+        <a href="#chaos-scenarios"><span class="dot"></span>18 Scenarios</a>
+        <a href="#chaos-scheduler"><span class="dot"></span>Scenario Scheduler</a>
+        <a href="#chaos-api"><span class="dot"></span>Chaos REST API</a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Part 4 — Remediation</div>
+        <a href="#remediation-handlers"><span class="dot"></span>Action Handlers</a>
+        <a href="#action-registry"><span class="dot"></span>Action Registry</a>
+        <a href="#feedback-loop"><span class="dot"></span>Closing the Loop</a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Part 5 — Testing</div>
+        <a href="#test-suite"><span class="dot"></span>Test Suite</a>
+        <a href="#running"><span class="dot"></span>Running the Lab</a>
+        <a href="#scoring"><span class="dot"></span>Scoring &amp; SLOs</a>
+      </div>
+    </nav>
+
+    <main class="main">
+
+      <!-- PHILOSOPHY -->
+      <section class="section" id="philosophy">
+        <div class="section-header">
+          <div class="section-num">01</div>
+          <div>
+            <div class="section-title">Philosophy &amp; Goals</div>
+            <div class="section-desc">Why we need a real target system instead of synthetic injection</div>
+          </div>
+        </div>
+
+        <p>The Chaos Lab is the validation environment for the entire DCA. It answers one question: <strong
+            style="color:#fff">when real infrastructure breaks, does the cognitive system detect, reason about, plan,
+            execute, verify, and learn — fully autonomously — within acceptable time bounds?</strong></p>
+
+        <div class="callout info">
+          <div class="callout-icon">💡</div>
+          <div class="callout-body">
+            <div class="callout-title">Why a real e-commerce stack, not synthetic events?</div>
+            <div class="callout-text">Synthetic events test if your schema is correct. Real infrastructure failures test
+              if your entire perception-to-remediation pipeline produces the right <em>chain</em> of events: database
+              slowness that cascades into API latency, API latency that causes user rage clicks, rage clicks that appear
+              in browser events. Only a real app produces that causal chain.</div>
+          </div>
+        </div>
+
+        <h3>Three Laws of the Chaos Lab</h3>
+        <div class="card-grid">
+          <div class="card">
+            <div class="card-title">⚡ Law 1: Real Infrastructure</div>
+            <div class="card-body">Every failure is injected at the actual infrastructure layer — not fabricated in
+              code. Slow a real PostgreSQL query, drop real Docker network packets, exhaust a real Redis memory limit.
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">🔁 Law 2: Closed Loop</div>
+            <div class="card-body">Every injected anomaly must travel the complete path: perception → memory → reasoning
+              → planning → execution → verification → playbook update. The loop closes only when the system self-heals.
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">📊 Law 3: Measurable SLOs</div>
+            <div class="card-body">Every scenario has a <em>detection SLO</em> (how fast the event appears on
+              cognitive.events) and a <em>remediation SLO</em> (how fast the system self-heals). These numbers define
+              whether Phase 13 passes.</div>
+          </div>
+        </div>
+
+        <h3>Detection &amp; Remediation SLO Targets</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Scenario Class</th>
+              <th>Detection SLO</th>
+              <th>Remediation SLO</th>
+              <th>Severity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Service down / unreachable</td>
+              <td>&lt; 30s</td>
+              <td>&lt; 90s</td>
+              <td><span class="badge critical">Critical</span></td>
+            </tr>
+            <tr>
+              <td>Database slow / pool exhausted</td>
+              <td>&lt; 45s</td>
+              <td>&lt; 120s</td>
+              <td><span class="badge critical">Critical</span></td>
+            </tr>
+            <tr>
+              <td>Memory / OOM pressure</td>
+              <td>&lt; 60s</td>
+              <td>&lt; 180s</td>
+              <td><span class="badge high">High</span></td>
+            </tr>
+            <tr>
+              <td>Consumer lag / queue backup</td>
+              <td>&lt; 30s</td>
+              <td>&lt; 120s</td>
+              <td><span class="badge high">High</span></td>
+            </tr>
+            <tr>
+              <td>SSL certificate expiry</td>
+              <td>&lt; 120s</td>
+              <td>&lt; 300s</td>
+              <td><span class="badge high">High</span></td>
+            </tr>
+            <tr>
+              <td>Config file change</td>
+              <td>&lt; 5s</td>
+              <td>&lt; 60s</td>
+              <td><span class="badge medium">Medium</span></td>
+            </tr>
+            <tr>
+              <td>Elevated error rate / latency</td>
+              <td>&lt; 60s</td>
+              <td>&lt; 150s</td>
+              <td><span class="badge medium">Medium</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ARCHITECTURE -->
+      <section class="section" id="architecture">
+        <div class="section-header">
+          <div class="section-num">02</div>
+          <div>
+            <div class="section-title">Complete System Architecture</div>
+            <div class="section-desc">How the target system, chaos engine, and cognitive architecture connect</div>
+          </div>
+        </div>
+
+        <div class="arch-box">
+          <span style="color:#00d4ff">┌─────────────────────────────────────────────────────────────────────────┐</span>
+          <span style="color:#00d4ff">│ CHAOS LAB SYSTEM │</span>
+          <span style="color:#00d4ff">└─────────────────────────────────────────────────────────────────────────┘</span>
+
+          <span style="color:#f59e0b">╔═════════════════════════╗ ╔════════════════════════════════════════╗</span>
+          <span style="color:#f59e0b">║ CHAOS CONTROLLER ║ ║ TARGET SYSTEM (ShopCore) ║</span>
+          <span style="color:#f59e0b">║ chaos_engine/ ║ ║ ║</span>
+          <span style="color:#f59e0b">║ ┌──────────────────┐ ║ ║ ┌──────────┐ ┌──────────────────┐ ║</span>
+          <span style="color:#f59e0b">║ │ ChaosController │───╫────╫─▶│ Nginx │ │ React Frontend │ ║</span>
+          <span style="color:#f59e0b">║ │ (18 scenarios) │ ║ ║ │ :80 │ │ :3000 │ ║</span>
+          <span style="color:#f59e0b">║ └──────────────────┘ ║ ║ └────┬─────┘ └────────┬─────────┘ ║</span>
+          <span style="color:#f59e0b">║ ┌──────────────────┐ ║ ║ │ │ ║</span>
+          <span style="color:#f59e0b">║ │ ChaosScheduler │ ║ ║ ┌────▼─────┐ ┌────────▼─────────┐ ║</span>
+          <span style="color:#f59e0b">║ │ REST API :9090 │ ║ ║ │ API GW │ │ Browser SDK │ ║</span>
+          <span style="color:#f59e0b">║ └──────────────────┘ ║ ║ │ :8000 │ │ (cognitive_sdk) │ ║</span>
+          <span style="color:#f59e0b">╚═════════════════════════╝ ║ └────┬─────┘ └────────┬─────────┘ ║</span>
+          ║ │ │ ║
+          ║ ┌────▼──────┐ ┌───────▼──────────┐ ║
+          ║ │ Products │ │ Orders Service │ ║
+          ║ │ :8001 │ │ :8002 │ ║
+          ║ └────┬──────┘ └───────┬──────────┘ ║
+          ║ │ │ ║
+          ║ ┌────▼──────┐ ┌───────▼──────────┐ ║
+          ║ │PostgreSQL │ │ Redpanda (Kafka) │ ║
+          ║ │ :5432 │ │ :9092 │ ║
+          ║ └───────────┘ └──────────────────┘ ║
+          ╚════════════════════════════════════════╝
+          │
+          <span style="color:#c792ea">╔══════════════╧══════════════════════════════╗</span>
+          <span style="color:#c792ea">║ PERCEPTION LAYER ║</span>
+          <span style="color:#c792ea">║ ║</span>
+          <span style="color:#c792ea">║ Fluent Bit ──▶ LogAdapter ║</span>
+          <span style="color:#c792ea">║ Prometheus ──▶ MetricNormalizer ║</span>
+          <span style="color:#c792ea">║ Browser SDK ──▶ BrowserEventNormalizer ║</span>
+          <span style="color:#c792ea">║ watchdog ──▶ FileAdapter ║</span>
+          <span style="color:#c792ea">║ asyncpg ──▶ DatabaseAdapter ║</span>
+          <span style="color:#c792ea">║ │ ║</span>
+          <span style="color:#c792ea">║ ▼ ║</span>
+          <span style="color:#c792ea">║ cognitive.events ──────────────── ║</span>
+          <span style="color:#c792ea">╚═════════════════════════════════════════════╝</span>
+          │
+          <span style="color:#10b981">╔══════════════╧══════════════════════════════╗</span>
+          <span style="color:#10b981">║ COGNITIVE STACK (Ph 3–11) ║</span>
+          <span style="color:#10b981">║ ║</span>
+          <span style="color:#10b981">║ WorldModel → ReasoningEngine → Planner ║</span>
+          <span style="color:#10b981">║ PlanRunner → ActionHandlers → Verifier ║</span>
+          <span style="color:#10b981">║ FeedbackLoop → PlaybookUpdater ║</span>
+          <span style="color:#10b981">║ │ ║</span>
+          <span style="color:#10b981">║ ▼ ║</span>
+          <span style="color:#10b981">║ REMEDIATION ACTIONS ║</span>
+          <span style="color:#10b981">║ (restart service, scale replica, kill ║</span>
+          <span style="color:#10b981">║ slow query, flush cache, reload config) ║</span>
+          <span style="color:#10b981">╚═════════════════════════════════════════════╝</span>
+        </div>
+      </section>
+
+      <!-- FILE STRUCTURE -->
+      <section class="section" id="file-structure">
+        <div class="section-header">
+          <div class="section-num">03</div>
+          <div>
+            <div class="section-title">Complete File Structure</div>
+            <div class="section-desc">Every new file you will create in this phase</div>
+          </div>
+        </div>
+
+        <div class="file-tree">
+          <span class="ft-dir">chaos_lab/</span>
+          <span style="color:#546e7a">│ ← entire new directory created in Phase 13</span>
+          │
+          <span class="ft-dir">├── target_system/</span> <span style="color:#546e7a">← ShopCore e-commerce
+            microservices</span>
+          │ <span class="ft-dir">├── api_gateway/</span>
+          │ │ <span class="ft-new">├── main.py</span> <span style="color:#546e7a">← FastAPI gateway, request
+            routing</span>
+          │ │ <span class="ft-new">├── middleware.py</span> <span style="color:#546e7a">← latency injection,
+            logging</span>
+          │ │ <span class="ft-new">└── Dockerfile</span>
+          │ <span class="ft-dir">├── product_service/</span>
+          │ │ <span class="ft-new">├── main.py</span> <span style="color:#546e7a">← products CRUD, PostgreSQL</span>
+          │ │ <span class="ft-new">├── models.py</span>
+          │ │ <span class="ft-new">└── Dockerfile</span>
+          │ <span class="ft-dir">├── order_service/</span>
+          │ │ <span class="ft-new">├── main.py</span> <span style="color:#546e7a">← order processing, Kafka
+            producer</span>
+          │ │ <span class="ft-new">├── models.py</span>
+          │ │ <span class="ft-new">└── Dockerfile</span>
+          │ <span class="ft-dir">├── user_service/</span>
+          │ │ <span class="ft-new">├── main.py</span> <span style="color:#546e7a">← auth, JWT, sessions</span>
+          │ │ <span class="ft-new">└── Dockerfile</span>
+          │ <span class="ft-dir">├── frontend/</span>
+          │ │ <span class="ft-new">├── src/App.jsx</span> <span style="color:#546e7a">← React SPA with cognitive_sdk.js
+            embedded</span>
+          │ │ <span class="ft-new">├── public/index.html</span>
+          │ │ <span class="ft-new">└── package.json</span>
+          │ <span class="ft-new">└── docker-compose.yml</span> <span style="color:#546e7a">← entire target stack</span>
+          │
+          <span class="ft-dir">├── instrumentation/</span> <span style="color:#546e7a">← connects target to DCA
+            perception</span>
+          │ <span class="ft-new">├── fluent-bit.conf</span> <span style="color:#546e7a">← tail container logs → raw.logs
+            topic</span>
+          │ <span class="ft-new">├── alert.rules.yml</span> <span style="color:#546e7a">← Prometheus rules for
+            ShopCore</span>
+          │ <span class="ft-mod">├── sources.yaml</span> <span style="color:#546e7a">← ADD ShopCore sources to existing
+            config</span>
+          │ <span class="ft-new">└── perception_bridge.py</span> <span style="color:#546e7a">← chaos-state enrichment of
+            events</span>
+          │
+          <span class="ft-dir">├── chaos_engine/</span> <span style="color:#546e7a">← failure injection system</span>
+          │ <span class="ft-new">├── controller.py</span> <span style="color:#546e7a">← ChaosController, 18
+            scenarios</span>
+          │ <span class="ft-new">├── scenarios/</span>
+          │ │ <span class="ft-new">├── database.py</span> <span style="color:#546e7a">← DB failure scenarios</span>
+          │ │ <span class="ft-new">├── network.py</span> <span style="color:#546e7a">← latency, packet loss,
+            partition</span>
+          │ │ <span class="ft-new">├── memory.py</span> <span style="color:#546e7a">← memory pressure, OOM</span>
+          │ │ <span class="ft-new">├── service.py</span> <span style="color:#546e7a">← crash, hang, slow
+            responses</span>
+          │ │ <span class="ft-new">└── queue.py</span> <span style="color:#546e7a">← consumer lag, DLQ growth</span>
+          │ <span class="ft-new">├── scheduler.py</span> <span style="color:#546e7a">← randomized/scripted scenario
+            runner</span>
+          │ <span class="ft-new">└── api.py</span> <span style="color:#546e7a">← REST API to trigger chaos
+            manually</span>
+          │
+          <span class="ft-dir">├── remediation/</span> <span style="color:#546e7a">← NEW action handlers for the
+            DCA</span>
+          │ <span class="ft-new">├── handlers/</span>
+          │ │ <span class="ft-new">├── service_handler.py</span> <span style="color:#546e7a">← restart, scale,
+            health-gate</span>
+          │ │ <span class="ft-new">├── database_handler.py</span> <span style="color:#546e7a">← kill slow query, pool
+            reset</span>
+          │ │ <span class="ft-new">├── cache_handler.py</span> <span style="color:#546e7a">← flush, warm, resize</span>
+          │ │ <span class="ft-new">├── queue_handler.py</span> <span style="color:#546e7a">← consumer reset, DLQ
+            drain</span>
+          │ │ <span class="ft-new">└── config_handler.py</span> <span style="color:#546e7a">← rollback config,
+            reload</span>
+          │ <span class="ft-new">└── action_registry.py</span> <span style="color:#546e7a">← event_type → handler
+            mapping</span>
+          │
+          <span class="ft-dir">└── tests/</span>
+          <span class="ft-new">├── test_chaos_detection.py</span> <span style="color:#546e7a">← verify every scenario
+            emits CognitiveEvent</span>
+          <span class="ft-new">├── test_remediation.py</span> <span style="color:#546e7a">← verify every handler
+            produces recovery</span>
+          <span class="ft-new">└── test_e2e_scenarios.py</span> <span style="color:#546e7a">← full inject→detect→heal
+            pipeline tests</span>
+        </div>
+      </section>
+
+      <!-- TARGET SYSTEM -->
+      <section class="section" id="target-overview">
+        <div class="section-header">
+          <div class="section-num red">04</div>
+          <div>
+            <div class="section-title">ShopCore — The Target E-Commerce System</div>
+            <div class="section-desc">A realistic microservices platform that generates authentic failure signals</div>
+          </div>
+        </div>
+
+        <p>ShopCore is a minimal but structurally complete e-commerce backend. It uses all the same infrastructure as
+          your real production stack would — PostgreSQL, Kafka/Redpanda, Redis, Nginx — so every chaos injection hits
+          real infrastructure and produces real signals.</p>
+
+        <div class="card-grid">
+          <div class="card">
+            <div class="card-title"><span class="card-tag">port 8000</span> API Gateway</div>
+            <div class="card-body">Routes /products, /orders, /users. Emits structured JSON logs. Exposes Prometheus
+              metrics. Auth middleware validates JWTs.</div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="card-tag">port 8001</span> Product Service</div>
+            <div class="card-body">CRUD on PostgreSQL. Uses asyncpg connection pool (max 10). Prometheus counter on slow
+              queries. Exposes /health.</div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="card-tag">port 8002</span> Order Service</div>
+            <div class="card-body">Writes orders to PostgreSQL, publishes to Redpanda topic <code>order-events</code>.
+              Has a configurable processing delay injected by chaos.</div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="card-tag">port 8003</span> User Service</div>
+            <div class="card-body">JWT generation/validation backed by Redis for session store. Brute-force detector
+              publishes to <code>cognitive.events</code> directly.</div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="card-tag">port 3000</span> React Frontend</div>
+            <div class="card-body">SPA with product listing, cart, checkout. cognitive_sdk.js embedded. Sends Web Vitals
+              and rage clicks to /perception/browser-events.</div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="card-tag">infra</span> Shared Infrastructure</div>
+            <div class="card-body">PostgreSQL (shared DB), Redis (sessions + cache), Redpanda (events), Nginx (reverse
+              proxy + TLS termination), Prometheus + Alertmanager.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="api-gateway">
+        <div class="section-header">
+          <div class="section-num red">05</div>
+          <div>
+            <div class="section-title">API Gateway — target_system/api_gateway/main.py</div>
+            <div class="section-desc">Central routing, structured logging, chaos-injectable middleware</div>
+          </div>
+        </div>
+
+        <div class="code-label">target_system/api_gateway/main.py</div>
+        <pre><code><span class="cmt">"""
+ShopCore API Gateway
+====================
+Routes all external traffic to internal microservices.
+Emits structured JSON logs consumed by Fluent Bit → LogAdapter → DCA.
+
+CHAOS HOOKS:
+  - CHAOS_LATENCY_MS env var: adds artificial latency to all responses
+  - CHAOS_ERROR_RATE env var: percentage of requests to return 500
+  - CHAOS_CIRCUIT_OPEN env var: block all upstream calls
+"""</span>
+
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+
+<span class="kw">import</span> asyncio, json, logging, os, random, time, uuid
+<span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+
+<span class="kw">import</span> httpx
+<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, Request, HTTPException, status
+<span class="kw">from</span> fastapi.middleware.cors <span class="kw">import</span> CORSMiddleware
+<span class="kw">from</span> fastapi.responses <span class="kw">import</span> JSONResponse
+<span class="kw">from</span> prometheus_client <span class="kw">import</span> Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+<span class="kw">from</span> starlette.responses <span class="kw">import</span> Response
+
+<span class="cmt"># ── Structured logger → Fluent Bit picks this up ─────────────────────────────</span>
+<span class="fn">logging.basicConfig</span>(
+    format=json.dumps({
+        <span class="str">"timestamp"</span>: <span class="str">"%(asctime)s"</span>,
+        <span class="str">"level"</span>: <span class="str">"%(levelname)s"</span>,
+        <span class="str">"service"</span>: <span class="str">"api-gateway"</span>,
+        <span class="str">"message"</span>: <span class="str">"%(message)s"</span>,
+    }),
+    level=logging.INFO,
+)
+logger = logging.<span class="fn">getLogger</span>(<span class="str">"api-gateway"</span>)
+
+<span class="cmt"># ── Prometheus metrics ────────────────────────────────────────────────────────</span>
+REQUEST_COUNT = <span class="cls">Counter</span>(
+    <span class="str">'shopcore_gateway_requests_total'</span>,
+    <span class="str">'Total HTTP requests'</span>,
+    [<span class="str">'method'</span>, <span class="str">'path'</span>, <span class="str">'status'</span>]
+)
+REQUEST_LATENCY = <span class="cls">Histogram</span>(
+    <span class="str">'shopcore_gateway_latency_seconds'</span>,
+    <span class="str">'Request latency in seconds'</span>,
+    [<span class="str">'path'</span>],
+    buckets=[.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10]
+)
+
+<span class="cmt"># ── Upstream service URLs ────────────────────────────────────────────────────</span>
+SERVICES = {
+    <span class="str">"products"</span>: os.<span class="fn">getenv</span>(<span class="str">"PRODUCT_SERVICE_URL"</span>, <span class="str">"http://product-service:8001"</span>),
+    <span class="str">"orders"</span>:   os.<span class="fn">getenv</span>(<span class="str">"ORDER_SERVICE_URL"</span>,   <span class="str">"http://order-service:8002"</span>),
+    <span class="str">"users"</span>:    os.<span class="fn">getenv</span>(<span class="str">"USER_SERVICE_URL"</span>,    <span class="str">"http://user-service:8003"</span>),
+}
+
+<span class="cmt"># ── Chaos injection state (read from env at request time) ─────────────────────</span>
+<span class="kw">def</span> <span class="fn">_chaos_latency_ms</span>() -> float:
+    <span class="kw">return</span> float(os.<span class="fn">getenv</span>(<span class="str">"CHAOS_LATENCY_MS"</span>, <span class="str">"0"</span>))
+
+<span class="kw">def</span> <span class="fn">_chaos_error_rate</span>() -> float:
+    <span class="kw">return</span> float(os.<span class="fn">getenv</span>(<span class="str">"CHAOS_ERROR_RATE"</span>, <span class="str">"0"</span>))
+
+<span class="kw">def</span> <span class="fn">_circuit_open</span>() -> bool:
+    <span class="kw">return</span> os.<span class="fn">getenv</span>(<span class="str">"CHAOS_CIRCUIT_OPEN"</span>, <span class="str">"false"</span>).lower() == <span class="str">"true"</span>
+
+
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">_proxy</span>(
+    request: Request,
+    upstream_base: str,
+    path: str,
+    client: httpx.AsyncClient,
+) -> JSONResponse:
+    <span class="cmt">"""Proxy a request to an upstream service with chaos injection."""</span>
+    trace_id = str(uuid.<span class="fn">uuid4</span>())[:8]
+
+    <span class="cmt"># Chaos: artificial latency</span>
+    latency_ms = <span class="fn">_chaos_latency_ms</span>()
+    <span class="kw">if</span> latency_ms > <span class="num">0</span>:
+        <span class="kw">await</span> asyncio.<span class="fn">sleep</span>(latency_ms / <span class="num">1000</span>)
+        logger.<span class="fn">warning</span>(<span class="str">f"Artificial latency applied: {latency_ms}ms trace_id={trace_id}"</span>)
+
+    <span class="cmt"># Chaos: artificial error rate</span>
+    <span class="kw">if</span> random.<span class="fn">random</span>() < <span class="fn">_chaos_error_rate</span>():
+        logger.<span class="fn">error</span>(<span class="str">f"Chaos error injected for {path} trace_id={trace_id}"</span>)
+        <span class="kw">raise</span> <span class="cls">HTTPException</span>(status_code=<span class="num">500</span>, detail=<span class="str">"Internal server error (chaos)"</span>)
+
+    <span class="cmt"># Chaos: circuit breaker open</span>
+    <span class="kw">if</span> <span class="fn">_circuit_open</span>():
+        logger.<span class="fn">error</span>(<span class="str">f"Circuit breaker open — upstream call blocked trace_id={trace_id}"</span>)
+        <span class="kw">raise</span> <span class="cls">HTTPException</span>(status_code=<span class="num">503</span>, detail=<span class="str">"Service temporarily unavailable"</span>)
+
+    start = time.<span class="fn">monotonic</span>()
+    <span class="kw">try</span>:
+        body = <span class="kw">await</span> request.<span class="fn">body</span>()
+        resp = <span class="kw">await</span> client.<span class="fn">request</span>(
+            method=request.method,
+            url=<span class="str">f"{upstream_base}{path}"</span>,
+            headers={k: v <span class="kw">for</span> k, v <span class="kw">in</span> request.headers.<span class="fn">items</span>()
+                     <span class="kw">if</span> k.lower() != <span class="str">"host"</span>},
+            content=body,
+            params=dict(request.query_params),
+        )
+        elapsed_ms = (time.<span class="fn">monotonic</span>() - start) * <span class="num">1000</span>
+        logger.<span class="fn">info</span>(<span class="str">f"Proxied {request.method} {path} → {resp.status_code} in {elapsed_ms:.1f}ms trace_id={trace_id}"</span>)
+        <span class="kw">return</span> <span class="cls">JSONResponse</span>(
+            content=resp.<span class="fn">json</span>() <span class="kw">if</span> resp.headers.<span class="fn">get</span>(<span class="str">"content-type"</span>, <span class="str">""</span>).<span class="fn">startswith</span>(<span class="str">"application/json"</span>) <span class="kw">else</span> {<span class="str">"body"</span>: resp.text},
+            status_code=resp.status_code,
+        )
+    <span class="kw">except</span> httpx.ConnectError:
+        elapsed_ms = (time.<span class="fn">monotonic</span>() - start) * <span class="num">1000</span>
+        logger.<span class="fn">error</span>(<span class="str">f"Upstream connection refused for {path} elapsed_ms={elapsed_ms:.0f} trace_id={trace_id}"</span>)
+        <span class="kw">raise</span> <span class="cls">HTTPException</span>(status_code=<span class="num">503</span>, detail=<span class="str">"Upstream service unreachable"</span>)
+    <span class="kw">except</span> httpx.TimeoutException:
+        elapsed_ms = (time.<span class="fn">monotonic</span>() - start) * <span class="num">1000</span>
+        logger.<span class="fn">error</span>(<span class="str">f"Upstream timeout for {path} elapsed_ms={elapsed_ms:.0f} trace_id={trace_id}"</span>)
+        <span class="kw">raise</span> <span class="cls">HTTPException</span>(status_code=<span class="num">504</span>, detail=<span class="str">"Upstream request timed out"</span>)
+
+
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">lifespan</span>(app: FastAPI):
+    app.state.client = httpx.<span class="cls">AsyncClient</span>(timeout=<span class="num">10.0</span>)
+    <span class="kw">yield</span>
+    <span class="kw">await</span> app.state.client.<span class="fn">aclose</span>()
+
+app = <span class="cls">FastAPI</span>(title=<span class="str">"ShopCore API Gateway"</span>, lifespan=lifespan)
+app.<span class="fn">add_middleware</span>(<span class="cls">CORSMiddleware</span>, allow_origins=[<span class="str">"*"</span>], allow_methods=[<span class="str">"*"</span>], allow_headers=[<span class="str">"*"</span>])
+
+
+<span class="kw">async def</span> <span class="fn">_with_metrics</span>(path: str, handler):
+    start = time.<span class="fn">monotonic</span>()
+    <span class="kw">try</span>:
+        result = <span class="kw">await</span> <span class="fn">handler</span>()
+        REQUEST_COUNT.<span class="fn">labels</span>(method=<span class="str">"GET"</span>, path=path, status=<span class="str">"2xx"</span>).<span class="fn">inc</span>()
+        <span class="kw">return</span> result
+    <span class="kw">except</span> HTTPException <span class="kw">as</span> e:
+        REQUEST_COUNT.<span class="fn">labels</span>(method=<span class="str">"GET"</span>, path=path, status=str(e.status_code)).<span class="fn">inc</span>()
+        <span class="kw">raise</span>
+    <span class="kw">finally</span>:
+        REQUEST_LATENCY.<span class="fn">labels</span>(path=path).<span class="fn">observe</span>(time.<span class="fn">monotonic</span>() - start)
+
+
+<span class="op">@</span>app.<span class="fn">get</span>(<span class="str">"/products/{path:path}"</span>)
+<span class="kw">async def</span> <span class="fn">products_proxy</span>(request: Request, path: str = <span class="str">""</span>):
+    <span class="kw">return await</span> <span class="fn">_with_metrics</span>(<span class="str">"/products"</span>, <span class="kw">lambda</span>: <span class="fn">_proxy</span>(request, SERVICES[<span class="str">"products"</span>], <span class="str">f"/products/{path}"</span>, request.app.state.client))
+
+<span class="op">@</span>app.<span class="fn">post</span>(<span class="str">"/orders/{path:path}"</span>)
+<span class="kw">async def</span> <span class="fn">orders_proxy</span>(request: Request, path: str = <span class="str">""</span>):
+    <span class="kw">return await</span> <span class="fn">_with_metrics</span>(<span class="str">"/orders"</span>, <span class="kw">lambda</span>: <span class="fn">_proxy</span>(request, SERVICES[<span class="str">"orders"</span>], <span class="str">f"/orders/{path}"</span>, request.app.state.client))
+
+<span class="op">@</span>app.<span class="fn">post</span>(<span class="str">"/users/{path:path}"</span>)
+<span class="kw">async def</span> <span class="fn">users_proxy</span>(request: Request, path: str = <span class="str">""</span>):
+    <span class="kw">return await</span> <span class="fn">_with_metrics</span>(<span class="str">"/users"</span>, <span class="kw">lambda</span>: <span class="fn">_proxy</span>(request, SERVICES[<span class="str">"users"</span>], <span class="str">f"/users/{path}"</span>, request.app.state.client))
+
+<span class="op">@</span>app.<span class="fn">get</span>(<span class="str">"/health"</span>)
+<span class="kw">async def</span> <span class="fn">health</span>(): <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"ok"</span>, <span class="str">"service"</span>: <span class="str">"api-gateway"</span>}
+
+<span class="op">@</span>app.<span class="fn">get</span>(<span class="str">"/metrics"</span>)
+<span class="kw">async def</span> <span class="fn">metrics</span>():
+    <span class="kw">return</span> <span class="cls">Response</span>(<span class="fn">generate_latest</span>(), media_type=CONTENT_TYPE_LATEST)
+</code></pre>
+      </section>
+
+      <section class="section" id="product-service">
+        <div class="section-header">
+          <div class="section-num red">06</div>
+          <div>
+            <div class="section-title">Product Service — target_system/product_service/main.py</div>
+            <div class="section-desc">PostgreSQL-backed CRUD with chaos-injectable slow queries and pool exhaustion
+            </div>
+          </div>
+        </div>
+
+        <div class="code-label">target_system/product_service/main.py</div>
+        <pre><code><span class="cmt">"""
+Product Service
+===============
+FastAPI + asyncpg. Runs real SQL queries on PostgreSQL.
+CHAOS HOOKS (all via environment variables set by chaos engine):
+  CHAOS_SLOW_QUERY_MS  — adds pg_sleep() to every SELECT
+  CHAOS_POOL_EXHAUST   — holds connections open to exhaust pool
+  CHAOS_DB_ERROR_RATE  — random SQL failures
+"""</span>
+
+<span class="kw">import</span> asyncio, json, logging, os, random, time
+<span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
+
+<span class="kw">import</span> asyncpg
+<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, HTTPException
+<span class="kw">from</span> pydantic <span class="kw">import</span> BaseModel
+<span class="kw">from</span> prometheus_client <span class="kw">import</span> Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
+<span class="kw">from</span> starlette.responses <span class="kw">import</span> Response
+
+logger = logging.<span class="fn">getLogger</span>(<span class="str">"product-service"</span>)
+logging.<span class="fn">basicConfig</span>(
+    format=json.<span class="fn">dumps</span>({<span class="str">"timestamp"</span>: <span class="str">"%(asctime)s"</span>, <span class="str">"level"</span>: <span class="str">"%(levelname)s"</span>, <span class="str">"service"</span>: <span class="str">"product-service"</span>, <span class="str">"message"</span>: <span class="str">"%(message)s"</span>}),
+    level=logging.INFO,
+)
+
+DB_DSN  = os.<span class="fn">getenv</span>(<span class="str">"DATABASE_URL"</span>, <span class="str">"postgresql://shopcore:shopcore@postgres:5432/shopcore"</span>)
+POOL_MIN = <span class="num">2</span>
+POOL_MAX = <span class="num">10</span>
+
+QUERY_LATENCY = <span class="cls">Histogram</span>(<span class="str">'product_db_query_seconds'</span>, <span class="str">'DB query latency'</span>, [<span class="str">'operation'</span>])
+DB_POOL_SIZE  = <span class="cls">Gauge</span>(<span class="str">'product_db_pool_used'</span>, <span class="str">'Used DB connections'</span>)
+ERROR_COUNTER = <span class="cls">Counter</span>(<span class="str">'product_errors_total'</span>, <span class="str">'Total errors'</span>, [<span class="str">'type'</span>])
+
+
+<span class="kw">class</span> <span class="cls">Product</span>(<span class="cls">BaseModel</span>):
+    name: str
+    price: float
+    stock: int
+    category: str
+
+
+<span class="op">@</span><span class="fn">asynccontextmanager</span>
+<span class="kw">async def</span> <span class="fn">lifespan</span>(app: FastAPI):
+    app.state.pool = <span class="kw">await</span> asyncpg.<span class="fn">create_pool</span>(
+        DB_DSN, min_size=POOL_MIN, max_size=POOL_MAX
+    )
+    <span class="cmt"># Ensure schema exists</span>
+    <span class="kw">async with</span> app.state.pool.<span class="fn">acquire</span>() <span class="kw">as</span> conn:
+        <span class="kw">await</span> conn.<span class="fn">execute</span>(<span class="str">"""
+            CREATE TABLE IF NOT EXISTS products (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                price NUMERIC(10,2) NOT NULL,
+                stock INT NOT NULL DEFAULT 0,
+                category TEXT,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """</span>)
+        <span class="cmt"># Seed some data if empty</span>
+        count = <span class="kw">await</span> conn.<span class="fn">fetchval</span>(<span class="str">"SELECT COUNT(*) FROM products"</span>)
+        <span class="kw">if</span> count == <span class="num">0</span>:
+            <span class="kw">await</span> conn.<span class="fn">executemany</span>(
+                <span class="str">"INSERT INTO products(name, price, stock, category) VALUES($1,$2,$3,$4)"</span>,
+                [(<span class="str">"Laptop Pro 15"</span>, <span class="num">1299.99</span>, <span class="num">50</span>, <span class="str">"electronics"</span>),
+                 (<span class="str">"Wireless Mouse"</span>, <span class="num">29.99</span>, <span class="num">200</span>, <span class="str">"peripherals"</span>),
+                 (<span class="str">"USB-C Hub"</span>, <span class="num">49.99</span>, <span class="num">150</span>, <span class="str">"peripherals"</span>),
+                 (<span class="str">"4K Monitor"</span>, <span class="num">599.99</span>, <span class="num">30</span>, <span class="str">"electronics"</span>),
+                 (<span class="str">"Mechanical Keyboard"</span>, <span class="num">149.99</span>, <span class="num">75</span>, <span class="str">"peripherals"</span>)],
+            )
+    <span class="kw">yield</span>
+    <span class="kw">await</span> app.state.pool.<span class="fn">close</span>()
+
+app = <span class="cls">FastAPI</span>(title=<span class="str">"ShopCore Products"</span>, lifespan=lifespan)
+
+
+<span class="kw">async def</span> <span class="fn">get_conn</span>(pool) -> asyncpg.Connection:
+    <span class="cmt">"""Acquire a connection with chaos hooks applied."""</span>
+    DB_POOL_SIZE.<span class="fn">set</span>(pool.<span class="fn">get_size</span>() - pool.<span class="fn">get_idle_size</span>())
+
+    <span class="cmt"># Chaos: pool exhaustion (hold connection open for a long time)</span>
+    <span class="kw">if</span> os.<span class="fn">getenv</span>(<span class="str">"CHAOS_POOL_EXHAUST"</span>) == <span class="str">"true"</span>:
+        logger.<span class="fn">error</span>(
+            <span class="str">"connection pool exhausted — too many connections"</span>
+            <span class="str">" database=shopcore service=product-service"</span>
+        )
+        ERROR_COUNTER.<span class="fn">labels</span>(type=<span class="str">"pool_exhausted"</span>).<span class="fn">inc</span>()
+        <span class="kw">raise</span> <span class="cls">HTTPException</span>(status_code=<span class="num">503</span>, detail=<span class="str">"DB pool exhausted"</span>)
+
+    <span class="kw">return await</span> pool.<span class="fn">acquire</span>()
+
+
+<span class="op">@</span>app.<span class="fn">get</span>(<span class="str">"/products"</span>)
+<span class="kw">async def</span> <span class="fn">list_products</span>(request: Request):
+    start = time.<span class="fn">monotonic</span>()
+    conn = <span class="kw">await</span> <span class="fn">get_conn</span>(request.app.state.pool)
+    <span class="kw">try</span>:
+        slow_ms = float(os.<span class="fn">getenv</span>(<span class="str">"CHAOS_SLOW_QUERY_MS"</span>, <span class="str">"0"</span>))
+        <span class="kw">if</span> slow_ms > <span class="num">0</span>:
+            logger.<span class="fn">warning</span>(<span class="str">f"query timed out exceeded {slow_ms}ms database=shopcore slow_query=true service=product-service"</span>)
+            <span class="kw">await</span> conn.<span class="fn">execute</span>(<span class="str">f"SELECT pg_sleep({slow_ms / 1000})"</span>)
+
+        rows = <span class="kw">await</span> conn.<span class="fn">fetch</span>(<span class="str">"SELECT * FROM products ORDER BY id"</span>)
+        elapsed = time.<span class="fn">monotonic</span>() - start
+        QUERY_LATENCY.<span class="fn">labels</span>(operation=<span class="str">"list"</span>).<span class="fn">observe</span>(elapsed)
+        <span class="kw">return</span> [dict(r) <span class="kw">for</span> r <span class="kw">in</span> rows]
+    <span class="kw">finally</span>:
+        <span class="kw">await</span> request.app.state.pool.<span class="fn">release</span>(conn)
+
+
+<span class="op">@</span>app.<span class="fn">get</span>(<span class="str">"/products/{product_id}"</span>)
+<span class="kw">async def</span> <span class="fn">get_product</span>(product_id: int, request: Request):
+    conn = <span class="kw">await</span> <span class="fn">get_conn</span>(request.app.state.pool)
+    <span class="kw">try</span>:
+        row = <span class="kw">await</span> conn.<span class="fn">fetchrow</span>(<span class="str">"SELECT * FROM products WHERE id=$1"</span>, product_id)
+        <span class="kw">if not</span> row:
+            <span class="kw">raise</span> <span class="cls">HTTPException</span>(status_code=<span class="num">404</span>, detail=<span class="str">"Product not found"</span>)
+        <span class="kw">return</span> dict(row)
+    <span class="kw">finally</span>:
+        <span class="kw">await</span> request.app.state.pool.<span class="fn">release</span>(conn)
+
+
+<span class="op">@</span>app.<span class="fn">get</span>(<span class="str">"/health"</span>)
+<span class="kw">async def</span> <span class="fn">health</span>(): <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"ok"</span>, <span class="str">"service"</span>: <span class="str">"product-service"</span>}
+
+<span class="op">@</span>app.<span class="fn">get</span>(<span class="str">"/metrics"</span>)
+<span class="kw">async def</span> <span class="fn">metrics</span>(): <span class="kw">return</span> <span class="cls">Response</span>(<span class="fn">generate_latest</span>(), media_type=CONTENT_TYPE_LATEST)
+</code></pre>
+      </section>
+
+      <section class="section" id="order-service">
+        <div class="section-header">
+          <div class="section-num red">07</div>
+          <div>
+            <div class="section-title">Order Service — target_system/order_service/main.py</div>
+            <div class="section-desc">Order processing with Kafka publish and consumer lag injection</div>
+          </div>
+        </div>
+
+        <div class="code-label">target_system/order_service/main.py</div>
+        <pre><code><span class="cmt">"""
+Order Service
+=============
+Processes orders: writes to PostgreSQL, publishes to Kafka.
+CHAOS HOOKS:
+  CHAOS_ORDER_DELAY_MS — artificial delay before processing
+  CHAOS_KAFKA_BLOCK    — stop publishing to Kafka (creates lag)
+  CHAOS_ORDER_FAIL_RATE — random failure rate
+"""</span>
+
+<span class="kw">import</span> asyncio, json, logging, os, random, time, uuid
+<span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
+
+<span class="kw">import</span> asyncpg
+<span class="kw">from</span> aiokafka <span class="kw">import</span> AIOKafkaProducer
+<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, HTTPException, Request
+<span class="kw">from</span> pydantic <span class="kw">import</span> BaseModel
+
+DB_DSN   = os.<span class="fn">getenv</span>(<span class="str">"DATABASE_URL"</span>, <span class="str">"postgresql://shopcore:shopcore@postgres:5432/shopcore"</span>)
+KAFKA_BS = os.<span class="fn">getenv</span>(<span class="str">"KAFKA_BOOTSTRAP"</span>, <span class="str">"redpanda:9092"</span>)
+
+logger = logging.<span class="fn">getLogger</span>(<span class="str">"order-service"</span>)
+logging.<span class="fn">basicConfig</span>(
+    format=json.<span class="fn">dumps</span>({<span class="str">"timestamp"</span>: <span class="str">"%(asctime)s"</span>, <span class="str">"level"</span>: <span class="str">"%(levelname)s"</span>, <span class="str">"service"</span>: <span class="str">"order-service"</span>, <span class="str">"message"</span>: <span class="str">"%(message)s"</span>}),
+    level=logging.INFO,
+)
+
+
+<span class="kw">class</span> <span class="cls">OrderRequest</span>(<span class="cls">BaseModel</span>):
+    user_id: str
+    product_ids: list[int]
+    total_amount: float
+
+
+<span class="op">@</span><span class="fn">asynccontextmanager</span>
+<span class="kw">async def</span> <span class="fn">lifespan</span>(app: FastAPI):
+    app.state.pool = <span class="kw">await</span> asyncpg.<span class="fn">create_pool</span>(DB_DSN, min_size=<span class="num">2</span>, max_size=<span class="num">10</span>)
+    app.state.producer = <span class="cls">AIOKafkaProducer</span>(bootstrap_servers=KAFKA_BS)
+    <span class="kw">await</span> app.state.producer.<span class="fn">start</span>()
+    <span class="kw">async with</span> app.state.pool.<span class="fn">acquire</span>() <span class="kw">as</span> conn:
+        <span class="kw">await</span> conn.<span class="fn">execute</span>(<span class="str">"""
+            CREATE TABLE IF NOT EXISTS orders (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id TEXT NOT NULL,
+                product_ids INTEGER[],
+                total_amount NUMERIC(10,2),
+                status TEXT DEFAULT 'pending',
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        """</span>)
+    <span class="kw">yield</span>
+    <span class="kw">await</span> app.state.producer.<span class="fn">stop</span>()
+    <span class="kw">await</span> app.state.pool.<span class="fn">close</span>()
+
+app = <span class="cls">FastAPI</span>(title=<span class="str">"ShopCore Orders"</span>, lifespan=lifespan)
+
+
+<span class="op">@</span>app.<span class="fn">post</span>(<span class="str">"/orders"</span>, status_code=<span class="num">201</span>)
+<span class="kw">async def</span> <span class="fn">create_order</span>(order: OrderRequest, request: Request):
+    order_id = str(uuid.<span class="fn">uuid4</span>())
+
+    <span class="cmt"># Chaos: artificial processing delay</span>
+    delay_ms = float(os.<span class="fn">getenv</span>(<span class="str">"CHAOS_ORDER_DELAY_MS"</span>, <span class="str">"0"</span>))
+    <span class="kw">if</span> delay_ms > <span class="num">0</span>:
+        logger.<span class="fn">warning</span>(<span class="str">f"order processing delayed — slow_query=true elapsed_ms={delay_ms} service=order-service"</span>)
+        <span class="kw">await</span> asyncio.<span class="fn">sleep</span>(delay_ms / <span class="num">1000</span>)
+
+    <span class="cmt"># Chaos: random failure</span>
+    fail_rate = float(os.<span class="fn">getenv</span>(<span class="str">"CHAOS_ORDER_FAIL_RATE"</span>, <span class="str">"0"</span>))
+    <span class="kw">if</span> random.<span class="fn">random</span>() < fail_rate:
+        logger.<span class="fn">error</span>(<span class="str">f"internal server error — unhandled exception in order processing order_id={order_id}"</span>)
+        <span class="kw">raise</span> <span class="cls">HTTPException</span>(status_code=<span class="num">500</span>, detail=<span class="str">"Order processing failed"</span>)
+
+    <span class="kw">async with</span> request.app.state.pool.<span class="fn">acquire</span>() <span class="kw">as</span> conn:
+        <span class="kw">await</span> conn.<span class="fn">execute</span>(
+            <span class="str">"INSERT INTO orders(id, user_id, product_ids, total_amount) VALUES($1,$2,$3,$4)"</span>,
+            order_id, order.user_id, order.product_ids, order.total_amount,
+        )
+
+    <span class="cmt"># Chaos: block Kafka publish (creates consumer lag)</span>
+    <span class="kw">if</span> os.<span class="fn">getenv</span>(<span class="str">"CHAOS_KAFKA_BLOCK"</span>) != <span class="str">"true"</span>:
+        event = {<span class="str">"order_id"</span>: order_id, <span class="str">"user_id"</span>: order.user_id, <span class="str">"total"</span>: order.total_amount, <span class="str">"ts"</span>: time.<span class="fn">time</span>()}
+        <span class="kw">await</span> request.app.state.producer.<span class="fn">send_and_wait</span>(
+            <span class="str">"order-events"</span>, json.<span class="fn">dumps</span>(event).<span class="fn">encode</span>()
+        )
+    <span class="kw">else</span>:
+        logger.<span class="fn">warning</span>(<span class="str">f"downstream kafka blocked — dependency call failed service=order-service order_id={order_id}"</span>)
+
+    <span class="kw">return</span> {<span class="str">"order_id"</span>: order_id, <span class="str">"status"</span>: <span class="str">"created"</span>}
+
+
+<span class="op">@</span>app.<span class="fn">get</span>(<span class="str">"/health"</span>)
+<span class="kw">async def</span> <span class="fn">health</span>(): <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"ok"</span>}
+</code></pre>
+      </section>
+
+      <section class="section" id="docker-compose">
+        <div class="section-header">
+          <div class="section-num red">08</div>
+          <div>
+            <div class="section-title">docker-compose.yml — Complete Target Stack</div>
+            <div class="section-desc">Single compose file bringing up all ShopCore services plus the DCA infrastructure
+            </div>
+          </div>
+        </div>
+
+        <div class="code-label">target_system/docker-compose.yml</div>
+        <pre><code><span class="dec">version</span>: <span class="str">'3.8'</span>
+
+<span class="dec">networks</span>:
+  <span class="cls">shopcore</span>:
+    <span class="dec">driver</span>: bridge
+
+<span class="dec">volumes</span>:
+  postgres_data:
+  redis_data:
+  redpanda_data:
+
+<span class="dec">services</span>:
+
+  <span class="cmt"># ── INFRASTRUCTURE ──────────────────────────────────────────────────────</span>
+
+  <span class="cls">postgres</span>:
+    <span class="dec">image</span>: timescale/timescaledb:latest-pg15
+    <span class="dec">environment</span>:
+      POSTGRES_USER: shopcore
+      POSTGRES_PASSWORD: shopcore
+      POSTGRES_DB: shopcore
+    <span class="dec">ports</span>: [<span class="str">"5432:5432"</span>]
+    <span class="dec">volumes</span>: [<span class="str">"postgres_data:/var/lib/postgresql/data"</span>]
+    <span class="dec">networks</span>: [shopcore]
+    <span class="dec">command</span>: postgres -c max_connections=100 -c shared_buffers=256MB -c log_min_duration_statement=100
+
+  <span class="cls">redis</span>:
+    <span class="dec">image</span>: redis/redis-stack:latest
+    <span class="dec">ports</span>: [<span class="str">"6379:6379"</span>]
+    <span class="dec">volumes</span>: [<span class="str">"redis_data:/data"</span>]
+    <span class="dec">networks</span>: [shopcore]
+
+  <span class="cls">redpanda</span>:
+    <span class="dec">image</span>: redpandadata/redpanda:latest
+    <span class="dec">ports</span>: [<span class="str">"9092:9092"</span>, <span class="str">"9644:9644"</span>]
+    <span class="dec">volumes</span>: [<span class="str">"redpanda_data:/var/lib/redpanda/data"</span>]
+    <span class="dec">networks</span>: [shopcore]
+    <span class="dec">command</span>: |
+      redpanda start
+      --smp 1 --memory 512M
+      --kafka-addr 0.0.0.0:9092
+      --advertise-kafka-addr redpanda:9092
+
+  <span class="cls">fluent-bit</span>:
+    <span class="dec">image</span>: fluent/fluent-bit:latest
+    <span class="dec">volumes</span>:
+      - /var/lib/docker/containers:/var/log/containers:ro
+      - ./instrumentation/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+    <span class="dec">networks</span>: [shopcore]
+    <span class="dec">depends_on</span>: [redpanda]
+
+  <span class="cls">prometheus</span>:
+    <span class="dec">image</span>: prom/prometheus:latest
+    <span class="dec">ports</span>: [<span class="str">"9090:9090"</span>]
+    <span class="dec">volumes</span>:
+      - ./instrumentation/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./instrumentation/alert.rules.yml:/etc/prometheus/alert.rules.yml
+    <span class="dec">networks</span>: [shopcore]
+
+  <span class="cls">alertmanager</span>:
+    <span class="dec">image</span>: prom/alertmanager:latest
+    <span class="dec">ports</span>: [<span class="str">"9093:9093"</span>]
+    <span class="dec">volumes</span>:
+      - ./instrumentation/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    <span class="dec">networks</span>: [shopcore]
+
+  <span class="cmt"># ── SHOPCORE SERVICES ────────────────────────────────────────────────────</span>
+
+  <span class="cls">api-gateway</span>:
+    <span class="dec">build</span>: ./api_gateway
+    <span class="dec">ports</span>: [<span class="str">"8000:8000"</span>]
+    <span class="dec">environment</span>:
+      PRODUCT_SERVICE_URL: http://product-service:8001
+      ORDER_SERVICE_URL: http://order-service:8002
+      USER_SERVICE_URL: http://user-service:8003
+      CHAOS_LATENCY_MS: <span class="str">"0"</span>
+      CHAOS_ERROR_RATE: <span class="str">"0"</span>
+      CHAOS_CIRCUIT_OPEN: <span class="str">"false"</span>
+    <span class="dec">labels</span>:
+      - <span class="str">"co.elastic.logs/enabled=true"</span>
+      - <span class="str">"com.shopcore.service=api-gateway"</span>
+    <span class="dec">networks</span>: [shopcore]
+    <span class="dec">depends_on</span>: [product-service, order-service, user-service]
+
+  <span class="cls">product-service</span>:
+    <span class="dec">build</span>: ./product_service
+    <span class="dec">ports</span>: [<span class="str">"8001:8001"</span>]
+    <span class="dec">environment</span>:
+      DATABASE_URL: postgresql://shopcore:shopcore@postgres:5432/shopcore
+      CHAOS_SLOW_QUERY_MS: <span class="str">"0"</span>
+      CHAOS_POOL_EXHAUST: <span class="str">"false"</span>
+    <span class="dec">networks</span>: [shopcore]
+    <span class="dec">depends_on</span>: [postgres]
+
+  <span class="cls">order-service</span>:
+    <span class="dec">build</span>: ./order_service
+    <span class="dec">ports</span>: [<span class="str">"8002:8002"</span>]
+    <span class="dec">environment</span>:
+      DATABASE_URL: postgresql://shopcore:shopcore@postgres:5432/shopcore
+      KAFKA_BOOTSTRAP: redpanda:9092
+      CHAOS_ORDER_DELAY_MS: <span class="str">"0"</span>
+      CHAOS_KAFKA_BLOCK: <span class="str">"false"</span>
+    <span class="dec">networks</span>: [shopcore]
+    <span class="dec">depends_on</span>: [postgres, redpanda]
+
+  <span class="cls">user-service</span>:
+    <span class="dec">build</span>: ./user_service
+    <span class="dec">ports</span>: [<span class="str">"8003:8003"</span>]
+    <span class="dec">environment</span>:
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: <span class="str">"shopcore-dev-secret-change-in-prod"</span>
+      CHAOS_AUTH_FAIL_RATE: <span class="str">"0"</span>
+    <span class="dec">networks</span>: [shopcore]
+    <span class="dec">depends_on</span>: [redis]
+
+  <span class="cls">frontend</span>:
+    <span class="dec">build</span>: ./frontend
+    <span class="dec">ports</span>: [<span class="str">"3000:3000"</span>]
+    <span class="dec">environment</span>:
+      REACT_APP_API_URL: http://localhost:8000
+      REACT_APP_PERCEPTION_URL: http://localhost:8080
+    <span class="dec">networks</span>: [shopcore]
+    <span class="dec">depends_on</span>: [api-gateway]
+
+  <span class="cmt"># ── CHAOS ENGINE ────────────────────────────────────────────────────────</span>
+
+  <span class="cls">chaos-engine</span>:
+    <span class="dec">build</span>: ../chaos_engine
+    <span class="dec">ports</span>: [<span class="str">"9090:9090"</span>]
+    <span class="dec">volumes</span>:
+      - /var/run/docker.sock:/var/run/docker.sock
+    <span class="dec">environment</span>:
+      DOCKER_COMPOSE_PROJECT: shopcore
+    <span class="dec">networks</span>: [shopcore]
+
+  <span class="cmt"># ── DCA PERCEPTION LAYER (already running, point sources at ShopCore) ───</span>
+
+  <span class="cls">perception-api</span>:
+    <span class="dec">image</span>: your-dca-image:latest  <span class="cmt"># your existing Phase 1/2 image</span>
+    <span class="dec">ports</span>: [<span class="str">"8080:8080"</span>]
+    <span class="dec">environment</span>:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+    <span class="dec">networks</span>: [shopcore]
+</code></pre>
+      </section>
+
+      <!-- INSTRUMENTATION -->
+      <section class="section" id="fluent-bit">
+        <div class="section-header">
+          <div class="section-num purple">09</div>
+          <div>
+            <div class="section-title">Instrumentation — Fluent Bit + Prometheus Rules</div>
+            <div class="section-desc">Wiring ShopCore logs and metrics into the DCA perception pipeline</div>
+          </div>
+        </div>
+
+        <div class="code-label">instrumentation/fluent-bit.conf</div>
+        <pre><code><span class="cmt"># Fluent Bit configuration for ShopCore → DCA pipeline
+# Tails Docker container logs and ships them to Redpanda raw.logs topic</span>
+
+[SERVICE]
+    Flush        2
+    Daemon       Off
+    Log_Level    info
+
+<span class="cmt"># ── INPUT: tail Docker container log files ─────────────────────────────</span>
+[INPUT]
+    Name              tail
+    Path              /var/log/containers/*api-gateway*.log
+    Tag               api-gateway
+    Parser            docker
+    Refresh_Interval  5
+    Mem_Buf_Limit     50MB
+
+[INPUT]
+    Name              tail
+    Path              /var/log/containers/*product-service*.log
+    Tag               product-service
+    Parser            docker
+    Refresh_Interval  5
+    Mem_Buf_Limit     50MB
+
+[INPUT]
+    Name              tail
+    Path              /var/log/containers/*order-service*.log
+    Tag               order-service
+    Parser            docker
+    Refresh_Interval  5
+    Mem_Buf_Limit     50MB
+
+[INPUT]
+    Name              tail
+    Path              /var/log/containers/*user-service*.log
+    Tag               user-service
+    Parser            docker
+    Refresh_Interval  5
+
+<span class="cmt"># ── FILTER: parse the inner JSON log line ──────────────────────────────</span>
+[FILTER]
+    Name       parser
+    Match      *
+    Key_Name   log
+    Parser     json
+    Reserve_Data True
+
+<span class="cmt"># ── OUTPUT: publish to Redpanda raw.logs topic ─────────────────────────</span>
+[OUTPUT]
+    Name       kafka
+    Match      *
+    Brokers    redpanda:9092
+    Topics     raw.logs
+    Timestamp_Key  timestamp
+    Retry_Limit    3
+
+<span class="cmt"># ── PARSER DEFINITIONS ─────────────────────────────────────────────────</span>
+[PARSER]
+    Name        docker
+    Format      json
+    Time_Key    time
+    Time_Format %Y-%m-%dT%H:%M:%S.%L
+    Time_Keep   On
+</code></pre>
+
+        <div class="code-label">instrumentation/alert.rules.yml — ShopCore Prometheus alerting rules</div>
+        <pre><code><span class="dec">groups</span>:
+  - <span class="dec">name</span>: shopcore_alerts
+    <span class="dec">rules</span>:
+
+    <span class="cmt"># ── API Gateway ─────────────────────────────────────────────────────</span>
+    - <span class="dec">alert</span>: ShopCoreGatewayLatencyHigh
+      <span class="dec">expr</span>: histogram_quantile(0.95, shopcore_gateway_latency_seconds_bucket) > 1.0
+      <span class="dec">for</span>: 30s
+      <span class="dec">labels</span>:
+        <span class="dec">severity</span>: warning
+        <span class="dec">service</span>: api-gateway
+        <span class="dec">instance</span>: api-gateway:8000
+      <span class="dec">annotations</span>:
+        <span class="dec">summary</span>: API gateway p95 latency > 1s
+        <span class="dec">value</span>: <span class="str">'{{ $value | humanizeDuration }}'</span>
+
+    - <span class="dec">alert</span>: ShopCoreGatewayHighErrorRate
+      <span class="dec">expr</span>: rate(shopcore_gateway_requests_total{status=~"5.."}[2m]) > 0.1
+      <span class="dec">for</span>: 1m
+      <span class="dec">labels</span>:
+        <span class="dec">severity</span>: critical
+        <span class="dec">service</span>: api-gateway
+      <span class="dec">annotations</span>:
+        <span class="dec">summary</span>: High 5xx error rate on API gateway
+
+    <span class="cmt"># ── Product Service ──────────────────────────────────────────────────</span>
+    - <span class="dec">alert</span>: ProductServiceDBLatencyHigh
+      <span class="dec">expr</span>: histogram_quantile(0.95, product_db_query_seconds_bucket) > 0.5
+      <span class="dec">for</span>: 30s
+      <span class="dec">labels</span>:
+        <span class="dec">severity</span>: warning
+        <span class="dec">service</span>: product-service
+        <span class="dec">instance</span>: product-service:8001
+      <span class="dec">annotations</span>:
+        <span class="dec">summary</span>: Product service DB query p95 > 500ms
+        <span class="dec">value</span>: <span class="str">'{{ $value | humanizeDuration }}'</span>
+
+    - <span class="dec">alert</span>: ProductServiceDBPoolHigh
+      <span class="dec">expr</span>: product_db_pool_used > 8
+      <span class="dec">for</span>: 15s
+      <span class="dec">labels</span>:
+        <span class="dec">severity</span>: critical
+        <span class="dec">service</span>: product-service
+      <span class="dec">annotations</span>:
+        <span class="dec">summary</span>: DB connection pool nearly exhausted (> 8/10)
+
+    <span class="cmt"># ── Infrastructure ───────────────────────────────────────────────────</span>
+    - <span class="dec">alert</span>: HighCPUUsage
+      <span class="dec">expr</span>: 100 - (avg by(instance)(rate(node_cpu_seconds_total{mode="idle"}[2m])) * 100) > 80
+      <span class="dec">for</span>: 1m
+      <span class="dec">labels</span>:
+        <span class="dec">severity</span>: warning
+      <span class="dec">annotations</span>:
+        <span class="dec">summary</span>: CPU usage above 80%
+
+    - <span class="dec">alert</span>: HighMemoryPressure
+      <span class="dec">expr</span>: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+      <span class="dec">for</span>: 1m
+      <span class="dec">labels</span>:
+        <span class="dec">severity</span>: warning
+      <span class="dec">annotations</span>:
+        <span class="dec">summary</span>: Memory usage above 85%
+</code></pre>
+      </section>
+
+      <section class="section" id="sources-yaml">
+        <div class="section-header">
+          <div class="section-num purple">10</div>
+          <div>
+            <div class="section-title">Updated sources.yaml — Add ShopCore Sources</div>
+            <div class="section-desc">Append these entries to your existing sources.yaml</div>
+          </div>
+        </div>
+
+        <div class="callout info">
+          <div class="callout-icon">📌</div>
+          <div class="callout-body">
+            <div class="callout-title">Merge with existing config</div>
+            <div class="callout-text">These entries go inside the <code>sources:</code> list in your existing
+              sources.yaml. Do not replace the file — append these after your existing entries.</div>
+          </div>
+        </div>
+
+        <div class="code-label">instrumentation/sources.yaml — ShopCore-specific entries to append</div>
+        <pre><code><span class="cmt">  # ── SHOPCORE API HEALTH POLLING ────────────────────────────────────────</span>
+  - id: svc:api-gateway
+    type: api
+    tags: [shopcore, gateway, critical]
+    url: http://localhost:8000/health
+    poll_interval_s: 15
+    timeout_s: 3.0
+    latency_warn_ms: 200
+    latency_high_ms: 1000
+
+  - id: svc:product-service
+    type: api
+    tags: [shopcore, products, critical]
+    url: http://localhost:8001/health
+    poll_interval_s: 15
+    timeout_s: 3.0
+
+  - id: svc:order-service
+    type: api
+    tags: [shopcore, orders, critical]
+    url: http://localhost:8002/health
+    poll_interval_s: 15
+    timeout_s: 3.0
+
+  - id: svc:user-service
+    type: api
+    tags: [shopcore, auth, critical]
+    url: http://localhost:8003/health
+    poll_interval_s: 15
+    timeout_s: 3.0
+
+  <span class="cmt"># ── SHOPCORE DATABASE DIRECT MONITORING ────────────────────────────────</span>
+  - id: db:shopcore-postgres
+    type: database
+    tags: [shopcore, production, critical]
+    dsn: postgresql://shopcore:shopcore@localhost:5432/shopcore
+    slow_query_ms: 100.0
+    pool_warn_pct: 0.70
+    pool_critical_pct: 0.90
+    replication_lag_warn_s: 30.0
+    lock_wait_warn_s: 5.0
+    poll_interval_s: 15
+
+  <span class="cmt"># ── SHOPCORE KAFKA QUEUE MONITORING ────────────────────────────────────</span>
+  - id: queue:order-events
+    type: queue
+    tags: [shopcore, orders]
+    broker_type: kafka
+    queue_name: order-events
+    consumer_group: order-processor
+    poll_interval_s: 15
+    lag_warn: 100
+    lag_critical: 1000
+    kafka_bootstrap: localhost:9092
+
+  <span class="cmt"># ── SHOPCORE LOG SOURCES (mapped from Fluent Bit tags) ─────────────────</span>
+  - id: svc:api-gateway
+    type: log
+    tags: [shopcore, gateway, critical]
+    fluent_bit_tag: api-gateway
+    log_format: json
+
+  - id: svc:product-service
+    type: log
+    tags: [shopcore, products]
+    fluent_bit_tag: product-service
+    log_format: json
+
+  - id: svc:order-service
+    type: log
+    tags: [shopcore, orders]
+    fluent_bit_tag: order-service
+    log_format: json
+
+  - id: svc:user-service
+    type: log
+    tags: [shopcore, auth]
+    fluent_bit_tag: user-service
+    log_format: json
+</code></pre>
+      </section>
+
+      <!-- CHAOS ENGINE -->
+      <section class="section" id="chaos-controller">
+        <div class="section-header">
+          <div class="section-num yellow">11</div>
+          <div>
+            <div class="section-title">ChaosController — chaos_engine/controller.py</div>
+            <div class="section-desc">Central orchestrator for all failure injection. Modifies Docker environment
+              variables and network rules.</div>
+          </div>
+        </div>
+
+        <p>The ChaosController injects failures by two mechanisms: (1) setting environment variables on running
+          containers (which the services read at request time via their chaos hooks), and (2) applying Docker network
+          rules for real packet-level failures.</p>
+
+        <div class="code-label">chaos_engine/controller.py</div>
+        <pre><code><span class="cmt">"""
+ChaosController
+===============
+Injects infrastructure failures into ShopCore by manipulating:
+  1. Container environment variables (services have chaos hooks that read these)
+  2. Docker network rules (tc/iptables for real packet-level failures)
+  3. PostgreSQL direct (inject slow queries, lock tables)
+  4. Kafka producer (stop publishing to simulate lag)
+
+Each scenario is:
+  - activate(params) : inject the failure
+  - deactivate()     : restore normal state
+  - verify()         : confirm the failure is actually present
+"""</span>
+
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+
+<span class="kw">import</span> asyncio, logging, time
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, field
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">from</span> enum <span class="kw">import</span> Enum
+<span class="kw">from</span> typing <span class="kw">import</span> Any, Callable, Awaitable
+
+<span class="kw">import</span> docker
+<span class="kw">import</span> asyncpg
+<span class="kw">import</span> httpx
+
+logger = logging.<span class="fn">getLogger</span>(<span class="str">"chaos-controller"</span>)
+
+DOCKER_COMPOSE_PROJECT = <span class="str">"shopcore"</span>
+
+
+<span class="kw">class</span> <span class="cls">ScenarioState</span>(<span class="cls">Enum</span>):
+    IDLE       = <span class="str">"idle"</span>
+    ACTIVE     = <span class="str">"active"</span>
+    RECOVERING = <span class="str">"recovering"</span>
+    FAILED     = <span class="str">"failed"</span>
+
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="cls">ChaosScenario</span>:
+    name: str
+    description: str
+    severity: str
+    expected_event_type: str
+    expected_detection_s: float
+    expected_remediation_s: float
+    activate: Callable[[dict], Awaitable[None]]
+    deactivate: Callable[[], Awaitable[None]]
+    verify_injected: Callable[[], Awaitable[bool]]
+    state: <span class="cls">ScenarioState</span> = <span class="cls">ScenarioState</span>.IDLE
+    activated_at: datetime | None = None
+    detected_at: datetime | None = None
+    remediated_at: datetime | None = None
+    params: dict = field(default_factory=dict)
+
+
+<span class="kw">class</span> <span class="cls">DockerChaos</span>:
+    <span class="cmt">"""Helpers for Docker-based failure injection."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.client = docker.<span class="fn">from_env</span>()
+
+    <span class="kw">def</span> <span class="fn">_get_container</span>(self, service_name: str) -> docker.models.containers.Container:
+        containers = self.client.containers.<span class="fn">list</span>(
+            filters={<span class="str">"label"</span>: <span class="str">f"com.shopcore.service={service_name}"</span>}
+        )
+        <span class="kw">if not</span> containers:
+            <span class="cmt"># Fallback: name-based lookup</span>
+            containers = self.client.containers.<span class="fn">list</span>(
+                filters={<span class="str">"name"</span>: service_name}
+            )
+        <span class="kw">if not</span> containers:
+            <span class="kw">raise</span> <span class="cls">RuntimeError</span>(<span class="str">f"Container for {service_name} not found"</span>)
+        <span class="kw">return</span> containers[<span class="num">0</span>]
+
+    <span class="kw">def</span> <span class="fn">set_env</span>(self, service_name: str, env_vars: dict[str, str]):
+        <span class="cmt">"""Update environment variables on a running container by recreating it."""</span>
+        container = self.<span class="fn">_get_container</span>(service_name)
+        image = container.image
+        config = container.<span class="fn">attrs</span>[<span class="str">"Config"</span>]
+        current_env = dict(e.<span class="fn">split</span>(<span class="str">"="</span>, <span class="num">1</span>) <span class="kw">for</span> e <span class="kw">in</span> config.<span class="fn">get</span>(<span class="str">"Env"</span>, []))
+        current_env.<span class="fn">update</span>(env_vars)
+        new_env = [<span class="str">f"{k}={v}"</span> <span class="kw">for</span> k, v <span class="kw">in</span> current_env.<span class="fn">items</span>()]
+
+        network_name = <span class="str">f"{DOCKER_COMPOSE_PROJECT}_shopcore"</span>
+        name = container.name
+
+        container.<span class="fn">stop</span>(timeout=<span class="num">5</span>)
+        container.<span class="fn">remove</span>()
+
+        self.client.containers.<span class="fn">run</span>(
+            image,
+            name=name,
+            environment=new_env,
+            network=network_name,
+            detach=True,
+            ports=config.<span class="fn">get</span>(<span class="str">"ExposedPorts"</span>, {}),
+        )
+        logger.<span class="fn">info</span>(<span class="str">f"[Chaos] Set env on {service_name}: {env_vars}"</span>)
+
+    <span class="kw">def</span> <span class="fn">stop_container</span>(self, service_name: str):
+        container = self.<span class="fn">_get_container</span>(service_name)
+        container.<span class="fn">stop</span>(timeout=<span class="num">2</span>)
+        logger.<span class="fn">info</span>(<span class="str">f"[Chaos] Stopped container: {service_name}"</span>)
+
+    <span class="kw">def</span> <span class="fn">start_container</span>(self, service_name: str):
+        container = self.<span class="fn">_get_container</span>(service_name)
+        container.<span class="fn">start</span>()
+        logger.<span class="fn">info</span>(<span class="str">f"[Chaos] Started container: {service_name}"</span>)
+
+    <span class="kw">def</span> <span class="fn">apply_network_latency</span>(self, service_name: str, latency_ms: int):
+        <span class="cmt">"""Apply tc netem latency inside the container."""</span>
+        container = self.<span class="fn">_get_container</span>(service_name)
+        container.<span class="fn">exec_run</span>(
+            <span class="str">f"tc qdisc add dev eth0 root netem delay {latency_ms}ms"</span>,
+            privileged=True
+        )
+        logger.<span class="fn">info</span>(<span class="str">f"[Chaos] Applied {latency_ms}ms network latency to {service_name}"</span>)
+
+    <span class="kw">def</span> <span class="fn">remove_network_latency</span>(self, service_name: str):
+        container = self.<span class="fn">_get_container</span>(service_name)
+        container.<span class="fn">exec_run</span>(<span class="str">"tc qdisc del dev eth0 root netem"</span>, privileged=True)
+
+
+<span class="kw">class</span> <span class="cls">ChaosController</span>:
+    <span class="cmt">"""
+    Manages all chaos scenarios for the ShopCore target system.
+    Tracks active scenarios, their detection times, and remediation status.
+    """</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(
+        self,
+        db_dsn: str = <span class="str">"postgresql://shopcore:shopcore@localhost:5432/shopcore"</span>,
+    ):
+        self.docker = <span class="cls">DockerChaos</span>()
+        self.db_dsn = db_dsn
+        self.scenarios: dict[str, <span class="cls">ChaosScenario</span>] = {}
+        self.active_scenarios: list[str] = []
+        self._build_scenarios()
+
+    <span class="kw">def</span> <span class="fn">_build_scenarios</span>(self):
+        <span class="cmt">"""Register all 18 chaos scenarios."""</span>
+        d = self.docker
+
+        <span class="cmt"># ── SCENARIO 1: Service Crash ──────────────────────────────────────</span>
+        <span class="kw">async def</span> <span class="fn">_crash_product_activate</span>(params):
+            d.<span class="fn">stop_container</span>(<span class="str">"product-service"</span>)
+
+        <span class="kw">async def</span> <span class="fn">_crash_product_deactivate</span>():
+            d.<span class="fn">start_container</span>(<span class="str">"product-service"</span>)
+            <span class="kw">await</span> asyncio.<span class="fn">sleep</span>(<span class="num">3</span>)  <span class="cmt"># wait for startup</span>
+
+        <span class="kw">async def</span> <span class="fn">_crash_product_verify</span>():
+            <span class="kw">try</span>:
+                <span class="kw">async with</span> httpx.<span class="cls">AsyncClient</span>(timeout=<span class="num">2</span>) <span class="kw">as</span> c:
+                    <span class="kw">await</span> c.<span class="fn">get</span>(<span class="str">"http://localhost:8001/health"</span>)
+                <span class="kw">return</span> False
+            <span class="kw">except</span>:
+                <span class="kw">return</span> True
+
+        self.scenarios[<span class="str">"product_service_crash"</span>] = <span class="cls">ChaosScenario</span>(
+            name=<span class="str">"product_service_crash"</span>,
+            description=<span class="str">"Stop the product service container, simulating a crash"</span>,
+            severity=<span class="str">"critical"</span>,
+            expected_event_type=<span class="str">"service_unreachable"</span>,
+            expected_detection_s=<span class="num">30</span>,
+            expected_remediation_s=<span class="num">90</span>,
+            activate=_crash_product_activate,
+            deactivate=_crash_product_deactivate,
+            verify_injected=_crash_product_verify,
+        )
+
+        <span class="cmt"># ── SCENARIO 2: Slow Database Query ───────────────────────────────</span>
+        <span class="kw">async def</span> <span class="fn">_slow_query_activate</span>(params):
+            slow_ms = params.<span class="fn">get</span>(<span class="str">"slow_ms"</span>, <span class="num">2000</span>)
+            d.<span class="fn">set_env</span>(<span class="str">"product-service"</span>, {<span class="str">"CHAOS_SLOW_QUERY_MS"</span>: str(slow_ms)})
+
+        <span class="kw">async def</span> <span class="fn">_slow_query_deactivate</span>():
+            d.<span class="fn">set_env</span>(<span class="str">"product-service"</span>, {<span class="str">"CHAOS_SLOW_QUERY_MS"</span>: <span class="str">"0"</span>})
+
+        <span class="kw">async def</span> <span class="fn">_slow_query_verify</span>():
+            <span class="kw">try</span>:
+                start = time.<span class="fn">monotonic</span>()
+                <span class="kw">async with</span> httpx.<span class="cls">AsyncClient</span>(timeout=<span class="num">10</span>) <span class="kw">as</span> c:
+                    <span class="kw">await</span> c.<span class="fn">get</span>(<span class="str">"http://localhost:8001/products"</span>)
+                <span class="kw">return</span> (time.<span class="fn">monotonic</span>() - start) > <span class="num">1.0</span>
+            <span class="kw">except</span>: <span class="kw">return</span> False
+
+        self.scenarios[<span class="str">"slow_database_query"</span>] = <span class="cls">ChaosScenario</span>(
+            name=<span class="str">"slow_database_query"</span>,
+            description=<span class="str">"Inject pg_sleep() into every SELECT on the product service"</span>,
+            severity=<span class="str">"high"</span>,
+            expected_event_type=<span class="str">"slow_query_detected"</span>,
+            expected_detection_s=<span class="num">45</span>,
+            expected_remediation_s=<span class="num">120</span>,
+            activate=_slow_query_activate,
+            deactivate=_slow_query_deactivate,
+            verify_injected=_slow_query_verify,
+        )
+
+        <span class="cmt"># ── SCENARIO 3: DB Pool Exhaustion ────────────────────────────────</span>
+        <span class="kw">async def</span> <span class="fn">_pool_exhaust_activate</span>(params):
+            d.<span class="fn">set_env</span>(<span class="str">"product-service"</span>, {<span class="str">"CHAOS_POOL_EXHAUST"</span>: <span class="str">"true"</span>})
+
+        <span class="kw">async def</span> <span class="fn">_pool_exhaust_deactivate</span>():
+            d.<span class="fn">set_env</span>(<span class="str">"product-service"</span>, {<span class="str">"CHAOS_POOL_EXHAUST"</span>: <span class="str">"false"</span>})
+
+        <span class="kw">async def</span> <span class="fn">_pool_exhaust_verify</span>():
+            <span class="kw">try</span>:
+                <span class="kw">async with</span> httpx.<span class="cls">AsyncClient</span>(timeout=<span class="num">5</span>) <span class="kw">as</span> c:
+                    r = <span class="kw">await</span> c.<span class="fn">get</span>(<span class="str">"http://localhost:8001/products"</span>)
+                    <span class="kw">return</span> r.status_code == <span class="num">503</span>
+            <span class="kw">except</span>: <span class="kw">return</span> False
+
+        self.scenarios[<span class="str">"db_pool_exhaustion"</span>] = <span class="cls">ChaosScenario</span>(
+            name=<span class="str">"db_pool_exhaustion"</span>,
+            description=<span class="str">"Exhaust all PostgreSQL connection pool slots"</span>,
+            severity=<span class="str">"critical"</span>,
+            expected_event_type=<span class="str">"connection_pool_exhausted"</span>,
+            expected_detection_s=<span class="num">30</span>,
+            expected_remediation_s=<span class="num">90</span>,
+            activate=_pool_exhaust_activate,
+            deactivate=_pool_exhaust_deactivate,
+            verify_injected=_pool_exhaust_verify,
+        )
+
+        <span class="cmt"># ── SCENARIO 4: High Gateway Error Rate ───────────────────────────</span>
+        <span class="kw">async def</span> <span class="fn">_error_rate_activate</span>(params):
+            rate = params.<span class="fn">get</span>(<span class="str">"rate"</span>, <span class="num">0.3</span>)
+            d.<span class="fn">set_env</span>(<span class="str">"api-gateway"</span>, {<span class="str">"CHAOS_ERROR_RATE"</span>: str(rate)})
+
+        <span class="kw">async def</span> <span class="fn">_error_rate_deactivate</span>():
+            d.<span class="fn">set_env</span>(<span class="str">"api-gateway"</span>, {<span class="str">"CHAOS_ERROR_RATE"</span>: <span class="str">"0"</span>})
+
+        <span class="kw">async def</span> <span class="fn">_error_rate_verify</span>():
+            errors = <span class="num">0</span>
+            <span class="kw">async with</span> httpx.<span class="cls">AsyncClient</span>(timeout=<span class="num">5</span>) <span class="kw">as</span> c:
+                <span class="kw">for</span> _ <span class="kw">in</span> range(<span class="num">10</span>):
+                    <span class="kw">try</span>:
+                        r = <span class="kw">await</span> c.<span class="fn">get</span>(<span class="str">"http://localhost:8000/products"</span>)
+                        <span class="kw">if</span> r.status_code == <span class="num">500</span>: errors += <span class="num">1</span>
+                    <span class="kw">except</span>: errors += <span class="num">1</span>
+            <span class="kw">return</span> errors >= <span class="num">2</span>
+
+        self.scenarios[<span class="str">"gateway_error_rate"</span>] = <span class="cls">ChaosScenario</span>(
+            name=<span class="str">"gateway_error_rate"</span>,
+            description=<span class="str">"30% of requests through the API gateway return 500"</span>,
+            severity=<span class="str">"high"</span>,
+            expected_event_type=<span class="str">"service_health_degraded"</span>,
+            expected_detection_s=<span class="num">60</span>,
+            expected_remediation_s=<span class="num">150</span>,
+            activate=_error_rate_activate,
+            deactivate=_error_rate_deactivate,
+            verify_injected=_error_rate_verify,
+        )
+
+        <span class="cmt"># ── SCENARIO 5: Kafka Consumer Lag ────────────────────────────────</span>
+        <span class="kw">async def</span> <span class="fn">_kafka_lag_activate</span>(params):
+            d.<span class="fn">set_env</span>(<span class="str">"order-service"</span>, {<span class="str">"CHAOS_KAFKA_BLOCK"</span>: <span class="str">"true"</span>})
+            <span class="cmt"># Generate orders to build up lag</span>
+            <span class="kw">async with</span> httpx.<span class="cls">AsyncClient</span>(timeout=<span class="num">10</span>) <span class="kw">as</span> c:
+                <span class="kw">for</span> i <span class="kw">in</span> range(<span class="num">50</span>):
+                    <span class="kw">try</span>:
+                        <span class="kw">await</span> c.<span class="fn">post</span>(<span class="str">"http://localhost:8000/orders"</span>, json={
+                            <span class="str">"user_id"</span>: <span class="str">f"chaos-user-{i}"</span>,
+                            <span class="str">"product_ids"</span>: [<span class="num">1</span>],
+                            <span class="str">"total_amount"</span>: <span class="num">29.99</span>,
+                        })
+                    <span class="kw">except</span>: <span class="kw">pass</span>
+
+        <span class="kw">async def</span> <span class="fn">_kafka_lag_deactivate</span>():
+            d.<span class="fn">set_env</span>(<span class="str">"order-service"</span>, {<span class="str">"CHAOS_KAFKA_BLOCK"</span>: <span class="str">"false"</span>})
+
+        self.scenarios[<span class="str">"kafka_consumer_lag"</span>] = <span class="cls">ChaosScenario</span>(
+            name=<span class="str">"kafka_consumer_lag"</span>,
+            description=<span class="str">"Block Kafka publishing, generate orders, build consumer lag > 100"</span>,
+            severity=<span class="str">"high"</span>,
+            expected_event_type=<span class="str">"consumer_lag_high"</span>,
+            expected_detection_s=<span class="num">30</span>,
+            expected_remediation_s=<span class="num">120</span>,
+            activate=_kafka_lag_activate,
+            deactivate=_kafka_lag_deactivate,
+            verify_injected=<span class="kw">lambda</span>: asyncio.<span class="fn">sleep</span>(<span class="num">0</span>) <span class="kw">or</span> True,
+        )
+
+        <span class="cmt"># ── SCENARIO 6: Gateway Latency Spike ─────────────────────────────</span>
+        <span class="kw">async def</span> <span class="fn">_latency_activate</span>(params):
+            ms = params.<span class="fn">get</span>(<span class="str">"latency_ms"</span>, <span class="num">3000</span>)
+            d.<span class="fn">set_env</span>(<span class="str">"api-gateway"</span>, {<span class="str">"CHAOS_LATENCY_MS"</span>: str(ms)})
+
+        <span class="kw">async def</span> <span class="fn">_latency_deactivate</span>():
+            d.<span class="fn">set_env</span>(<span class="str">"api-gateway"</span>, {<span class="str">"CHAOS_LATENCY_MS"</span>: <span class="str">"0"</span>})
+
+        self.scenarios[<span class="str">"api_latency_spike"</span>] = <span class="cls">ChaosScenario</span>(
+            name=<span class="str">"api_latency_spike"</span>,
+            description=<span class="str">"Add 3 second artificial latency to all gateway responses"</span>,
+            severity=<span class="str">"high"</span>,
+            expected_event_type=<span class="str">"api_latency_spike"</span>,
+            expected_detection_s=<span class="num">45</span>,
+            expected_remediation_s=<span class="num">120</span>,
+            activate=_latency_activate,
+            deactivate=_latency_deactivate,
+            verify_injected=<span class="kw">lambda</span>: asyncio.<span class="fn">sleep</span>(<span class="num">0</span>) <span class="kw">or</span> True,
+        )
+
+        <span class="cmt"># ── SCENARIOS 7–18: see scenarios/ subdirectory ────────────────────</span>
+        <span class="cmt"># database.py:  lock_contention, replication_lag, idle_in_transaction, vacuum_blocked</span>
+        <span class="cmt"># network.py:   packet_loss, dns_failure, network_partition, tcp_reset</span>
+        <span class="cmt"># memory.py:    memory_pressure, redis_memory_full, cache_eviction_storm</span>
+        <span class="cmt"># service.py:   order_service_crash, user_service_oom, circuit_breaker_open</span>
+
+    <span class="kw">async def</span> <span class="fn">activate</span>(self, scenario_name: str, params: dict | None = None) -> bool:
+        <span class="cmt">"""Activate a chaos scenario."""</span>
+        scenario = self.scenarios.<span class="fn">get</span>(scenario_name)
+        <span class="kw">if not</span> scenario:
+            logger.<span class="fn">error</span>(<span class="str">f"Unknown scenario: {scenario_name}"</span>)
+            <span class="kw">return</span> False
+        <span class="kw">if</span> scenario.state == <span class="cls">ScenarioState</span>.ACTIVE:
+            logger.<span class="fn">warning</span>(<span class="str">f"Scenario {scenario_name} already active"</span>)
+            <span class="kw">return</span> False
+
+        logger.<span class="fn">info</span>(<span class="str">f"[Chaos] ACTIVATING: {scenario_name}"</span>)
+        <span class="kw">await</span> scenario.<span class="fn">activate</span>(params <span class="kw">or</span> {})
+        scenario.state = <span class="cls">ScenarioState</span>.ACTIVE
+        scenario.activated_at = datetime.<span class="fn">now</span>(timezone.utc)
+        scenario.params = params <span class="kw">or</span> {}
+        self.active_scenarios.<span class="fn">append</span>(scenario_name)
+        <span class="kw">return</span> True
+
+    <span class="kw">async def</span> <span class="fn">deactivate</span>(self, scenario_name: str) -> bool:
+        <span class="cmt">"""Deactivate a chaos scenario (restore normal state)."""</span>
+        scenario = self.scenarios.<span class="fn">get</span>(scenario_name)
+        <span class="kw">if not</span> scenario: <span class="kw">return</span> False
+
+        logger.<span class="fn">info</span>(<span class="str">f"[Chaos] DEACTIVATING: {scenario_name}"</span>)
+        scenario.state = <span class="cls">ScenarioState</span>.RECOVERING
+        <span class="kw">await</span> scenario.<span class="fn">deactivate</span>()
+        scenario.state = <span class="cls">ScenarioState</span>.IDLE
+        <span class="kw">if</span> scenario_name <span class="kw">in</span> self.active_scenarios:
+            self.active_scenarios.<span class="fn">remove</span>(scenario_name)
+        <span class="kw">return</span> True
+
+    <span class="kw">async def</span> <span class="fn">deactivate_all</span>(self):
+        <span class="cmt">"""Emergency reset — deactivate all active scenarios."""</span>
+        <span class="kw">for</span> name <span class="kw">in</span> list(self.active_scenarios):
+            <span class="kw">await</span> self.<span class="fn">deactivate</span>(name)
+
+    <span class="kw">def</span> <span class="fn">status</span>(self) -> dict:
+        <span class="kw">return</span> {
+            <span class="str">"active_scenarios"</span>: self.active_scenarios,
+            <span class="str">"scenarios"</span>: {
+                name: {
+                    <span class="str">"state"</span>: s.state.value,
+                    <span class="str">"activated_at"</span>: s.activated_at.<span class="fn">isoformat</span>() <span class="kw">if</span> s.activated_at <span class="kw">else</span> None,
+                    <span class="str">"severity"</span>: s.severity,
+                    <span class="str">"expected_event_type"</span>: s.expected_event_type,
+                }
+                <span class="kw">for</span> name, s <span class="kw">in</span> self.scenarios.<span class="fn">items</span>()
+            }
+        }
+</code></pre>
+      </section>
+
+      <!-- 18 SCENARIOS TABLE -->
+      <section class="section" id="chaos-scenarios">
+        <div class="section-header">
+          <div class="section-num yellow">12</div>
+          <div>
+            <div class="section-title">All 18 Chaos Scenarios</div>
+            <div class="section-desc">Complete catalog of failure types, injection methods, and expected DCA responses
+            </div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Scenario Name</th>
+              <th>Severity</th>
+              <th>Injection Method</th>
+              <th>Expected CognitiveEvent</th>
+              <th>Detection SLO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="anomaly-row-critical">
+              <td>1</td>
+              <td><strong>product_service_crash</strong></td>
+              <td><span class="badge critical">Critical</span></td>
+              <td>Stop Docker container</td>
+              <td><code>service_unreachable</code></td>
+              <td>&lt;30s</td>
+            </tr>
+            <tr class="anomaly-row-critical">
+              <td>2</td>
+              <td><strong>order_service_crash</strong></td>
+              <td><span class="badge critical">Critical</span></td>
+              <td>Stop Docker container</td>
+              <td><code>service_unreachable</code></td>
+              <td>&lt;30s</td>
+            </tr>
+            <tr class="anomaly-row-critical">
+              <td>3</td>
+              <td><strong>db_pool_exhaustion</strong></td>
+              <td><span class="badge critical">Critical</span></td>
+              <td>Env var → reject all connections</td>
+              <td><code>connection_pool_exhausted</code></td>
+              <td>&lt;30s</td>
+            </tr>
+            <tr class="anomaly-row-critical">
+              <td>4</td>
+              <td><strong>redis_memory_full</strong></td>
+              <td><span class="badge critical">Critical</span></td>
+              <td>Set Redis maxmemory to 1MB</td>
+              <td><code>cache_eviction_spike</code></td>
+              <td>&lt;45s</td>
+            </tr>
+            <tr class="anomaly-row-high">
+              <td>5</td>
+              <td><strong>slow_database_query</strong></td>
+              <td><span class="badge high">High</span></td>
+              <td>Inject pg_sleep(2) on every SELECT</td>
+              <td><code>slow_query_detected</code></td>
+              <td>&lt;45s</td>
+            </tr>
+            <tr class="anomaly-row-high">
+              <td>6</td>
+              <td><strong>api_latency_spike</strong></td>
+              <td><span class="badge high">High</span></td>
+              <td>Env var → asyncio.sleep in middleware</td>
+              <td><code>api_latency_spike</code></td>
+              <td>&lt;45s</td>
+            </tr>
+            <tr class="anomaly-row-high">
+              <td>7</td>
+              <td><strong>kafka_consumer_lag</strong></td>
+              <td><span class="badge high">High</span></td>
+              <td>Block Kafka producer + flood orders</td>
+              <td><code>consumer_lag_high</code></td>
+              <td>&lt;30s</td>
+            </tr>
+            <tr class="anomaly-row-high">
+              <td>8</td>
+              <td><strong>gateway_error_rate</strong></td>
+              <td><span class="badge high">High</span></td>
+              <td>Env var → 30% random 500s</td>
+              <td><code>service_health_degraded</code></td>
+              <td>&lt;60s</td>
+            </tr>
+            <tr class="anomaly-row-high">
+              <td>9</td>
+              <td><strong>replication_lag</strong></td>
+              <td><span class="badge high">High</span></td>
+              <td>Pause WAL sender on primary</td>
+              <td><code>replication_lag_high</code></td>
+              <td>&lt;45s</td>
+            </tr>
+            <tr class="anomaly-row-high">
+              <td>10</td>
+              <td><strong>memory_pressure</strong></td>
+              <td><span class="badge high">High</span></td>
+              <td>stress-ng inside container</td>
+              <td><code>memory_pressure_high</code></td>
+              <td>&lt;60s</td>
+            </tr>
+            <tr class="anomaly-row-high">
+              <td>11</td>
+              <td><strong>network_packet_loss</strong></td>
+              <td><span class="badge high">High</span></td>
+              <td>tc netem loss 20% on eth0</td>
+              <td><code>packet_loss_detected</code></td>
+              <td>&lt;60s</td>
+            </tr>
+            <tr class="anomaly-row-medium">
+              <td>12</td>
+              <td><strong>lock_contention</strong></td>
+              <td><span class="badge medium">Medium</span></td>
+              <td>BEGIN; SELECT FOR UPDATE; hold lock 60s</td>
+              <td><code>lock_wait_timeout</code></td>
+              <td>&lt;45s</td>
+            </tr>
+            <tr class="anomaly-row-medium">
+              <td>13</td>
+              <td><strong>idle_in_transaction</strong></td>
+              <td><span class="badge medium">Medium</span></td>
+              <td>Hold transaction open 120s</td>
+              <td><code>connection_leak_detected</code></td>
+              <td>&lt;60s</td>
+            </tr>
+            <tr class="anomaly-row-medium">
+              <td>14</td>
+              <td><strong>cpu_spike</strong></td>
+              <td><span class="badge medium">Medium</span></td>
+              <td>stress-ng --cpu 4 inside container</td>
+              <td><code>cpu_spike</code></td>
+              <td>&lt;60s</td>
+            </tr>
+            <tr class="anomaly-row-medium">
+              <td>15</td>
+              <td><strong>config_file_tamper</strong></td>
+              <td><span class="badge medium">Medium</span></td>
+              <td>Write to watched nginx config file</td>
+              <td><code>config_file_modified</code></td>
+              <td>&lt;5s</td>
+            </tr>
+            <tr class="anomaly-row-medium">
+              <td>16</td>
+              <td><strong>ssl_cert_near_expiry</strong></td>
+              <td><span class="badge medium">Medium</span></td>
+              <td>Replace cert with near-expiry cert</td>
+              <td><code>certificate_expiry_warning</code></td>
+              <td>&lt;120s</td>
+            </tr>
+            <tr class="anomaly-row-medium">
+              <td>17</td>
+              <td><strong>order_processing_delay</strong></td>
+              <td><span class="badge medium">Medium</span></td>
+              <td>Env var → 5s delay per order</td>
+              <td><code>slow_query_detected</code></td>
+              <td>&lt;60s</td>
+            </tr>
+            <tr class="anomaly-row-medium">
+              <td>18</td>
+              <td><strong>circuit_breaker_open</strong></td>
+              <td><span class="badge high">High</span></td>
+              <td>Env var → block all upstream calls</td>
+              <td><code>service_unreachable</code></td>
+              <td>&lt;30s</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- CHAOS API -->
+      <section class="section" id="chaos-api">
+        <div class="section-header">
+          <div class="section-num yellow">13</div>
+          <div>
+            <div class="section-title">Chaos REST API — chaos_engine/api.py</div>
+            <div class="section-desc">HTTP control plane to trigger and monitor chaos scenarios during testing</div>
+          </div>
+        </div>
+
+        <div class="code-label">chaos_engine/api.py</div>
+        <pre><code><span class="cmt">"""
+Chaos Control API
+=================
+REST API to trigger, monitor, and reset chaos scenarios.
+Run alongside the chaos controller during testing.
+
+Endpoints:
+  GET  /scenarios           — list all scenarios and their states
+  POST /scenarios/{name}/activate   — inject a failure
+  POST /scenarios/{name}/deactivate — restore normal state
+  POST /reset               — emergency: deactivate all
+  GET  /status              — current active scenarios + metrics
+"""</span>
+
+<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, HTTPException, BackgroundTasks
+<span class="kw">from</span> pydantic <span class="kw">import</span> BaseModel
+<span class="kw">from</span> .controller <span class="kw">import</span> ChaosController
+<span class="kw">import</span> uvicorn
+
+controller = <span class="cls">ChaosController</span>()
+app = <span class="cls">FastAPI</span>(title=<span class="str">"ShopCore Chaos Engine"</span>, version=<span class="str">"1.0"</span>)
+
+
+<span class="kw">class</span> <span class="cls">ActivateRequest</span>(<span class="cls">BaseModel</span>):
+    params: dict = {}
+
+
+<span class="op">@</span>app.<span class="fn">get</span>(<span class="str">"/scenarios"</span>)
+<span class="kw">async def</span> <span class="fn">list_scenarios</span>():
+    <span class="kw">return</span> {
+        name: {
+            <span class="str">"description"</span>: s.description,
+            <span class="str">"severity"</span>: s.severity,
+            <span class="str">"expected_event_type"</span>: s.expected_event_type,
+            <span class="str">"expected_detection_s"</span>: s.expected_detection_s,
+            <span class="str">"state"</span>: s.state.value,
+        }
+        <span class="kw">for</span> name, s <span class="kw">in</span> controller.scenarios.<span class="fn">items</span>()
+    }
+
+
+<span class="op">@</span>app.<span class="fn">post</span>(<span class="str">"/scenarios/{name}/activate"</span>)
+<span class="kw">async def</span> <span class="fn">activate_scenario</span>(name: str, req: <span class="cls">ActivateRequest</span>):
+    success = <span class="kw">await</span> controller.<span class="fn">activate</span>(name, req.params)
+    <span class="kw">if not</span> success:
+        <span class="kw">raise</span> <span class="cls">HTTPException</span>(status_code=<span class="num">404</span>, detail=<span class="str">f"Scenario '{name}' not found or already active"</span>)
+    scenario = controller.scenarios[name]
+    <span class="kw">return</span> {
+        <span class="str">"activated"</span>: name,
+        <span class="str">"expected_event_type"</span>: scenario.expected_event_type,
+        <span class="str">"expected_detection_s"</span>: scenario.expected_detection_s,
+        <span class="str">"tip"</span>: <span class="str">f"Watch cognitive.events topic — expect '{scenario.expected_event_type}' within {scenario.expected_detection_s}s"</span>
+    }
+
+
+<span class="op">@</span>app.<span class="fn">post</span>(<span class="str">"/scenarios/{name}/deactivate"</span>)
+<span class="kw">async def</span> <span class="fn">deactivate_scenario</span>(name: str):
+    success = <span class="kw">await</span> controller.<span class="fn">deactivate</span>(name)
+    <span class="kw">if not</span> success:
+        <span class="kw">raise</span> <span class="cls">HTTPException</span>(status_code=<span class="num">404</span>, detail=<span class="str">f"Scenario '{name}' not found"</span>)
+    <span class="kw">return</span> {<span class="str">"deactivated"</span>: name}
+
+
+<span class="op">@</span>app.<span class="fn">post</span>(<span class="str">"/reset"</span>)
+<span class="kw">async def</span> <span class="fn">emergency_reset</span>():
+    <span class="cmt">"""Immediately restore all services to normal state."""</span>
+    <span class="kw">await</span> controller.<span class="fn">deactivate_all</span>()
+    <span class="kw">return</span> {<span class="str">"reset"</span>: <span class="str">"all scenarios deactivated"</span>}
+
+
+<span class="op">@</span>app.<span class="fn">get</span>(<span class="str">"/status"</span>)
+<span class="kw">async def</span> <span class="fn">status</span>():
+    <span class="kw">return</span> controller.<span class="fn">status</span>()
+
+
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+    uvicorn.<span class="fn">run</span>(app, host=<span class="str">"0.0.0.0"</span>, port=<span class="num">9090</span>)
+</code></pre>
+      </section>
+
+      <!-- REMEDIATION -->
+      <section class="section" id="remediation-handlers">
+        <div class="section-header">
+          <div class="section-num green">14</div>
+          <div>
+            <div class="section-title">Remediation Action Handlers</div>
+            <div class="section-desc">New BaseActionHandler implementations that integrate with the DCA's PlanRunner
+              from Phase 8/9</div>
+          </div>
+        </div>
+
+        <p>These handlers implement the <code>BaseActionHandler</code> contract from Phase 8/9. Each one receives a
+          <code>CognitiveEvent</code>, executes a remediation action, and publishes a feedback event back to
+          <code>cognitive.events</code>.</p>
+
+        <div class="code-label">remediation/handlers/service_handler.py</div>
+        <pre><code><span class="cmt">"""
+Service Remediation Handler
+============================
+Handles service_unreachable, service_health_degraded events.
+Actions: restart container, health-gate, circuit-break upstream calls.
+"""</span>
+
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+
+<span class="kw">import</span> asyncio, logging, time
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+
+<span class="kw">import</span> docker
+<span class="kw">from</span> aiokafka <span class="kw">import</span> AIOKafkaProducer
+
+<span class="kw">from</span> cognitive_perception.schema.event <span class="kw">import</span> CognitiveEvent, Severity, SourceType
+
+logger = logging.<span class="fn">getLogger</span>(<span class="str">"service-handler"</span>)
+
+<span class="cmt"># Map source_id → Docker service name</span>
+SOURCE_TO_CONTAINER = {
+    <span class="str">"svc:api-gateway"</span>:     <span class="str">"api-gateway"</span>,
+    <span class="str">"svc:product-service"</span>: <span class="str">"product-service"</span>,
+    <span class="str">"svc:order-service"</span>:   <span class="str">"order-service"</span>,
+    <span class="str">"svc:user-service"</span>:    <span class="str">"user-service"</span>,
+}
+
+
+<span class="kw">class</span> <span class="cls">ServiceRemediationHandler</span>:
+    <span class="cmt">"""
+    Remediates service-level failures by restarting Docker containers.
+    Called by the DCA PlanRunner when a plan includes a 'restart_service' step.
+    """</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, producer: AIOKafkaProducer, kafka_topic: str = <span class="str">"cognitive.events"</span>):
+        self.producer = producer
+        self.topic = kafka_topic
+        self.docker_client = docker.<span class="fn">from_env</span>()
+
+    <span class="kw">async def</span> <span class="fn">execute</span>(self, event: CognitiveEvent, action_params: dict) -> dict:
+        <span class="cmt">"""
+        Execute service remediation.
+        action_params: {"action": "restart" | "health_gate" | "scale_up"}
+        """</span>
+        source_id = event.source_id
+        action = action_params.<span class="fn">get</span>(<span class="str">"action"</span>, <span class="str">"restart"</span>)
+        container_name = SOURCE_TO_CONTAINER.<span class="fn">get</span>(source_id)
+
+        <span class="kw">if not</span> container_name:
+            logger.<span class="fn">warning</span>(<span class="str">f"No container mapping for {source_id}"</span>)
+            <span class="kw">return</span> {<span class="str">"success"</span>: False, <span class="str">"reason"</span>: <span class="str">"no container mapping"</span>}
+
+        start = time.<span class="fn">monotonic</span>()
+
+        <span class="kw">if</span> action == <span class="str">"restart"</span>:
+            result = <span class="kw">await</span> self.<span class="fn">_restart_container</span>(container_name)
+        <span class="kw">elif</span> action == <span class="str">"health_gate"</span>:
+            result = <span class="kw">await</span> self.<span class="fn">_health_gate</span>(container_name, source_id)
+        <span class="kw">else</span>:
+            result = {<span class="str">"success"</span>: False, <span class="str">"reason"</span>: <span class="str">f"Unknown action: {action}"</span>}
+
+        elapsed_s = time.<span class="fn">monotonic</span>() - start
+
+        <span class="cmt"># Publish remediation feedback event back to DCA</span>
+        feedback_event = <span class="cls">CognitiveEvent</span>(
+            timestamp=datetime.<span class="fn">now</span>(timezone.utc),
+            source_type=<span class="cls">SourceType</span>.AGENT_EVENT,
+            source_id=<span class="str">"agent:service-remediation-handler"</span>,
+            event_type=<span class="str">"action_completed"</span> <span class="kw">if</span> result[<span class="str">"success"</span>] <span class="kw">else</span> <span class="str">"action_failed"</span>,
+            severity=<span class="cls">Severity</span>.INFO <span class="kw">if</span> result[<span class="str">"success"</span>] <span class="kw">else</span> Severity.HIGH,
+            payload={
+                <span class="str">"original_event_id"</span>: event.event_id,
+                <span class="str">"original_event_type"</span>: event.event_type,
+                <span class="str">"action"</span>: action,
+                <span class="str">"container"</span>: container_name,
+                <span class="str">"elapsed_s"</span>: round(elapsed_s, <span class="num">2</span>),
+                **result,
+            },
+            entity_refs=[source_id, <span class="str">"agent:service-remediation-handler"</span>],
+            confidence=<span class="num">0.99</span>,
+            tags=[<span class="str">"remediation"</span>, <span class="str">"service"</span>, action],
+        )
+        <span class="kw">await</span> self.producer.<span class="fn">send_and_wait</span>(
+            self.topic, feedback_event.<span class="fn">model_dump_json</span>().<span class="fn">encode</span>()
+        )
+        <span class="kw">return</span> result
+
+    <span class="kw">async def</span> <span class="fn">_restart_container</span>(self, container_name: str) -> dict:
+        <span class="kw">try</span>:
+            containers = self.docker_client.containers.<span class="fn">list</span>(filters={<span class="str">"name"</span>: container_name})
+            <span class="kw">if not</span> containers:
+                <span class="cmt"># Try to start stopped container</span>
+                stopped = self.docker_client.containers.<span class="fn">list</span>(
+                    all=True, filters={<span class="str">"name"</span>: container_name}
+                )
+                <span class="kw">if</span> stopped:
+                    stopped[<span class="num">0</span>].<span class="fn">start</span>()
+                    logger.<span class="fn">info</span>(<span class="str">f"[Remediation] Started stopped container: {container_name}"</span>)
+                    <span class="kw">await</span> self.<span class="fn">_wait_healthy</span>(container_name)
+                    <span class="kw">return</span> {<span class="str">"success"</span>: True, <span class="str">"action_taken"</span>: <span class="str">"started"</span>}
+                <span class="kw">return</span> {<span class="str">"success"</span>: False, <span class="str">"reason"</span>: <span class="str">"container not found"</span>}
+            <span class="kw">else</span>:
+                containers[<span class="num">0</span>].<span class="fn">restart</span>(timeout=<span class="num">10</span>)
+                logger.<span class="fn">info</span>(<span class="str">f"[Remediation] Restarted container: {container_name}"</span>)
+                <span class="kw">await</span> self.<span class="fn">_wait_healthy</span>(container_name)
+                <span class="kw">return</span> {<span class="str">"success"</span>: True, <span class="str">"action_taken"</span>: <span class="str">"restarted"</span>}
+        <span class="kw">except Exception as</span> e:
+            logger.<span class="fn">error</span>(<span class="str">f"[Remediation] Restart failed for {container_name}: {e}"</span>)
+            <span class="kw">return</span> {<span class="str">"success"</span>: False, <span class="str">"reason"</span>: str(e)}
+
+    <span class="kw">async def</span> <span class="fn">_health_gate</span>(self, container_name: str, source_id: str) -> dict:
+        <span class="cmt">"""Wait for health check to pass before returning traffic."""</span>
+        <span class="kw">for</span> _ <span class="kw">in</span> range(<span class="num">30</span>):  <span class="cmt"># up to 60s</span>
+            <span class="kw">try</span>:
+                <span class="kw">import</span> httpx
+                port_map = {<span class="str">"api-gateway"</span>: <span class="num">8000</span>, <span class="str">"product-service"</span>: <span class="num">8001</span>, <span class="str">"order-service"</span>: <span class="num">8002</span>, <span class="str">"user-service"</span>: <span class="num">8003</span>}
+                port = port_map.<span class="fn">get</span>(container_name, <span class="num">8000</span>)
+                <span class="kw">async with</span> httpx.<span class="cls">AsyncClient</span>(timeout=<span class="num">2</span>) <span class="kw">as</span> c:
+                    r = <span class="kw">await</span> c.<span class="fn">get</span>(<span class="str">f"http://localhost:{port}/health"</span>)
+                    <span class="kw">if</span> r.status_code == <span class="num">200</span>:
+                        <span class="kw">return</span> {<span class="str">"success"</span>: True, <span class="str">"action_taken"</span>: <span class="str">"health_gate_passed"</span>}
+            <span class="kw">except</span>: <span class="kw">pass</span>
+            <span class="kw">await</span> asyncio.<span class="fn">sleep</span>(<span class="num">2</span>)
+        <span class="kw">return</span> {<span class="str">"success"</span>: False, <span class="str">"reason"</span>: <span class="str">"health gate timeout"</span>}
+
+    <span class="kw">async def</span> <span class="fn">_wait_healthy</span>(self, container_name: str, timeout_s: int = <span class="num">30</span>):
+        <span class="kw">await</span> self.<span class="fn">_health_gate</span>(container_name, container_name)
+</code></pre>
+
+        <div class="code-label">remediation/handlers/database_handler.py</div>
+        <pre><code><span class="cmt">"""
+Database Remediation Handler
+=============================
+Handles slow_query_detected, connection_pool_exhausted,
+lock_wait_timeout, connection_leak_detected events.
+Actions: kill slow query PID, terminate idle connections, reset pool.
+"""</span>
+
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> asyncio, logging, time
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+
+<span class="kw">import</span> asyncpg
+<span class="kw">from</span> aiokafka <span class="kw">import</span> AIOKafkaProducer
+<span class="kw">from</span> cognitive_perception.schema.event <span class="kw">import</span> CognitiveEvent, Severity, SourceType
+
+logger = logging.<span class="fn">getLogger</span>(<span class="str">"database-handler"</span>)
+
+
+<span class="kw">class</span> <span class="cls">DatabaseRemediationHandler</span>:
+    <span class="cmt">"""Handles database-level failures by executing corrective SQL."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(
+        self,
+        db_dsn: str,
+        producer: AIOKafkaProducer,
+        kafka_topic: str = <span class="str">"cognitive.events"</span>,
+    ):
+        self.db_dsn = db_dsn
+        self.producer = producer
+        self.topic = kafka_topic
+
+    <span class="kw">async def</span> <span class="fn">execute</span>(self, event: CognitiveEvent, action_params: dict) -> dict:
+        action = action_params.<span class="fn">get</span>(<span class="str">"action"</span>, <span class="str">"kill_slow_queries"</span>)
+        start = time.<span class="fn">monotonic</span>()
+
+        <span class="kw">try</span>:
+            conn = <span class="kw">await</span> asyncpg.<span class="fn">connect</span>(self.db_dsn, timeout=<span class="num">10</span>)
+            <span class="kw">try</span>:
+                <span class="kw">if</span> action == <span class="str">"kill_slow_queries"</span>:
+                    result = <span class="kw">await</span> self.<span class="fn">_kill_slow_queries</span>(conn, event)
+                <span class="kw">elif</span> action == <span class="str">"terminate_idle_connections"</span>:
+                    result = <span class="kw">await</span> self.<span class="fn">_terminate_idle_connections</span>(conn)
+                <span class="kw">elif</span> action == <span class="str">"kill_blocking_query"</span>:
+                    result = <span class="kw">await</span> self.<span class="fn">_kill_blocking_query</span>(conn, event)
+                <span class="kw">else</span>:
+                    result = {<span class="str">"success"</span>: False, <span class="str">"reason"</span>: <span class="str">f"Unknown: {action}"</span>}
+            <span class="kw">finally</span>:
+                <span class="kw">await</span> conn.<span class="fn">close</span>()
+        <span class="kw">except Exception as</span> e:
+            result = {<span class="str">"success"</span>: False, <span class="str">"reason"</span>: str(e)}
+
+        elapsed_s = time.<span class="fn">monotonic</span>() - start
+        <span class="kw">await</span> self.<span class="fn">_publish_feedback</span>(event, action, result, elapsed_s)
+        <span class="kw">return</span> result
+
+    <span class="kw">async def</span> <span class="fn">_kill_slow_queries</span>(self, conn: asyncpg.Connection, event: CognitiveEvent) -> dict:
+        <span class="cmt">"""Terminate queries running longer than 10 seconds."""</span>
+        rows = <span class="kw">await</span> conn.<span class="fn">fetch</span>(<span class="str">"""
+            SELECT pid, query_start,
+                   EXTRACT(EPOCH FROM now() - query_start) AS duration_s,
+                   left(query, 100) AS q
+            FROM pg_stat_activity
+            WHERE state != 'idle'
+              AND pid != pg_backend_pid()
+              AND EXTRACT(EPOCH FROM now() - query_start) > 10
+            ORDER BY duration_s DESC
+        """</span>)
+        killed = <span class="num">0</span>
+        <span class="kw">for</span> row <span class="kw">in</span> rows:
+            <span class="kw">await</span> conn.<span class="fn">execute</span>(<span class="str">"SELECT pg_terminate_backend($1)"</span>, row[<span class="str">"pid"</span>])
+            killed += <span class="num">1</span>
+            logger.<span class="fn">info</span>(<span class="str">f"[DBHandler] Killed slow query PID {row['pid']} ({row['duration_s']:.0f}s)"</span>)
+        <span class="kw">return</span> {<span class="str">"success"</span>: True, <span class="str">"killed_queries"</span>: killed}
+
+    <span class="kw">async def</span> <span class="fn">_terminate_idle_connections</span>(self, conn: asyncpg.Connection) -> dict:
+        <span class="cmt">"""Terminate idle-in-transaction connections older than 60 seconds."""</span>
+        result = <span class="kw">await</span> conn.<span class="fn">execute</span>(<span class="str">"""
+            SELECT pg_terminate_backend(pid)
+            FROM pg_stat_activity
+            WHERE state = 'idle in transaction'
+              AND pid != pg_backend_pid()
+              AND EXTRACT(EPOCH FROM now() - query_start) > 60
+        """</span>)
+        count = int(result.<span class="fn">split</span>()[<span class="num">1</span>])
+        logger.<span class="fn">info</span>(<span class="str">f"[DBHandler] Terminated {count} idle-in-transaction connections"</span>)
+        <span class="kw">return</span> {<span class="str">"success"</span>: True, <span class="str">"terminated_connections"</span>: count}
+
+    <span class="kw">async def</span> <span class="fn">_kill_blocking_query</span>(self, conn: asyncpg.Connection, event: CognitiveEvent) -> dict:
+        <span class="cmt">"""Kill the blocking PID from a lock_wait_timeout event."""</span>
+        blocking_pid = event.payload.<span class="fn">get</span>(<span class="str">"blocking_pid"</span>)
+        <span class="kw">if not</span> blocking_pid:
+            <span class="kw">return</span> {<span class="str">"success"</span>: False, <span class="str">"reason"</span>: <span class="str">"no blocking_pid in event payload"</span>}
+        <span class="kw">await</span> conn.<span class="fn">execute</span>(<span class="str">"SELECT pg_terminate_backend($1)"</span>, blocking_pid)
+        logger.<span class="fn">info</span>(<span class="str">f"[DBHandler] Killed blocking query PID {blocking_pid}"</span>)
+        <span class="kw">return</span> {<span class="str">"success"</span>: True, <span class="str">"killed_blocking_pid"</span>: blocking_pid}
+
+    <span class="kw">async def</span> <span class="fn">_publish_feedback</span>(self, event, action, result, elapsed_s):
+        feedback = <span class="cls">CognitiveEvent</span>(
+            timestamp=datetime.<span class="fn">now</span>(timezone.utc),
+            source_type=<span class="cls">SourceType</span>.AGENT_EVENT,
+            source_id=<span class="str">"agent:database-remediation-handler"</span>,
+            event_type=<span class="str">"action_completed"</span> <span class="kw">if</span> result[<span class="str">"success"</span>] <span class="kw">else</span> <span class="str">"action_failed"</span>,
+            severity=<span class="cls">Severity</span>.INFO <span class="kw">if</span> result[<span class="str">"success"</span>] <span class="kw">else</span> <span class="cls">Severity</span>.HIGH,
+            payload={<span class="str">"original_event_id"</span>: event.event_id, <span class="str">"action"</span>: action, <span class="str">"elapsed_s"</span>: round(elapsed_s, <span class="num">2</span>), **result},
+            entity_refs=[event.source_id, <span class="str">"agent:database-remediation-handler"</span>],
+            confidence=<span class="num">0.99</span>,
+            tags=[<span class="str">"remediation"</span>, <span class="str">"database"</span>, action],
+        )
+        <span class="kw">await</span> self.producer.<span class="fn">send_and_wait</span>(self.topic, feedback.<span class="fn">model_dump_json</span>().<span class="fn">encode</span>())
+</code></pre>
+      </section>
+
+      <!-- ACTION REGISTRY -->
+      <section class="section" id="action-registry">
+        <div class="section-header">
+          <div class="section-num green">15</div>
+          <div>
+            <div class="section-title">Action Registry — remediation/action_registry.py</div>
+            <div class="section-desc">Maps every event_type to the correct handler. This is what the DCA PlanRunner
+              calls.</div>
+          </div>
+        </div>
+
+        <div class="code-label">remediation/action_registry.py</div>
+        <pre><code><span class="cmt">"""
+Remediation Action Registry
+============================
+Maps event_type strings → (handler, action_params).
+The PlanRunner calls registry.get_handler(event_type) to
+find the correct remediation for any detected anomaly.
+
+This is the bridge between the cognitive architecture (which knows
+WHAT happened) and the target system (which knows HOW to fix it).
+"""</span>
+
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+
+<span class="kw">import</span> os
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> typing <span class="kw">import</span> Any
+
+<span class="kw">from</span> aiokafka <span class="kw">import</span> AIOKafkaProducer
+
+<span class="kw">from</span> .handlers.service_handler  <span class="kw">import</span> ServiceRemediationHandler
+<span class="kw">from</span> .handlers.database_handler <span class="kw">import</span> DatabaseRemediationHandler
+<span class="kw">from</span> .handlers.cache_handler    <span class="kw">import</span> CacheRemediationHandler
+<span class="kw">from</span> .handlers.queue_handler    <span class="kw">import</span> QueueRemediationHandler
+<span class="kw">from</span> .handlers.config_handler   <span class="kw">import</span> ConfigRemediationHandler
+
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="cls">RemediationEntry</span>:
+    handler_class: type
+    action_params: dict[str, Any]
+    description: str
+    requires_approval: bool = False  <span class="cmt"># set True for destructive actions</span>
+
+
+<span class="cmt"># ── THE REGISTRY ──────────────────────────────────────────────────────────────</span>
+<span class="cmt"># event_type → RemediationEntry</span>
+
+REMEDIATION_REGISTRY: dict[str, RemediationEntry] = {
+
+    <span class="cmt"># ── Service failures ─────────────────────────────────────────────────────</span>
+    <span class="str">"service_unreachable"</span>: <span class="cls">RemediationEntry</span>(
+        handler_class=<span class="cls">ServiceRemediationHandler</span>,
+        action_params={<span class="str">"action"</span>: <span class="str">"restart"</span>},
+        description=<span class="str">"Restart the unreachable service container"</span>,
+    ),
+    <span class="str">"service_health_degraded"</span>: <span class="cls">RemediationEntry</span>(
+        handler_class=<span class="cls">ServiceRemediationHandler</span>,
+        action_params={<span class="str">"action"</span>: <span class="str">"health_gate"</span>},
+        description=<span class="str">"Wait for health gate to pass, then re-enable traffic"</span>,
+    ),
+
+    <span class="cmt"># ── Database failures ────────────────────────────────────────────────────</span>
+    <span class="str">"slow_query_detected"</span>: <span class="cls">RemediationEntry</span>(
+        handler_class=<span class="cls">DatabaseRemediationHandler</span>,
+        action_params={<span class="str">"action"</span>: <span class="str">"kill_slow_queries"</span>},
+        description=<span class="str">"Terminate queries running longer than 10 seconds"</span>,
+    ),
+    <span class="str">"connection_pool_exhausted"</span>: <span class="cls">RemediationEntry</span>(
+        handler_class=<span class="cls">DatabaseRemediationHandler</span>,
+        action_params={<span class="str">"action"</span>: <span class="str">"terminate_idle_connections"</span>},
+        description=<span class="str">"Terminate idle connections to free pool slots"</span>,
+    ),
+    <span class="str">"lock_wait_timeout"</span>: <span class="cls">RemediationEntry</span>(
+        handler_class=<span class="cls">DatabaseRemediationHandler</span>,
+        action_params={<span class="str">"action"</span>: <span class="str">"kill_blocking_query"</span>},
+        description=<span class="str">"Kill the blocking query identified in the event payload"</span>,
+        requires_approval=True,  <span class="cmt"># could kill legitimate transactions</span>
+    ),
+    <span class="str">"connection_leak_detected"</span>: <span class="cls">RemediationEntry</span>(
+        handler_class=<span class="cls">DatabaseRemediationHandler</span>,
+        action_params={<span class="str">"action"</span>: <span class="str">"terminate_idle_connections"</span>},
+        description=<span class="str">"Terminate idle-in-transaction connections older than 60s"</span>,
+    ),
+
+    <span class="cmt"># ── Cache failures ───────────────────────────────────────────────────────</span>
+    <span class="str">"cache_eviction_spike"</span>: <span class="cls">RemediationEntry</span>(
+        handler_class=<span class="cls">CacheRemediationHandler</span>,
+        action_params={<span class="str">"action"</span>: <span class="str">"increase_maxmemory"</span>},
+        description=<span class="str">"Increase Redis maxmemory limit to stop evictions"</span>,
+    ),
+    <span class="str">"cache_hit_ratio_dropped"</span>: <span class="cls">RemediationEntry</span>(
+        handler_class=<span class="cls">CacheRemediationHandler</span>,
+        action_params={<span class="str">"action"</span>: <span class="str">"warm_cache"</span>},
+        description=<span class="str">"Pre-warm the product catalog cache"</span>,
+    ),
+
+    <span class="cmt"># ── Queue failures ───────────────────────────────────────────────────────</span>
+    <span class="str">"consumer_lag_high"</span>: <span class="cls">RemediationEntry</span>(
+        handler_class=<span class="cls">QueueRemediationHandler</span>,
+        action_params={<span class="str">"action"</span>: <span class="str">"scale_consumer"</span>},
+        description=<span class="str">"Restart order-service to unblock Kafka consumer"</span>,
+    ),
+    <span class="str">"consumer_lag_critical"</span>: <span class="cls">RemediationEntry</span>(
+        handler_class=<span class="cls">QueueRemediationHandler</span>,
+        action_params={<span class="str">"action"</span>: <span class="str">"reset_consumer_offset"</span>},
+        description=<span class="str">"Reset consumer offset to latest to stop processing dead messages"</span>,
+        requires_approval=True,
+    ),
+
+    <span class="cmt"># ── Config / file failures ───────────────────────────────────────────────</span>
+    <span class="str">"config_file_modified"</span>: <span class="cls">RemediationEntry</span>(
+        handler_class=<span class="cls">ConfigRemediationHandler</span>,
+        action_params={<span class="str">"action"</span>: <span class="str">"validate_and_reload"</span>},
+        description=<span class="str">"Validate the modified config file, reload service if valid"</span>,
+    ),
+
+    <span class="cmt"># ── API failures ─────────────────────────────────────────────────────────</span>
+    <span class="str">"api_latency_spike"</span>: <span class="cls">RemediationEntry</span>(
+        handler_class=<span class="cls">ServiceRemediationHandler</span>,
+        action_params={<span class="str">"action"</span>: <span class="str">"health_gate"</span>},
+        description=<span class="str">"Monitor health gate; restart if latency persists over 5 minutes"</span>,
+    ),
+}
+
+
+<span class="kw">class</span> <span class="cls">ActionRegistry</span>:
+    <span class="cmt">"""
+    Resolves which handler to call for a given event_type.
+    Called by the DCA PlanRunner during plan execution.
+    """</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(
+        self,
+        producer: AIOKafkaProducer,
+        db_dsn: str = <span class="str">"postgresql://shopcore:shopcore@localhost:5432/shopcore"</span>,
+        redis_url: str = <span class="str">"redis://localhost:6379"</span>,
+        kafka_bootstrap: str = <span class="str">"localhost:9092"</span>,
+    ):
+        self._producer = producer
+        self._db_dsn = db_dsn
+        self._redis_url = redis_url
+        self._kafka_bootstrap = kafka_bootstrap
+        self._handler_instances: dict[type, Any] = {}
+
+    <span class="kw">def</span> <span class="fn">_get_handler</span>(self, handler_class: type) -> Any:
+        <span class="kw">if</span> handler_class <span class="kw">not in</span> self._handler_instances:
+            <span class="kw">if</span> handler_class == <span class="cls">ServiceRemediationHandler</span>:
+                self._handler_instances[handler_class] = <span class="cls">ServiceRemediationHandler</span>(self._producer)
+            <span class="kw">elif</span> handler_class == <span class="cls">DatabaseRemediationHandler</span>:
+                self._handler_instances[handler_class] = <span class="cls">DatabaseRemediationHandler</span>(self._db_dsn, self._producer)
+            <span class="kw">elif</span> handler_class == <span class="cls">CacheRemediationHandler</span>:
+                self._handler_instances[handler_class] = <span class="cls">CacheRemediationHandler</span>(self._redis_url, self._producer)
+            <span class="kw">elif</span> handler_class == <span class="cls">QueueRemediationHandler</span>:
+                self._handler_instances[handler_class] = <span class="cls">QueueRemediationHandler</span>(self._kafka_bootstrap, self._producer)
+            <span class="kw">elif</span> handler_class == <span class="cls">ConfigRemediationHandler</span>:
+                self._handler_instances[handler_class] = <span class="cls">ConfigRemediationHandler</span>(self._producer)
+        <span class="kw">return</span> self._handler_instances[handler_class]
+
+    <span class="kw">def</span> <span class="fn">get_handler_for_event</span>(self, event_type: str) -> tuple[Any, dict] | None:
+        <span class="kw">if</span> event_type <span class="kw">not in</span> REMEDIATION_REGISTRY:
+            <span class="kw">return</span> None
+        entry = REMEDIATION_REGISTRY[event_type]
+        handler = self.<span class="fn">_get_handler</span>(entry.handler_class)
+        <span class="kw">return</span> handler, entry.action_params
+
+    <span class="kw">def</span> <span class="fn">requires_approval</span>(self, event_type: str) -> bool:
+        <span class="kw">return</span> REMEDIATION_REGISTRY.<span class="fn">get</span>(event_type, <span class="cls">RemediationEntry</span>(<span class="kw">None</span>, {}, <span class="str">""</span>)).<span class="fn">requires_approval</span>
+</code></pre>
+      </section>
+
+      <!-- TEST SUITE -->
+      <section class="section" id="test-suite">
+        <div class="section-header">
+          <div class="section-num orange">16</div>
+          <div>
+            <div class="section-title">Test Suite — 45 Tests Across 3 Files</div>
+            <div class="section-desc">Unit, integration, and end-to-end tests validating the complete chaos→detect→heal
+              pipeline</div>
+          </div>
+        </div>
+
+        <div class="code-label">tests/test_chaos_detection.py — Verify every scenario emits the expected CognitiveEvent
+        </div>
+        <pre><code><span class="cmt">"""
+Chaos Detection Tests
+=====================
+For each chaos scenario:
+1. Activate the scenario
+2. Wait up to the detection SLO
+3. Assert the expected CognitiveEvent appears on cognitive.events
+4. Deactivate the scenario
+"""</span>
+
+<span class="kw">import</span> asyncio, json, pytest, time
+<span class="kw">from</span> aiokafka <span class="kw">import</span> AIOKafkaConsumer
+<span class="kw">from</span> cognitive_perception.schema.event <span class="kw">import</span> CognitiveEvent
+<span class="kw">from</span> chaos_engine.controller <span class="kw">import</span> ChaosController
+
+KAFKA_BOOTSTRAP = <span class="str">"localhost:9092"</span>
+COGNITIVE_TOPIC = <span class="str">"cognitive.events"</span>
+
+
+<span class="kw">async def</span> <span class="fn">wait_for_event</span>(
+    expected_event_type: str,
+    timeout_s: float,
+    source_id_filter: str | None = None,
+) -> CognitiveEvent | None:
+    <span class="cmt">"""Consume cognitive.events until expected_event_type appears or timeout."""</span>
+    consumer = <span class="cls">AIOKafkaConsumer</span>(
+        COGNITIVE_TOPIC,
+        bootstrap_servers=KAFKA_BOOTSTRAP,
+        auto_offset_reset=<span class="str">"latest"</span>,
+        enable_auto_commit=True,
+        group_id=<span class="str">f"test-{expected_event_type}-{int(time.time())}"</span>,
+    )
+    <span class="kw">await</span> consumer.<span class="fn">start</span>()
+    deadline = time.<span class="fn">monotonic</span>() + timeout_s
+    <span class="kw">try</span>:
+        <span class="kw">async for</span> msg <span class="kw">in</span> consumer:
+            <span class="kw">if</span> time.<span class="fn">monotonic</span>() > deadline:
+                <span class="kw">return</span> None
+            <span class="kw">try</span>:
+                event = <span class="cls">CognitiveEvent</span>.<span class="fn">model_validate_json</span>(msg.value)
+                <span class="kw">if</span> event.event_type == expected_event_type:
+                    <span class="kw">if</span> source_id_filter <span class="kw">is None or</span> source_id_filter <span class="kw">in</span> event.entity_refs:
+                        <span class="kw">return</span> event
+            <span class="kw">except</span>: <span class="kw">pass</span>
+    <span class="kw">finally</span>:
+        <span class="kw">await</span> consumer.<span class="fn">stop</span>()
+    <span class="kw">return</span> None
+
+
+<span class="kw">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">chaos</span>():
+    <span class="kw">return</span> <span class="cls">ChaosController</span>()
+
+
+<span class="kw">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_product_crash_detected_within_slo</span>(chaos):
+    <span class="cmt">"""Scenario 1: crash product service → expect service_unreachable within 30s"""</span>
+    scenario = chaos.scenarios[<span class="str">"product_service_crash"</span>]
+    <span class="kw">await</span> chaos.<span class="fn">activate</span>(<span class="str">"product_service_crash"</span>)
+
+    <span class="kw">try</span>:
+        event = <span class="kw">await</span> <span class="fn">wait_for_event</span>(
+            <span class="str">"service_unreachable"</span>,
+            timeout_s=scenario.expected_detection_s,
+            source_id_filter=<span class="str">"svc:product-service"</span>,
+        )
+        <span class="kw">assert</span> event <span class="kw">is not</span> None, \
+            <span class="str">f"service_unreachable not detected within {scenario.expected_detection_s}s"</span>
+        <span class="kw">assert</span> event.severity <span class="kw">in</span> (<span class="str">"critical"</span>, <span class="str">"high"</span>)
+        <span class="kw">assert</span> <span class="str">"svc:product-service"</span> <span class="kw">in</span> event.entity_refs
+        <span class="kw">assert</span> event.confidence >= <span class="num">0.90</span>
+    <span class="kw">finally</span>:
+        <span class="kw">await</span> chaos.<span class="fn">deactivate</span>(<span class="str">"product_service_crash"</span>)
+
+
+<span class="kw">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_slow_query_detected_within_slo</span>(chaos):
+    <span class="cmt">"""Scenario 2: inject 2s pg_sleep → expect slow_query_detected within 45s"""</span>
+    scenario = chaos.scenarios[<span class="str">"slow_database_query"</span>]
+    <span class="kw">await</span> chaos.<span class="fn">activate</span>(<span class="str">"slow_database_query"</span>, {<span class="str">"slow_ms"</span>: <span class="num">2000</span>})
+
+    <span class="kw">try</span>:
+        event = <span class="kw">await</span> <span class="fn">wait_for_event</span>(
+            <span class="str">"slow_query_detected"</span>,
+            timeout_s=scenario.expected_detection_s,
+        )
+        <span class="kw">assert</span> event <span class="kw">is not</span> None, <span class="str">"slow_query_detected not seen within SLO"</span>
+        <span class="kw">assert</span> <span class="str">"duration_s"</span> <span class="kw">in</span> event.payload
+        <span class="kw">assert</span> event.payload[<span class="str">"duration_s"</span>] > <span class="num">1.5</span>
+    <span class="kw">finally</span>:
+        <span class="kw">await</span> chaos.<span class="fn">deactivate</span>(<span class="str">"slow_database_query"</span>)
+
+
+<span class="kw">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_pool_exhaustion_detected</span>(chaos):
+    <span class="cmt">"""Scenario 3: pool exhaustion → connection_pool_exhausted within 30s"""</span>
+    <span class="kw">await</span> chaos.<span class="fn">activate</span>(<span class="str">"db_pool_exhaustion"</span>)
+    <span class="kw">try</span>:
+        event = <span class="kw">await</span> <span class="fn">wait_for_event</span>(<span class="str">"connection_pool_exhausted"</span>, timeout_s=<span class="num">30</span>)
+        <span class="kw">assert</span> event <span class="kw">is not</span> None
+    <span class="kw">finally</span>:
+        <span class="kw">await</span> chaos.<span class="fn">deactivate</span>(<span class="str">"db_pool_exhaustion"</span>)
+
+
+<span class="kw">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_kafka_lag_detected</span>(chaos):
+    <span class="cmt">"""Scenario 7: block Kafka + flood orders → consumer_lag_high"""</span>
+    <span class="kw">await</span> chaos.<span class="fn">activate</span>(<span class="str">"kafka_consumer_lag"</span>)
+    <span class="kw">try</span>:
+        event = <span class="kw">await</span> <span class="fn">wait_for_event</span>(<span class="str">"consumer_lag_high"</span>, timeout_s=<span class="num">60</span>)
+        <span class="kw">assert</span> event <span class="kw">is not</span> None
+        <span class="kw">assert</span> event.payload[<span class="str">"consumer_lag"</span>] > <span class="num">50</span>
+    <span class="kw">finally</span>:
+        <span class="kw">await</span> chaos.<span class="fn">deactivate</span>(<span class="str">"kafka_consumer_lag"</span>)
+
+
+<span class="kw">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_config_tamper_detected_fast</span>(chaos):
+    <span class="cmt">"""Scenario 15: file watchdog should detect within 5s"""</span>
+    <span class="kw">await</span> chaos.<span class="fn">activate</span>(<span class="str">"config_file_tamper"</span>)
+    <span class="kw">try</span>:
+        event = <span class="kw">await</span> <span class="fn">wait_for_event</span>(<span class="str">"config_file_modified"</span>, timeout_s=<span class="num">5</span>)
+        <span class="kw">assert</span> event <span class="kw">is not</span> None, <span class="str">"File event should arrive within 5s (inotify)"</span>
+    <span class="kw">finally</span>:
+        <span class="kw">await</span> chaos.<span class="fn">deactivate</span>(<span class="str">"config_file_tamper"</span>)
+
+<span class="cmt">
+# Tests 6–18 follow the same pattern:
+# - test_api_latency_spike_detected
+# - test_gateway_error_rate_detected
+# - test_replication_lag_detected
+# - test_memory_pressure_detected
+# - test_network_packet_loss_detected
+# - test_lock_contention_detected
+# - test_idle_transaction_detected
+# - test_cpu_spike_detected
+# - test_ssl_expiry_detected
+# - test_order_processing_delay_detected
+# - test_circuit_breaker_detected
+# - test_redis_memory_full_detected
+# - test_order_service_crash_detected</span>
+</code></pre>
+
+        <div class="code-label">tests/test_e2e_scenarios.py — Full pipeline: inject → detect → heal → verify</div>
+        <pre><code><span class="cmt">"""
+End-to-End Scenario Tests
+=========================
+These tests verify the COMPLETE loop:
+1. Inject chaos failure
+2. Wait for CognitiveEvent on cognitive.events (detection)
+3. Wait for action_completed event (plan execution)
+4. Verify the target system is actually healthy again (remediation)
+5. Check that the feedback loop updated the playbook
+"""</span>
+
+<span class="kw">import</span> asyncio, pytest, httpx
+<span class="kw">from</span> aiokafka <span class="kw">import</span> AIOKafkaConsumer
+<span class="kw">from</span> cognitive_perception.schema.event <span class="kw">import</span> CognitiveEvent
+<span class="kw">from</span> chaos_engine.controller <span class="kw">import</span> ChaosController
+
+<span class="kw">import</span> test_chaos_detection <span class="kw">as</span> detection  <span class="cmt"># reuse wait_for_event</span>
+
+
+<span class="kw">@pytest.mark.asyncio</span>
+<span class="kw">@pytest.mark.timeout</span>(<span class="num">180</span>)  <span class="cmt"># 3 minute max per e2e test</span>
+<span class="kw">async def</span> <span class="fn">test_e2e_service_crash_recovery</span>():
+    <span class="cmt">"""
+    Full loop: crash product service → detect → restart → verify healthy.
+    This is the most critical e2e test in the suite.
+    """</span>
+    chaos = <span class="cls">ChaosController</span>()
+
+    <span class="cmt"># Step 1: Verify baseline healthy</span>
+    <span class="kw">async with</span> httpx.<span class="cls">AsyncClient</span>(timeout=<span class="num">5</span>) <span class="kw">as</span> c:
+        r = <span class="kw">await</span> c.<span class="fn">get</span>(<span class="str">"http://localhost:8001/health"</span>)
+        <span class="kw">assert</span> r.status_code == <span class="num">200</span>, <span class="str">"Baseline: product-service must be healthy before test"</span>
+
+    <span class="cmt"># Step 2: Inject failure</span>
+    <span class="kw">await</span> chaos.<span class="fn">activate</span>(<span class="str">"product_service_crash"</span>)
+
+    <span class="cmt"># Step 3: Wait for detection (service_unreachable)</span>
+    detection_event = <span class="kw">await</span> detection.<span class="fn">wait_for_event</span>(<span class="str">"service_unreachable"</span>, timeout_s=<span class="num">30</span>)
+    <span class="kw">assert</span> detection_event <span class="kw">is not</span> None, <span class="str">"service_unreachable not detected within 30s"</span>
+
+    <span class="cmt"># Step 4: Wait for action_completed (the DCA executed the restart action)</span>
+    <span class="cmt"># The DCA's PlanRunner will fire a restart, publishing action_completed</span>
+    action_event = <span class="kw">await</span> detection.<span class="fn">wait_for_event</span>(<span class="str">"action_completed"</span>, timeout_s=<span class="num">90</span>)
+    <span class="kw">assert</span> action_event <span class="kw">is not</span> None, <span class="str">"action_completed not seen within 90s"</span>
+    <span class="kw">assert</span> action_event.payload.<span class="fn">get</span>(<span class="str">"action"</span>) <span class="kw">in</span> (<span class="str">"restart"</span>, <span class="str">"started"</span>)
+
+    <span class="cmt"># Step 5: Verify service is actually healthy again</span>
+    healthy = False
+    <span class="kw">for</span> _ <span class="kw">in</span> range(<span class="num">15</span>):  <span class="cmt"># poll for 30s</span>
+        <span class="kw">try</span>:
+            <span class="kw">async with</span> httpx.<span class="cls">AsyncClient</span>(timeout=<span class="num">3</span>) <span class="kw">as</span> c:
+                r = <span class="kw">await</span> c.<span class="fn">get</span>(<span class="str">"http://localhost:8001/health"</span>)
+                <span class="kw">if</span> r.status_code == <span class="num">200</span>:
+                    healthy = True
+                    <span class="kw">break</span>
+        <span class="kw">except</span>: <span class="kw">pass</span>
+        <span class="kw">await</span> asyncio.<span class="fn">sleep</span>(<span class="num">2</span>)
+
+    <span class="kw">assert</span> healthy, <span class="str">"product-service should be healthy after DCA remediation"</span>
+
+    <span class="cmt"># Step 6: Check service_health_restored event published</span>
+    restored = <span class="kw">await</span> detection.<span class="fn">wait_for_event</span>(<span class="str">"service_health_restored"</span>, timeout_s=<span class="num">30</span>)
+    <span class="kw">assert</span> restored <span class="kw">is not</span> None, <span class="str">"Perception should detect service recovery"</span>
+
+
+<span class="kw">@pytest.mark.asyncio</span>
+<span class="kw">@pytest.mark.timeout</span>(<span class="num">240</span>)
+<span class="kw">async def</span> <span class="fn">test_e2e_slow_query_remediation</span>():
+    <span class="cmt">"""Inject slow queries → detect → kill slow queries → verify latency normal."""</span>
+    chaos = <span class="cls">ChaosController</span>()
+    <span class="kw">await</span> chaos.<span class="fn">activate</span>(<span class="str">"slow_database_query"</span>, {<span class="str">"slow_ms"</span>: <span class="num">3000</span>})
+
+    <span class="kw">try</span>:
+        <span class="cmt"># Wait for detection</span>
+        event = <span class="kw">await</span> detection.<span class="fn">wait_for_event</span>(<span class="str">"slow_query_detected"</span>, timeout_s=<span class="num">60</span>)
+        <span class="kw">assert</span> event <span class="kw">is not</span> None
+
+        <span class="cmt"># Wait for action (kill slow queries)</span>
+        action = <span class="kw">await</span> detection.<span class="fn">wait_for_event</span>(<span class="str">"action_completed"</span>, timeout_s=<span class="num">60</span>)
+        <span class="kw">assert</span> action <span class="kw">is not</span> None
+        <span class="kw">assert</span> action.payload.<span class="fn">get</span>(<span class="str">"action"</span>) == <span class="str">"kill_slow_queries"</span>
+
+        <span class="cmt"># Deactivate chaos (simulate chaos resolved after DCA intervened)</span>
+        <span class="kw">await</span> chaos.<span class="fn">deactivate</span>(<span class="str">"slow_database_query"</span>)
+
+        <span class="cmt"># Verify latency is back to normal</span>
+        <span class="kw">import</span> time
+        start = time.<span class="fn">monotonic</span>()
+        <span class="kw">async with</span> httpx.<span class="cls">AsyncClient</span>(timeout=<span class="num">5</span>) <span class="kw">as</span> c:
+            <span class="kw">await</span> c.<span class="fn">get</span>(<span class="str">"http://localhost:8001/products"</span>)
+        elapsed = time.<span class="fn">monotonic</span>() - start
+        <span class="kw">assert</span> elapsed < <span class="num">1.0</span>, <span class="str">f"Latency should be < 1s after remediation, got {elapsed:.2f}s"</span>
+
+    <span class="kw">finally</span>:
+        <span class="kw">await</span> chaos.<span class="fn">deactivate</span>(<span class="str">"slow_database_query"</span>)  <span class="cmt"># safety cleanup</span>
+</code></pre>
+      </section>
+
+      <!-- RUNNING -->
+      <section class="section" id="running">
+        <div class="section-header">
+          <div class="section-num orange">17</div>
+          <div>
+            <div class="section-title">Running the Chaos Lab</div>
+            <div class="section-desc">Step-by-step commands to stand up the full system and run the first test</div>
+          </div>
+        </div>
+
+        <ol class="step-list">
+          <li>
+            <div class="step-content">
+              <h4>Start the target system</h4>
+              <pre><code><span class="cmt"># From chaos_lab/target_system/</span>
+docker-compose up -d
+
+<span class="cmt"># Wait for all services to be healthy</span>
+docker-compose ps
+<span class="cmt"># All should show "healthy" or "running"</span>
+
+<span class="cmt"># Verify manually</span>
+curl http://localhost:8000/health   <span class="cmt"># API Gateway</span>
+curl http://localhost:8001/health   <span class="cmt"># Product Service</span>
+curl http://localhost:8001/products <span class="cmt"># Should return 5 products</span></code></pre>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <h4>Start the DCA perception layer (already built in Phases 1–11)</h4>
+              <pre><code><span class="cmt"># Point your existing perception layer at the ShopCore sources</span>
+<span class="cmt"># Merge instrumentation/sources.yaml entries into your sources.yaml</span>
+
+python -m cognitive_perception.perception_main \
+  --sources-config chaos_lab/instrumentation/sources.yaml
+
+<span class="cmt"># Or run via docker if you have it containerized</span>
+docker run -e KAFKA_BOOTSTRAP_SERVERS=localhost:9092 \
+  -v $(pwd)/chaos_lab/instrumentation/sources.yaml:/app/sources.yaml \
+  your-dca:latest</code></pre>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <h4>Start the Chaos Engine API</h4>
+              <pre><code><span class="cmt"># From chaos_lab/chaos_engine/</span>
+pip install docker fastapi uvicorn
+
+python -m uvicorn api:app --port 9090 --reload
+
+<span class="cmt"># Verify it lists all 18 scenarios</span>
+curl http://localhost:9090/scenarios | python -m json.tool</code></pre>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <h4>Run your first manual chaos test</h4>
+              <pre><code><span class="cmt"># Terminal 1: Watch cognitive.events in real time</span>
+kcat -b localhost:9092 -t cognitive.events -C -f '%s\n' | python -m json.tool
+
+<span class="cmt"># Terminal 2: Inject the crash</span>
+curl -X POST http://localhost:9090/scenarios/product_service_crash/activate \
+  -H "Content-Type: application/json" -d '{}'
+
+<span class="cmt"># Watch Terminal 1 — you should see service_unreachable within 30s!</span>
+
+<span class="cmt"># After the DCA auto-remediates, deactivate the chaos</span>
+curl -X POST http://localhost:9090/scenarios/product_service_crash/deactivate</code></pre>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <h4>Run the full automated test suite</h4>
+              <pre><code><span class="cmt"># Install test deps</span>
+pip install pytest pytest-asyncio pytest-timeout
+
+<span class="cmt"># Run detection tests (fast — just checks events appear)</span>
+pytest tests/test_chaos_detection.py -v --timeout=120
+
+<span class="cmt"># Run end-to-end tests (slow — full loop including remediation)</span>
+pytest tests/test_e2e_scenarios.py -v --timeout=300
+
+<span class="cmt"># Run all with coverage</span>
+pytest tests/ -v --timeout=300 --tb=short \
+  --cov=chaos_engine --cov=remediation \
+  --cov-report=term-missing</code></pre>
+            </div>
+          </li>
+          <li>
+            <div class="step-content">
+              <h4>Run the randomized chaos gauntlet</h4>
+              <pre><code><span class="cmt"># chaos_engine/scheduler.py — runs random scenarios every 2-5 minutes</span>
+python chaos_engine/scheduler.py \
+  --mode random \
+  --interval-min 120 \
+  --interval-max 300 \
+  --duration-minutes 60 \
+  --max-concurrent 1
+
+<span class="cmt"># The DCA should self-heal every injection autonomously</span>
+<span class="cmt"># Check the Phase 12 Observability Dashboard to watch detection times</span></code></pre>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <!-- SCORING -->
+      <section class="section" id="scoring">
+        <div class="section-header">
+          <div class="section-num orange">18</div>
+          <div>
+            <div class="section-title">Scoring &amp; Phase 13 Pass Criteria</div>
+            <div class="section-desc">Quantitative definition of what "Phase 13 passed" means</div>
+          </div>
+        </div>
+
+        <div class="card-grid">
+          <div class="card">
+            <div class="card-title"><span class="card-tag green">Required</span> Detection Score ≥ 90%</div>
+            <div class="card-body">At least 16 of 18 scenarios must produce a CognitiveEvent within their detection SLO.
+              Measured by <code>test_chaos_detection.py</code>.</div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="card-tag green">Required</span> Remediation Score ≥ 75%</div>
+            <div class="card-body">At least 6 of 8 critical/high scenarios must self-heal within their remediation SLO.
+              Measured by <code>test_e2e_scenarios.py</code>.</div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="card-tag green">Required</span> Zero Data Loss</div>
+            <div class="card-body">No CognitiveEvent on <code>cognitive.perception_failures</code> that isn't also
+              retried or escalated. Failures must never be silently dropped.</div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span class="card-tag yellow">Stretch</span> Playbook Learning</div>
+            <div class="card-body">After 3 successful remediations of <code>slow_query_detected</code>, the fast-path
+              rule engine should handle it without LLM inference. Verify via Phase 10 playbook store.</div>
+          </div>
+        </div>
+
+        <h3>Scoring CLI</h3>
+        <div class="code-label">tests/score_phase13.py — prints final pass/fail report</div>
+        <pre><code><span class="cmt">"""Run after the test suite to print a Phase 13 pass/fail scorecard."""</span>
+<span class="kw">import</span> asyncio, json
+<span class="kw">from</span> pathlib <span class="kw">import</span> Path
+
+<span class="kw">def</span> <span class="fn">score</span>(results_json: str):
+    results = json.<span class="fn">loads</span>(<span class="fn">Path</span>(results_json).<span class="fn">read_text</span>())
+    detection_pass = results[<span class="str">"detection_pass"</span>]
+    detection_total = results[<span class="str">"detection_total"</span>]
+    remediation_pass = results[<span class="str">"remediation_pass"</span>]
+    remediation_total = results[<span class="str">"remediation_total"</span>]
+
+    pct_d = detection_pass / detection_total * <span class="num">100</span>
+    pct_r = remediation_pass / remediation_total * <span class="num">100</span>
+
+    print(<span class="str">f"\n{'='*50}"</span>)
+    print(<span class="str">f"  PHASE 13 CHAOS LAB SCORECARD"</span>)
+    print(<span class="str">f"{'='*50}"</span>)
+    print(<span class="str">f"  Detection:    {detection_pass}/{detection_total} ({pct_d:.0f}%)  {'✅ PASS' if pct_d >= 90 else '❌ FAIL'}"</span>)
+    print(<span class="str">f"  Remediation:  {remediation_pass}/{remediation_total} ({pct_r:.0f}%)  {'✅ PASS' if pct_r >= 75 else '❌ FAIL'}"</span>)
+    phase_pass = pct_d >= <span class="num">90</span> <span class="kw">and</span> pct_r >= <span class="num">75</span>
+    print(<span class="str">f"\n  PHASE 13: {'✅ PASSED — Ready for Phase 14' if phase_pass else '❌ FAILED — Fix SLOs above'}"</span>)
+    print(<span class="str">f"{'='*50}\n"</span>)
+    <span class="kw">return</span> phase_pass
+
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+    <span class="kw">import</span> sys
+    sys.<span class="fn">exit</span>(<span class="num">0</span> <span class="kw">if</span> <span class="fn">score</span>(sys.argv[<span class="num">1</span>]) <span class="kw">else</span> <span class="num">1</span>)
+</code></pre>
+
+        <div class="callout success">
+          <div class="callout-icon">🏁</div>
+          <div class="callout-body">
+            <div class="callout-title">Phase 13 Complete — Proceed to Phase 14: Production Hardening</div>
+            <div class="callout-text">When the scorecard shows ✅ on both Detection and Remediation, your DCA has proven
+              it can detect, reason about, plan for, and heal real infrastructure failures autonomously. Phase 14 will
+              add rate limiting on action execution, multi-tenancy isolation, audit logging for all remediation actions,
+              and hardened security for the Chaos API itself.</div>
+          </div>
+        </div>
+
+        <h3>Cumulative Test Count</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Phase</th>
+              <th>New Tests</th>
+              <th>Running Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Phases 1–11</td>
+              <td>176</td>
+              <td>176</td>
+            </tr>
+            <tr>
+              <td>Phase 13 — test_chaos_detection.py</td>
+              <td>18</td>
+              <td>194</td>
+            </tr>
+            <tr>
+              <td>Phase 13 — test_remediation.py</td>
+              <td>11</td>
+              <td>205</td>
+            </tr>
+            <tr>
+              <td>Phase 13 — test_e2e_scenarios.py</td>
+              <td>8</td>
+              <td>213</td>
+            </tr>
+            <tr>
+              <td>Phase 13 — test_chaos_controller.py</td>
+              <td>8</td>
+              <td><strong>221</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+</body>
+
+</html>

@@ -1,0 +1,2650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chaos Lab Dashboard — Complete Build Guide</title>
+<style>
+  :root {
+    --bg:       #090d18;
+    --bg2:      #0e1220;
+    --bg3:      #131928;
+    --surface:  #161d2e;
+    --surface2: #1b2438;
+    --border:   #1e2d48;
+    --border2:  #263650;
+    --text:     #dde5f0;
+    --text2:    #8fa3be;
+    --text3:    #536680;
+    --accent:   #00d4ff;
+    --red:      #ff4b6e;
+    --green:    #10d48e;
+    --purple:   #9d65ff;
+    --yellow:   #f5b731;
+    --orange:   #f97316;
+    --pink:     #ec4899;
+    --code-bg:  #07090f;
+    --nav-w:    268px;
+    --header-h: 58px;
+
+    --kw:   #c792ea;
+    --str:  #c3e88d;
+    --num:  #f78c6c;
+    --cmt:  #435465;
+    --fn:   #82aaff;
+    --cls:  #ffcb6b;
+    --dec:  #89ddff;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.75;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ── TOP HEADER ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 300;
+    height: var(--header-h);
+    background: rgba(9,13,24,0.92);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 28px; gap: 14px;
+  }
+  .topbar-badge {
+    background: linear-gradient(135deg, rgba(255,75,110,0.9), rgba(157,101,255,0.9));
+    color: #fff; font-size: 10px; font-weight: 800;
+    letter-spacing: .12em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 5px; flex-shrink: 0;
+  }
+  .topbar-title {
+    font-size: 15px; font-weight: 700; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .topbar-right {
+    margin-left: auto; display: flex; align-items: center; gap: 16px;
+  }
+  .topbar-pill {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 4px 12px; font-size: 12px; color: var(--text2);
+  }
+  .topbar-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .dot-red    { background: var(--red); }
+  .dot-green  { background: var(--green); }
+  .dot-yellow { background: var(--yellow); }
+  .dot-blue   { background: var(--accent); }
+  .dot-purple { background: var(--purple); }
+
+  /* ── LAYOUT ── */
+  .layout {
+    display: grid;
+    grid-template-columns: var(--nav-w) 1fr;
+    min-height: calc(100vh - var(--header-h));
+  }
+
+  /* ── SIDEBAR ── */
+  nav {
+    position: sticky; top: var(--header-h);
+    height: calc(100vh - var(--header-h));
+    overflow-y: auto; padding: 24px 0;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+  }
+  .nav-group { margin-bottom: 24px; }
+  .nav-label {
+    font-size: 10px; font-weight: 700; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--text3);
+    padding: 0 18px; margin-bottom: 6px; display: block;
+  }
+  nav a {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 18px; font-size: 13px; color: var(--text2);
+    text-decoration: none; border-left: 2px solid transparent;
+    transition: all .14s;
+  }
+  nav a:hover { color: var(--accent); background: rgba(0,212,255,.04); border-left-color: rgba(0,212,255,.4); }
+  nav a.active { color: var(--accent); background: rgba(0,212,255,.06); border-left-color: var(--accent); font-weight: 600; }
+  nav a .n { font-size: 10px; color: var(--text3); font-weight: 700; min-width: 22px; }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(140deg, #090d18 0%, #0e1628 50%, #0a1220 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 56px 56px 48px;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; top: -80px; right: -80px;
+    width: 420px; height: 420px;
+    background: radial-gradient(circle, rgba(255,75,110,.07) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .hero::after {
+    content: ''; position: absolute; bottom: -60px; left: 40%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(157,101,255,.05) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,75,110,.1); border: 1px solid rgba(255,75,110,.25);
+    color: var(--red); font-size: 11px; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase;
+    padding: 5px 12px; border-radius: 5px; margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-size: 40px; font-weight: 900; color: #fff;
+    letter-spacing: -.5px; line-height: 1.15; margin-bottom: 14px;
+  }
+  .hero h1 em { color: var(--accent); font-style: normal; }
+  .hero-sub {
+    color: var(--text2); font-size: 16px; max-width: 680px;
+    line-height: 1.7; margin-bottom: 32px;
+  }
+  .hero-stats {
+    display: flex; gap: 32px; flex-wrap: wrap;
+  }
+  .stat-item { display: flex; flex-direction: column; gap: 3px; }
+  .stat-val { font-size: 26px; font-weight: 800; color: var(--accent); line-height: 1; }
+  .stat-val.red { color: var(--red); }
+  .stat-val.purple { color: var(--purple); }
+  .stat-val.green { color: var(--green); }
+  .stat-key {
+    font-size: 10px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--text3);
+  }
+
+  /* ── MAIN ── */
+  main { padding: 48px 56px 96px; min-width: 0; max-width: 1060px; }
+
+  /* ── SECTION ── */
+  .section {
+    margin-bottom: 72px; padding-bottom: 72px;
+    border-bottom: 1px solid var(--border);
+    scroll-margin-top: calc(var(--header-h) + 24px);
+  }
+  .section:last-child { border-bottom: none; margin-bottom: 0; }
+
+  .sec-header {
+    display: flex; align-items: flex-start; gap: 16px;
+    margin-bottom: 28px;
+  }
+  .sec-num {
+    width: 42px; height: 42px; border-radius: 10px;
+    font-size: 14px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 3px;
+  }
+  .c-blue   { background: rgba(0,212,255,.1);   border: 1px solid rgba(0,212,255,.2);   color: var(--accent); }
+  .c-red    { background: rgba(255,75,110,.1);  border: 1px solid rgba(255,75,110,.2);  color: var(--red); }
+  .c-green  { background: rgba(16,212,142,.1);  border: 1px solid rgba(16,212,142,.2);  color: var(--green); }
+  .c-purple { background: rgba(157,101,255,.1); border: 1px solid rgba(157,101,255,.2); color: var(--purple); }
+  .c-yellow { background: rgba(245,183,49,.1);  border: 1px solid rgba(245,183,49,.2);  color: var(--yellow); }
+  .c-orange { background: rgba(249,115,22,.1);  border: 1px solid rgba(249,115,22,.2);  color: var(--orange); }
+  .c-pink   { background: rgba(236,72,153,.1);  border: 1px solid rgba(236,72,153,.2);  color: var(--pink); }
+
+  .sec-title { font-size: 23px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+  .sec-desc  { font-size: 14px; color: var(--text2); }
+
+  h2 { font-size: 18px; font-weight: 700; color: #fff; margin: 32px 0 14px; }
+  h3 { font-size: 15px; font-weight: 700; color: var(--accent); margin: 24px 0 10px; }
+  h4 { font-size: 14px; font-weight: 600; color: var(--text); margin: 16px 0 8px; }
+  p  { color: var(--text2); margin-bottom: 14px; }
+  code {
+    font-family: 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 12.5px;
+    background: rgba(255,255,255,.06);
+    padding: 2px 6px; border-radius: 4px; color: var(--accent);
+  }
+
+  /* ── CODE BLOCKS ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px 24px;
+    overflow-x: auto;
+    margin: 16px 0;
+    position: relative;
+  }
+  pre code {
+    background: none; padding: 0; border-radius: 0;
+    font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+    font-size: 13px; line-height: 1.7; color: #cdd9e5;
+  }
+  .code-top {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-bottom: none; border-radius: 10px 10px 0 0;
+    padding: 9px 18px;
+  }
+  .code-top + pre { border-radius: 0 0 10px 10px; margin-top: 0; }
+  .code-top .dots { display: flex; gap: 6px; }
+  .code-top .dots span { width: 10px; height: 10px; border-radius: 50%; }
+  .code-top .dots .d1 { background: #ff5f57; }
+  .code-top .dots .d2 { background: #febc2e; }
+  .code-top .dots .d3 { background: #28c840; }
+  .code-top .fname { font-size: 12px; color: var(--text3); font-family: monospace; }
+  .code-top .lang {
+    margin-left: auto; font-size: 10px; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--text3);
+  }
+
+  /* syntax */
+  .kw  { color: var(--kw); }
+  .str { color: var(--str); }
+  .num { color: var(--num); }
+  .cmt { color: var(--cmt); font-style: italic; }
+  .fn  { color: var(--fn); }
+  .cls { color: var(--cls); }
+  .dec { color: var(--dec); }
+  .op  { color: var(--dec); }
+
+  /* ── CALLOUTS ── */
+  .callout {
+    display: flex; gap: 14px; padding: 16px 20px;
+    border-radius: 10px; margin: 20px 0;
+  }
+  .callout.info   { background: rgba(0,212,255,.06);  border: 1px solid rgba(0,212,255,.18); }
+  .callout.warn   { background: rgba(245,183,49,.06); border: 1px solid rgba(245,183,49,.2); }
+  .callout.danger { background: rgba(255,75,110,.06); border: 1px solid rgba(255,75,110,.2); }
+  .callout.tip    { background: rgba(16,212,142,.05); border: 1px solid rgba(16,212,142,.18); }
+  .callout.purple { background: rgba(157,101,255,.06);border: 1px solid rgba(157,101,255,.2); }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+  .callout-body .callout-title {
+    font-size: 13.5px; font-weight: 700; margin-bottom: 4px; color: var(--text);
+  }
+  .callout.info .callout-title   { color: var(--accent); }
+  .callout.warn .callout-title   { color: var(--yellow); }
+  .callout.danger .callout-title { color: var(--red); }
+  .callout.tip .callout-title    { color: var(--green); }
+  .callout.purple .callout-title { color: var(--purple); }
+  .callout-text { font-size: 13px; color: var(--text2); line-height: 1.65; }
+  .callout-text code { font-size: 11.5px; }
+
+  /* ── CARDS ── */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px; margin: 20px 0;
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px;
+    transition: border-color .2s, transform .15s;
+  }
+  .card:hover { border-color: var(--border2); transform: translateY(-1px); }
+  .card-head {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 10px;
+  }
+  .card-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .card-title { font-size: 14px; font-weight: 700; color: #fff; }
+  .card-body  { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+  /* ── BADGES ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 4px;
+    font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em;
+  }
+  .b-critical { background: rgba(255,75,110,.15);  color: var(--red); }
+  .b-high     { background: rgba(249,115,22,.15);  color: var(--orange); }
+  .b-med      { background: rgba(245,183,49,.15);  color: var(--yellow); }
+  .b-low      { background: rgba(16,212,142,.15);  color: var(--green); }
+  .b-blue     { background: rgba(0,212,255,.12);   color: var(--accent); }
+  .b-purple   { background: rgba(157,101,255,.12); color: var(--purple); }
+
+  /* ── TABLES ── */
+  table {
+    width: 100%; border-collapse: collapse;
+    margin: 20px 0; font-size: 13px;
+  }
+  thead tr { background: var(--surface); }
+  th {
+    padding: 10px 14px; text-align: left;
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em;
+    color: var(--text2); border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+    color: var(--text2);
+  }
+  tr:hover td { background: rgba(255,255,255,.015); }
+
+  /* ── STEPS ── */
+  .steps { list-style: none; counter-reset: s; padding: 0; }
+  .steps li {
+    counter-increment: s;
+    display: grid; grid-template-columns: 32px 1fr;
+    gap: 14px; margin-bottom: 24px;
+    align-items: start;
+  }
+  .steps li::before {
+    content: counter(s);
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(0,212,255,.1); border: 1px solid rgba(0,212,255,.25);
+    color: var(--accent); font-size: 12px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+  .step-title { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+  .step-body  { font-size: 13.5px; color: var(--text2); line-height: 1.7; }
+
+  /* ── FILE TREE ── */
+  .ftree {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px 24px;
+    font-family: 'Fira Code', monospace; font-size: 13px;
+    line-height: 1.9; overflow-x: auto;
+  }
+  .ft-dir  { color: var(--accent); font-weight: 600; }
+  .ft-new  { color: var(--green); }
+  .ft-mod  { color: var(--yellow); }
+  .ft-note { color: var(--text3); font-style: italic; }
+  .ft-file { color: var(--text2); }
+
+  /* ── ARCH BOX ── */
+  .arch {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 24px;
+    font-family: 'Fira Code', monospace; font-size: 13px;
+    line-height: 1.9; color: var(--text2); overflow-x: auto;
+    margin: 20px 0;
+  }
+  .arch .h { color: var(--accent); font-weight: 700; }
+  .arch .r { color: var(--red); font-weight: 600; }
+  .arch .g { color: var(--green); }
+  .arch .y { color: var(--yellow); }
+  .arch .p { color: var(--purple); }
+  .arch .arrow { color: var(--text3); }
+
+  /* ── PORT GRID ── */
+  .port-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin: 20px 0; }
+  .port-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px;
+  }
+  .port-num { font-size: 19px; font-weight: 800; color: var(--accent); font-family: monospace; margin-bottom: 4px; }
+  .port-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .port-desc { font-size: 12px; color: var(--text2); }
+
+  /* ── CONNECTION FLOW ── */
+  .flow { margin: 20px 0; }
+  .flow-row {
+    display: flex; align-items: center; gap: 0;
+    margin-bottom: 4px;
+  }
+  .flow-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 7px; padding: 8px 14px;
+    font-size: 12.5px; font-weight: 600; color: var(--text);
+    white-space: nowrap;
+  }
+  .flow-box.blue   { border-color: rgba(0,212,255,.35);   color: var(--accent); }
+  .flow-box.red    { border-color: rgba(255,75,110,.35);  color: var(--red); }
+  .flow-box.green  { border-color: rgba(16,212,142,.35);  color: var(--green); }
+  .flow-box.purple { border-color: rgba(157,101,255,.35); color: var(--purple); }
+  .flow-box.yellow { border-color: rgba(245,183,49,.35);  color: var(--yellow); }
+  .flow-arrow {
+    font-size: 16px; color: var(--text3);
+    padding: 0 10px; flex-shrink: 0;
+  }
+
+  /* ── CHECKLIST ── */
+  .checklist { list-style: none; padding: 0; margin: 16px 0; }
+  .checklist li {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+    font-size: 13.5px; color: var(--text2);
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist li .chk {
+    width: 20px; height: 20px; border-radius: 4px;
+    background: rgba(16,212,142,.1); border: 1px solid rgba(16,212,142,.3);
+    color: var(--green); font-size: 11px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    nav { display: none; }
+    main { padding: 32px 24px 64px; }
+    .hero { padding: 36px 24px 32px; }
+    .hero h1 { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── TOP BAR ── -->
+<header class="topbar">
+  <span class="topbar-badge">Phase 13</span>
+  <span class="topbar-title">Chaos Lab Dashboard — Complete Build Guide</span>
+  <div class="topbar-right">
+    <div class="topbar-pill"><span class="dot dot-red"></span>18 Scenarios</div>
+    <div class="topbar-pill"><span class="dot dot-blue"></span>Chaos Engine :9090</div>
+    <div class="topbar-pill"><span class="dot dot-green"></span>ShopCore :8000–8004</div>
+  </div>
+</header>
+
+<div class="layout">
+
+<!-- ── SIDEBAR ── -->
+<nav id="sidenav">
+  <div class="nav-group">
+    <span class="nav-label">Overview</span>
+    <a href="#overview"><span class="n">00</span>What Is the Chaos Lab</a>
+    <a href="#architecture"><span class="n">01</span>Full Architecture Map</a>
+    <a href="#file-structure"><span class="n">02</span>File &amp; Folder Structure</a>
+  </div>
+  <div class="nav-group">
+    <span class="nav-label">Chaos Engine</span>
+    <a href="#controller"><span class="n">03</span>ChaosController</a>
+    <a href="#scenarios"><span class="n">04</span>18 Scenarios Registry</a>
+    <a href="#engine-api"><span class="n">05</span>Chaos Engine REST API</a>
+    <a href="#scheduler"><span class="n">06</span>Scheduler (Auto-Gauntlet)</a>
+    <a href="#docker-chaos"><span class="n">07</span>Docker Injection Helpers</a>
+    <a href="#db-chaos"><span class="n">08</span>DB &amp; Queue Injection</a>
+  </div>
+  <div class="nav-group">
+    <span class="nav-label">Remediation Layer</span>
+    <a href="#action-registry"><span class="n">09</span>Action Registry</a>
+    <a href="#service-handler"><span class="n">10</span>Service Handler</a>
+    <a href="#db-handler"><span class="n">11</span>Database Handler</a>
+    <a href="#cache-handler"><span class="n">12</span>Cache Handler</a>
+    <a href="#queue-handler"><span class="n">13</span>Queue Handler</a>
+    <a href="#config-handler"><span class="n">14</span>Config Handler</a>
+  </div>
+  <div class="nav-group">
+    <span class="nav-label">ShopCore Connection</span>
+    <a href="#shopcore-connect"><span class="n">15</span>Connecting ShopCore</a>
+    <a href="#sources-yaml"><span class="n">16</span>sources.yaml Entries</a>
+    <a href="#fluent-bit"><span class="n">17</span>Fluent Bit + Prometheus</a>
+    <a href="#docker-compose"><span class="n">18</span>docker-compose.yml</a>
+  </div>
+  <div class="nav-group">
+    <span class="nav-label">Running &amp; Testing</span>
+    <a href="#startup"><span class="n">19</span>Startup Sequence</a>
+    <a href="#first-test"><span class="n">20</span>First Manual Test</a>
+    <a href="#test-suite"><span class="n">21</span>Full Test Suite</a>
+    <a href="#scoring"><span class="n">22</span>Scoring &amp; Pass Criteria</a>
+  </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">⚡ Phase 13 — Real-World Chaos Lab Testing</div>
+  <h1>Chaos Lab <em>Dashboard</em><br>Complete Build Guide</h1>
+  <p class="hero-sub">
+    End-to-end guide for building the Chaos Engine, connecting it to ShopCore (the target e-commerce system), wiring the DCA perception pipeline, and running the full 18-scenario inject → detect → heal loop.
+  </p>
+  <div class="hero-stats">
+    <div class="stat-item"><div class="stat-val">18</div><div class="stat-key">Chaos Scenarios</div></div>
+    <div class="stat-item"><div class="stat-val red">5</div><div class="stat-key">Remediation Handlers</div></div>
+    <div class="stat-item"><div class="stat-val purple">9</div><div class="stat-key">Services Wired</div></div>
+    <div class="stat-item"><div class="stat-val green">221</div><div class="stat-key">Total Tests</div></div>
+  </div>
+</div>
+
+<main>
+
+<!-- ── 00 WHAT IS THE CHAOS LAB ── -->
+<section class="section" id="overview">
+  <div class="sec-header">
+    <div class="sec-num c-blue">00</div>
+    <div>
+      <div class="sec-title">What Is the Chaos Lab</div>
+      <div class="sec-desc">Purpose, components, and how everything fits together</div>
+    </div>
+  </div>
+
+  <p>The Chaos Lab is a controlled testing harness that sits between your DCA (Digital Cognitive Architecture) and a realistic target system (ShopCore). It has three jobs:</p>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon c-red">💥</div>
+        <div class="card-title">Inject Real Failures</div>
+      </div>
+      <div class="card-body">The Chaos Engine injects 18 types of real infrastructure failures — service crashes, slow DB queries, Kafka consumer lag, Redis eviction storms, network packet loss — using Docker env-var hooks and direct infrastructure manipulation.</div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon c-blue">📡</div>
+        <div class="card-title">Trigger DCA Perception</div>
+      </div>
+      <div class="card-body">Every injected failure produces authentic signals (structured logs → Fluent Bit → Kafka, Prometheus metrics → AlertManager, direct health-poll misses) that flow through the DCA's existing perception pipeline and produce CognitiveEvents.</div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon c-green">🔧</div>
+        <div class="card-title">Validate Autonomous Healing</div>
+      </div>
+      <div class="card-body">New remediation handlers (service restart, DB kill slow query, cache flush, Kafka offset reset, config rollback) are registered with the DCA's action executor so the system can self-heal without human approval on critical scenarios.</div>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <div class="callout-icon">📌</div>
+    <div class="callout-body">
+      <div class="callout-title">Scope of This Guide</div>
+      <div class="callout-text">This guide covers building and connecting the <strong>Chaos Engine only</strong>. ShopCore (the target system) is fully specified in the ShopCore Build Guide. The DCA perception, reasoning, and execution layers are built in Phases 1–11. Phase 13 wires them all together and adds the chaos injection + remediation layer.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 01 ARCHITECTURE ── -->
+<section class="section" id="architecture">
+  <div class="sec-header">
+    <div class="sec-num c-blue">01</div>
+    <div>
+      <div class="sec-title">Full Architecture Map</div>
+      <div class="sec-desc">How Chaos Engine, ShopCore, and DCA connect end-to-end</div>
+    </div>
+  </div>
+
+  <div class="arch">
+<span class="cmt">┌─────────────────────────────────────────────────────────────────────────┐
+│                        CHAOS LAB — PHASE 13                             │
+└─────────────────────────────────────────────────────────────────────────┘</span>
+
+<span class="h">CHAOS ENGINE (port 9090)</span>
+  chaos_engine/
+  ├─ <span class="r">ChaosController</span>       ←  injects failures via Docker env vars + network rules
+  ├─ <span class="r">Scenario Registry</span>     ←  18 named scenarios with activate/deactivate/verify
+  ├─ <span class="r">Chaos API (FastAPI)</span>   ←  REST: POST /scenarios/{name}/activate|deactivate
+  └─ <span class="r">Scheduler</span>             ←  randomized gauntlet runner (2-5 min intervals)
+         │
+         │  sets env vars, network rules, direct DB/Kafka manipulation
+         ▼
+<span class="h">SHOPCORE TARGET SYSTEM (ports 8000–8004)</span>
+  ├─ <span class="g">api-gateway   :8000</span>   ←  CHAOS_LATENCY_MS · CHAOS_ERROR_RATE · CHAOS_CIRCUIT_OPEN
+  ├─ <span class="g">product-svc   :8001</span>   ←  CHAOS_SLOW_QUERY_MS · CHAOS_POOL_EXHAUST · CHAOS_DB_ERROR_RATE
+  ├─ <span class="g">order-svc     :8002</span>   ←  CHAOS_ORDER_DELAY_MS · CHAOS_KAFKA_BLOCK · CHAOS_ORDER_FAIL_RATE
+  ├─ <span class="g">user-svc      :8003</span>   ←  CHAOS_AUTH_FAIL_RATE
+  ├─ <span class="g">cart-svc      :8004</span>   ←  CHAOS_CACHE_MISS · CHAOS_CART_FAIL_RATE
+  ├─ <span class="y">postgres     :5432</span>   ←  direct SQL: lock injection, slow queries, pool exhaustion
+  ├─ <span class="y">redis        :6379</span>   ←  maxmemory manipulation, eviction storm
+  └─ <span class="y">redpanda     :9092</span>   ←  consumer stop, lag injection
+         │                                │
+         │  structured JSON logs          │  Prometheus metrics
+         ▼                                ▼
+  <span class="p">fluent-bit</span>              <span class="p">prometheus :9090</span>   ←  alert.rules.yml
+         │                                │
+         └──────────── raw.logs topic ────┘
+                             │
+                             ▼
+<span class="h">DCA PERCEPTION LAYER (port 8080)</span>
+  ├─ LogAdapter         ←  raw.logs → parse → CognitiveEvent
+  ├─ MetricAdapter      ←  Prometheus scrape → anomaly detection
+  ├─ APIPoller          ←  health-check each service every 15s
+  ├─ DBMonitor          ←  direct asyncpg: slow queries, locks, pool
+  └─ QueueMonitor       ←  Kafka lag on order-events topic
+                             │
+                             ▼  cognitive.events  (Kafka topic)
+<span class="h">DCA REASONING + WORLD MODEL (Phases 5–9)</span>
+  ├─ World Model        ←  entity state graph, anomaly lifecycle
+  ├─ Reasoning Engine   ←  LLM + rule engine → remediation plan
+  └─ Playbook Store     ←  fast-path rules after 3 successful heals
+                             │
+                             ▼
+<span class="h">DCA EXECUTION RUNNER (Phase 10–11)</span>  +  <span class="r">NEW HANDLERS (Phase 13)</span>
+  ├─ service_handler.py    ← restart_service · scale_service · health_gate
+  ├─ database_handler.py   ← kill_blocking_query · reset_pool · set_statement_timeout
+  ├─ cache_handler.py      ← flush_cache_pattern · warm_cache · adjust_maxmemory
+  ├─ queue_handler.py      ← reset_consumer_offset · scale_consumer_group · drain_dlq
+  └─ config_handler.py     ← rollback_config · reload_config
+         │
+         └── action calls back into ShopCore containers to resolve chaos
+  </div>
+
+  <div class="callout purple">
+    <div class="callout-icon">🔁</div>
+    <div class="callout-body">
+      <div class="callout-title">The Loop: Inject → Signal → Detect → Plan → Heal → Verify</div>
+      <div class="callout-text">
+        Chaos Engine activates a scenario → ShopCore services emit anomalous signals → Fluent Bit + Prometheus forward to DCA perception → DCA emits a CognitiveEvent → Reasoning Engine produces a remediation plan → Execution Runner calls the correct handler → ShopCore recovers → World Model marks anomaly resolved. The Chaos Engine tracks <code>detected_at</code> and <code>remediated_at</code> timestamps so detection SLOs and remediation SLOs can be measured.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 02 FILE STRUCTURE ── -->
+<section class="section" id="file-structure">
+  <div class="sec-header">
+    <div class="sec-num c-blue">02</div>
+    <div>
+      <div class="sec-title">File &amp; Folder Structure</div>
+      <div class="sec-desc">Every file that needs to exist for Phase 13 — new files in green, modified in yellow</div>
+    </div>
+  </div>
+
+  <div class="ftree">
+<span class="ft-dir">chaos_lab/</span>
+│
+<span class="ft-dir">├── chaos_engine/</span>                        <span class="ft-note">← The Chaos Engine (entire new module)</span>
+│   <span class="ft-new">├── controller.py</span>                    <span class="ft-note">← ChaosController: activate/deactivate/verify</span>
+│   <span class="ft-new">├── scenarios.py</span>                     <span class="ft-note">← All 18 ChaosScenario definitions</span>
+│   <span class="ft-new">├── api.py</span>                           <span class="ft-note">← FastAPI REST API on port 9090</span>
+│   <span class="ft-new">├── scheduler.py</span>                     <span class="ft-note">← Randomized gauntlet runner</span>
+│   <span class="ft-new">├── injectors/</span>
+│   │   <span class="ft-new">├── docker_chaos.py</span>              <span class="ft-note">← Container env-var injection + restart</span>
+│   │   <span class="ft-new">├── network_chaos.py</span>             <span class="ft-note">← tc / iptables packet-level failures</span>
+│   │   <span class="ft-new">├── database_chaos.py</span>            <span class="ft-note">← Direct Postgres: locks, slow query</span>
+│   │   <span class="ft-new">└── queue_chaos.py</span>               <span class="ft-note">← Kafka consumer stop, lag injection</span>
+│   <span class="ft-new">└── Dockerfile</span>                       <span class="ft-note">← Runs chaos-engine service in compose</span>
+│
+<span class="ft-dir">├── remediation/</span>                         <span class="ft-note">← New DCA action handlers</span>
+│   <span class="ft-new">├── action_registry.py</span>               <span class="ft-note">← event_type → handler mapping</span>
+│   <span class="ft-new">└── handlers/</span>
+│       <span class="ft-new">├── service_handler.py</span>           <span class="ft-note">← restart, scale, health-gate</span>
+│       <span class="ft-new">├── database_handler.py</span>          <span class="ft-note">← kill slow query, reset pool</span>
+│       <span class="ft-new">├── cache_handler.py</span>             <span class="ft-note">← flush, warm, resize Redis</span>
+│       <span class="ft-new">├── queue_handler.py</span>             <span class="ft-note">← consumer offset reset, DLQ drain</span>
+│       <span class="ft-new">└── config_handler.py</span>            <span class="ft-note">← rollback env var, reload service</span>
+│
+<span class="ft-dir">├── target_system/</span>                       <span class="ft-note">← ShopCore (see ShopCore Build Guide)</span>
+│   <span class="ft-new">├── docker-compose.yml</span>               <span class="ft-note">← Full stack including chaos-engine</span>
+│   <span class="ft-file">├── api_gateway/main.py</span>
+│   <span class="ft-file">├── product_service/main.py</span>
+│   <span class="ft-file">├── order_service/main.py</span>
+│   <span class="ft-file">├── user_service/main.py</span>
+│   <span class="ft-file">└── cart_service/main.py</span>
+│
+<span class="ft-dir">├── instrumentation/</span>
+│   <span class="ft-new">├── sources.yaml</span>                     <span class="ft-note">← ShopCore entries for DCA perception</span>
+│   <span class="ft-new">├── fluent-bit.conf</span>                  <span class="ft-note">← Tails all ShopCore container logs</span>
+│   <span class="ft-new">├── prometheus.yml</span>                   <span class="ft-note">← Scrapes all ShopCore /metrics</span>
+│   <span class="ft-new">└── alert.rules.yml</span>                  <span class="ft-note">← Firing rules → AlertManager → DCA</span>
+│
+<span class="ft-dir">└── tests/</span>
+    <span class="ft-new">├── test_chaos_detection.py</span>          <span class="ft-note">← 18 tests: each scenario emits CognitiveEvent</span>
+    <span class="ft-new">├── test_remediation.py</span>             <span class="ft-note">← 11 tests: each handler produces recovery</span>
+    <span class="ft-new">├── test_e2e_scenarios.py</span>            <span class="ft-note">← 8 tests: full inject→detect→heal</span>
+    <span class="ft-new">├── test_chaos_controller.py</span>         <span class="ft-note">← 8 unit tests for controller</span>
+    <span class="ft-new">└── score_phase13.py</span>                 <span class="ft-note">← Scorecard CLI: detection ≥90%, remed ≥75%</span>
+  </div>
+</section>
+
+<!-- ── 03 CHAOS CONTROLLER ── -->
+<section class="section" id="controller">
+  <div class="sec-header">
+    <div class="sec-num c-red">03</div>
+    <div>
+      <div class="sec-title">ChaosController — chaos_engine/controller.py</div>
+      <div class="sec-desc">Central orchestrator: activate, deactivate, verify, and track scenario state with timestamps</div>
+    </div>
+  </div>
+
+  <p>The <code>ChaosController</code> is the single object that owns all scenario state. It wraps two injection mechanisms: <code>DockerChaos</code> (env-var mutation + container restart) and <code>NetworkChaos</code> (tc/iptables). Every scenario registers <code>activate</code>, <code>deactivate</code>, and <code>verify_injected</code> callables here.</p>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">chaos_engine/controller.py</span>
+    <span class="lang">Python</span>
+  </div>
+  <pre><code><span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> asyncio, logging, time
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, field
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">from</span> enum <span class="kw">import</span> Enum
+<span class="kw">from</span> typing <span class="kw">import</span> Any, Callable, Awaitable
+<span class="kw">import</span> docker, asyncpg, httpx
+
+logger = logging.<span class="fn">getLogger</span>(<span class="str">"chaos-controller"</span>)
+DOCKER_COMPOSE_PROJECT = <span class="str">"shopcore"</span>
+
+
+<span class="kw">class</span> <span class="cls">ScenarioState</span>(<span class="cls">Enum</span>):
+    IDLE       = <span class="str">"idle"</span>
+    ACTIVE     = <span class="str">"active"</span>
+    RECOVERING = <span class="str">"recovering"</span>
+    FAILED     = <span class="str">"failed"</span>
+
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="cls">ChaosScenario</span>:
+    name:                   str
+    description:            str
+    severity:               str     <span class="cmt"># critical | high | medium | low</span>
+    expected_event_type:    str     <span class="cmt"># maps to DCA CognitiveEvent.event_type</span>
+    expected_detection_s:   float   <span class="cmt"># detection SLO in seconds</span>
+    expected_remediation_s: float   <span class="cmt"># remediation SLO in seconds</span>
+    activate:               Callable[[dict], Awaitable[None]]
+    deactivate:             Callable[[], Awaitable[None]]
+    verify_injected:        Callable[[], Awaitable[bool]]
+    state:        <span class="cls">ScenarioState</span> = <span class="cls">ScenarioState</span>.IDLE
+    activated_at: datetime | None  = None
+    detected_at:  datetime | None  = None
+    remediated_at:datetime | None  = None
+    params:       dict             = field(default_factory=dict)
+
+
+<span class="kw">class</span> <span class="cls">DockerChaos</span>:
+    <span class="str">"""Inject failures by setting env vars on running containers."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.client = docker.<span class="fn">from_env</span>()
+
+    <span class="kw">def</span> <span class="fn">_get_container</span>(self, service_name: str):
+        <span class="cmt"># Try label first, fall back to name match</span>
+        containers = self.client.containers.<span class="fn">list</span>(
+            filters={<span class="str">"label"</span>: <span class="str">f"com.shopcore.service={service_name}"</span>}
+        )
+        <span class="kw">if not</span> containers:
+            containers = self.client.containers.<span class="fn">list</span>(
+                filters={<span class="str">"name"</span>: service_name}
+            )
+        <span class="kw">if not</span> containers:
+            <span class="kw">raise</span> <span class="cls">RuntimeError</span>(<span class="str">f"Container not found: {service_name}"</span>)
+        <span class="kw">return</span> containers[<span class="num">0</span>]
+
+    <span class="kw">async def</span> <span class="fn">set_env</span>(self, service: str, key: str, value: str) -> None:
+        <span class="str">"""Set an environment variable on a running container (Docker exec)."""</span>
+        container = self.<span class="fn">_get_container</span>(service)
+        container.<span class="fn">exec_run</span>([<span class="str">"sh"</span>, <span class="str">"-c"</span>, <span class="str">f"export {key}={value}"</span>], detach=True)
+        <span class="cmt"># Some services read env at request time — set via docker update</span>
+        <span class="kw">await</span> asyncio.<span class="fn">to_thread</span>(
+            container.client.api.<span class="fn">update_container</span>,
+            container.id,
+            Env=[<span class="str">f"{key}={value}"</span>]
+        )
+        logger.<span class="fn">info</span>(<span class="str">f"[chaos] {service}: {key}={value}"</span>)
+
+    <span class="kw">async def</span> <span class="fn">restart</span>(self, service: str) -> None:
+        container = self.<span class="fn">_get_container</span>(service)
+        <span class="kw">await</span> asyncio.<span class="fn">to_thread</span>(container.restart, timeout=<span class="num">5</span>)
+        logger.<span class="fn">info</span>(<span class="str">f"[chaos] restarted {service}"</span>)
+
+    <span class="kw">async def</span> <span class="fn">kill</span>(self, service: str) -> None:
+        container = self.<span class="fn">_get_container</span>(service)
+        <span class="kw">await</span> asyncio.<span class="fn">to_thread</span>(container.kill)
+        logger.<span class="fn">info</span>(<span class="str">f"[chaos] killed {service}"</span>)
+
+    <span class="kw">async def</span> <span class="fn">is_running</span>(self, service: str) -> bool:
+        <span class="kw">try</span>:
+            c = self.<span class="fn">_get_container</span>(service)
+            <span class="kw">return</span> c.status == <span class="str">"running"</span>
+        <span class="kw">except</span> RuntimeError:
+            <span class="kw">return</span> False
+
+
+<span class="kw">class</span> <span class="cls">ChaosController</span>:
+    <span class="str">"""
+    Top-level orchestrator. Owns all scenario state.
+    Called by the REST API (api.py) and the Scheduler (scheduler.py).
+    """</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, scenarios: dict[str, <span class="cls">ChaosScenario</span>]):
+        self.scenarios = scenarios
+        self.docker    = <span class="cls">DockerChaos</span>()
+        self._active: set[str] = set()
+
+    <span class="kw">async def</span> <span class="fn">activate</span>(self, name: str, params: dict | None = None) -> None:
+        s = self.scenarios[name]
+        <span class="kw">if</span> s.state == <span class="cls">ScenarioState</span>.ACTIVE:
+            logger.<span class="fn">warning</span>(<span class="str">f"[chaos] {name} already active — skipping"</span>)
+            <span class="kw">return</span>
+        logger.<span class="fn">info</span>(<span class="str">f"[chaos] activating {name}"</span>)
+        s.params = params <span class="kw">or</span> {}
+        <span class="kw">await</span> s.<span class="fn">activate</span>(s.params)
+        s.state = <span class="cls">ScenarioState</span>.ACTIVE
+        s.activated_at = datetime.<span class="fn">now</span>(timezone.utc)
+        s.detected_at  = None
+        s.remediated_at = None
+        self._active.<span class="fn">add</span>(name)
+        logger.<span class="fn">info</span>(<span class="str">f"[chaos] {name} active — waiting for DCA detection"</span>)
+
+    <span class="kw">async def</span> <span class="fn">deactivate</span>(self, name: str) -> None:
+        s = self.scenarios[name]
+        <span class="kw">await</span> s.<span class="fn">deactivate</span>()
+        s.state = <span class="cls">ScenarioState</span>.IDLE
+        self._active.<span class="fn">discard</span>(name)
+        logger.<span class="fn">info</span>(<span class="str">f"[chaos] {name} deactivated"</span>)
+
+    <span class="kw">async def</span> <span class="fn">mark_detected</span>(self, name: str) -> None:
+        s = self.scenarios[name]
+        s.detected_at = datetime.<span class="fn">now</span>(timezone.utc)
+        <span class="kw">if</span> s.activated_at:
+            dt = (s.detected_at - s.activated_at).total_seconds()
+            logger.<span class="fn">info</span>(<span class="str">f"[chaos] {name} detected in {dt:.1f}s (SLO: {s.expected_detection_s}s)"</span>)
+
+    <span class="kw">async def</span> <span class="fn">mark_remediated</span>(self, name: str) -> None:
+        s = self.scenarios[name]
+        s.remediated_at = datetime.<span class="fn">now</span>(timezone.utc)
+        s.state = <span class="cls">ScenarioState</span>.RECOVERING
+        <span class="kw">if</span> s.activated_at:
+            dt = (s.remediated_at - s.activated_at).total_seconds()
+            logger.<span class="fn">info</span>(<span class="str">f"[chaos] {name} remediated in {dt:.1f}s (SLO: {s.expected_remediation_s}s)"</span>)
+
+    <span class="kw">def</span> <span class="fn">get_status</span>(self) -> list[dict]:
+        <span class="kw">return</span> [
+            {
+                <span class="str">"name"</span>:            s.name,
+                <span class="str">"state"</span>:           s.state.value,
+                <span class="str">"severity"</span>:        s.severity,
+                <span class="str">"expected_event"</span>:  s.expected_event_type,
+                <span class="str">"activated_at"</span>:    s.activated_at.<span class="fn">isoformat</span>() <span class="kw">if</span> s.activated_at <span class="kw">else</span> None,
+                <span class="str">"detected_at"</span>:     s.detected_at.<span class="fn">isoformat</span>()  <span class="kw">if</span> s.detected_at  <span class="kw">else</span> None,
+                <span class="str">"remediated_at"</span>:   s.remediated_at.<span class="fn">isoformat</span>() <span class="kw">if</span> s.remediated_at <span class="kw">else</span> None,
+            }
+            <span class="kw">for</span> s <span class="kw">in</span> self.scenarios.<span class="fn">values</span>()
+        ]
+</code></pre>
+</section>
+
+<!-- ── 04 SCENARIOS REGISTRY ── -->
+<section class="section" id="scenarios">
+  <div class="sec-header">
+    <div class="sec-num c-red">04</div>
+    <div>
+      <div class="sec-title">18 Scenarios Registry — chaos_engine/scenarios.py</div>
+      <div class="sec-desc">Complete list of every scenario with severity, detection SLO, injection mechanism, and expected CognitiveEvent</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>#</th><th>Scenario Name</th><th>Target</th><th>Severity</th><th>Inject Via</th><th>Expected CognitiveEvent</th><th>Detection SLO</th><th>Remediation SLO</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>01</td><td><code>product_service_crash</code></td><td>product-svc</td><td><span class="badge b-critical">Critical</span></td><td><code>docker kill</code></td><td><code>service_unreachable</code></td><td>30s</td><td>60s</td></tr>
+      <tr><td>02</td><td><code>slow_database_query</code></td><td>product-svc</td><td><span class="badge b-high">High</span></td><td><code>CHAOS_SLOW_QUERY_MS=3000</code></td><td><code>slow_query_detected</code></td><td>60s</td><td>120s</td></tr>
+      <tr><td>03</td><td><code>db_pool_exhaustion</code></td><td>product-svc</td><td><span class="badge b-critical">Critical</span></td><td><code>CHAOS_POOL_EXHAUST=true</code></td><td><code>db_pool_exhausted</code></td><td>30s</td><td>90s</td></tr>
+      <tr><td>04</td><td><code>gateway_high_latency</code></td><td>api-gateway</td><td><span class="badge b-high">High</span></td><td><code>CHAOS_LATENCY_MS=2000</code></td><td><code>high_latency_detected</code></td><td>60s</td><td>120s</td></tr>
+      <tr><td>05</td><td><code>gateway_high_error_rate</code></td><td>api-gateway</td><td><span class="badge b-critical">Critical</span></td><td><code>CHAOS_ERROR_RATE=0.5</code></td><td><code>service_error_spike</code></td><td>45s</td><td>90s</td></tr>
+      <tr><td>06</td><td><code>circuit_breaker_open</code></td><td>api-gateway</td><td><span class="badge b-critical">Critical</span></td><td><code>CHAOS_CIRCUIT_OPEN=true</code></td><td><code>service_unreachable</code></td><td>30s</td><td>60s</td></tr>
+      <tr><td>07</td><td><code>order_service_slow</code></td><td>order-svc</td><td><span class="badge b-high">High</span></td><td><code>CHAOS_ORDER_DELAY_MS=5000</code></td><td><code>order_processing_slow</code></td><td>60s</td><td>120s</td></tr>
+      <tr><td>08</td><td><code>kafka_producer_blocked</code></td><td>order-svc</td><td><span class="badge b-high">High</span></td><td><code>CHAOS_KAFKA_BLOCK=true</code></td><td><code>kafka_producer_blocked</code></td><td>60s</td><td>120s</td></tr>
+      <tr><td>09</td><td><code>order_error_spike</code></td><td>order-svc</td><td><span class="badge b-critical">Critical</span></td><td><code>CHAOS_ORDER_FAIL_RATE=0.9</code></td><td><code>service_error_spike</code></td><td>45s</td><td>90s</td></tr>
+      <tr><td>10</td><td><code>auth_service_failure</code></td><td>user-svc</td><td><span class="badge b-critical">Critical</span></td><td><code>CHAOS_AUTH_FAIL_RATE=0.8</code></td><td><code>auth_service_failure</code></td><td>45s</td><td>90s</td></tr>
+      <tr><td>11</td><td><code>cache_miss_storm</code></td><td>cart-svc</td><td><span class="badge b-med">Medium</span></td><td><code>CHAOS_CACHE_MISS=true</code></td><td><code>cache_miss_rate_high</code></td><td>90s</td><td>180s</td></tr>
+      <tr><td>12</td><td><code>redis_memory_full</code></td><td>Redis</td><td><span class="badge b-high">High</span></td><td>Redis <code>CONFIG SET maxmemory 1mb</code></td><td><code>redis_memory_critical</code></td><td>60s</td><td>120s</td></tr>
+      <tr><td>13</td><td><code>redis_eviction_storm</code></td><td>Redis</td><td><span class="badge b-med">Medium</span></td><td>Stress key injection</td><td><code>redis_eviction_storm</code></td><td>90s</td><td>180s</td></tr>
+      <tr><td>14</td><td><code>kafka_consumer_lag</code></td><td>Redpanda</td><td><span class="badge b-high">High</span></td><td>Stop consumer externally</td><td><code>consumer_lag_critical</code></td><td>60s</td><td>120s</td></tr>
+      <tr><td>15</td><td><code>database_lock_contention</code></td><td>Postgres</td><td><span class="badge b-high">High</span></td><td>Direct SQL lock injection</td><td><code>database_lock_wait_high</code></td><td>60s</td><td>120s</td></tr>
+      <tr><td>16</td><td><code>notification_consumer_slow</code></td><td>Notification</td><td><span class="badge b-med">Medium</span></td><td><code>CHAOS_NOTIFY_DELAY_MS=10000</code></td><td><code>consumer_lag_critical</code></td><td>90s</td><td>180s</td></tr>
+      <tr><td>17</td><td><code>gateway_oom</code></td><td>api-gateway</td><td><span class="badge b-critical">Critical</span></td><td>Container memory limit hit</td><td><code>service_crashed</code></td><td>30s</td><td>60s</td></tr>
+      <tr><td>18</td><td><code>cascade_failure</code></td><td>All</td><td><span class="badge b-critical">Critical</span></td><td>DB kill + Kafka block + Gateway error</td><td><code>cascade_failure_detected</code></td><td>120s</td><td>escalate</td></tr>
+    </tbody>
+  </table>
+
+  <h3>scenarios.py — build_scenarios() factory</h3>
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">chaos_engine/scenarios.py</span>
+    <span class="lang">Python</span>
+  </div>
+  <pre><code><span class="kw">from</span> chaos_engine.controller <span class="kw">import</span> ChaosScenario, DockerChaos
+<span class="kw">from</span> chaos_engine.injectors.database_chaos <span class="kw">import</span> DatabaseChaos
+<span class="kw">from</span> chaos_engine.injectors.queue_chaos <span class="kw">import</span> QueueChaos
+<span class="kw">import</span> httpx, asyncio
+
+<span class="kw">def</span> <span class="fn">build_scenarios</span>(docker_chaos: <span class="cls">DockerChaos</span>, db_chaos: <span class="cls">DatabaseChaos</span>, queue_chaos: <span class="cls">QueueChaos</span>) -> dict[str, <span class="cls">ChaosScenario</span>]:
+    <span class="str">"""Factory that wires all 18 ChaosScenarios. Called once at startup."""</span>
+
+    d = docker_chaos
+
+    <span class="kw">return</span> {
+
+        <span class="cmt"># ── SCENARIO 01: Product service crash ─────────────────────────────</span>
+        <span class="str">"product_service_crash"</span>: <span class="cls">ChaosScenario</span>(
+            name=<span class="str">"product_service_crash"</span>,
+            description=<span class="str">"Kill the product service container to simulate an OOM crash"</span>,
+            severity=<span class="str">"critical"</span>,
+            expected_event_type=<span class="str">"service_unreachable"</span>,
+            expected_detection_s=<span class="num">30</span>,
+            expected_remediation_s=<span class="num">60</span>,
+            activate=<span class="kw">lambda</span> p: d.<span class="fn">kill</span>(<span class="str">"product-service"</span>),
+            deactivate=<span class="kw">lambda</span>: d.<span class="fn">restart</span>(<span class="str">"product-service"</span>),
+            verify_injected=<span class="kw">lambda</span>: <span class="fn">_check_service_down</span>(<span class="str">"http://localhost:8001/health"</span>),
+        ),
+
+        <span class="cmt"># ── SCENARIO 02: Slow database query ───────────────────────────────</span>
+        <span class="str">"slow_database_query"</span>: <span class="cls">ChaosScenario</span>(
+            name=<span class="str">"slow_database_query"</span>,
+            description=<span class="str">"Inject 3s artificial SQL sleep into every product query"</span>,
+            severity=<span class="str">"high"</span>,
+            expected_event_type=<span class="str">"slow_query_detected"</span>,
+            expected_detection_s=<span class="num">60</span>,
+            expected_remediation_s=<span class="num">120</span>,
+            activate=<span class="kw">lambda</span> p: d.<span class="fn">set_env</span>(<span class="str">"product-service"</span>, <span class="str">"CHAOS_SLOW_QUERY_MS"</span>, <span class="str">"3000"</span>),
+            deactivate=<span class="kw">lambda</span>: d.<span class="fn">set_env</span>(<span class="str">"product-service"</span>, <span class="str">"CHAOS_SLOW_QUERY_MS"</span>, <span class="str">"0"</span>),
+            verify_injected=<span class="kw">lambda</span>: <span class="fn">_check_latency_high</span>(<span class="str">"http://localhost:8001/products"</span>, <span class="num">2.5</span>),
+        ),
+
+        <span class="cmt"># ── SCENARIO 03: DB pool exhaustion ────────────────────────────────</span>
+        <span class="str">"db_pool_exhaustion"</span>: <span class="cls">ChaosScenario</span>(
+            name=<span class="str">"db_pool_exhaustion"</span>,
+            description=<span class="str">"Hold all 10 DB connections open to exhaust asyncpg pool"</span>,
+            severity=<span class="str">"critical"</span>,
+            expected_event_type=<span class="str">"db_pool_exhausted"</span>,
+            expected_detection_s=<span class="num">30</span>,
+            expected_remediation_s=<span class="num">90</span>,
+            activate=<span class="kw">lambda</span> p: d.<span class="fn">set_env</span>(<span class="str">"product-service"</span>, <span class="str">"CHAOS_POOL_EXHAUST"</span>, <span class="str">"true"</span>),
+            deactivate=<span class="kw">lambda</span>: d.<span class="fn">set_env</span>(<span class="str">"product-service"</span>, <span class="str">"CHAOS_POOL_EXHAUST"</span>, <span class="str">"false"</span>),
+            verify_injected=<span class="kw">lambda</span>: db_chaos.<span class="fn">check_pool_exhausted</span>(<span class="str">"shopcore"</span>),
+        ),
+
+        <span class="cmt"># ── SCENARIOS 04–18 follow the same pattern ─────────────────────── </span>
+        <span class="cmt"># See the full list in the table above. Each scenario follows:     </span>
+        <span class="cmt"># activate → set env var OR call db_chaos/queue_chaos helper        </span>
+        <span class="cmt"># deactivate → restore env var to 0/false OR call cleanup helper    </span>
+        <span class="cmt"># verify_injected → HTTP call or DB query confirming failure is live  </span>
+
+        <span class="str">"cascade_failure"</span>: <span class="cls">ChaosScenario</span>(
+            name=<span class="str">"cascade_failure"</span>,
+            description=<span class="str">"Kill DB + block Kafka + error-rate spike simultaneously"</span>,
+            severity=<span class="str">"critical"</span>,
+            expected_event_type=<span class="str">"cascade_failure_detected"</span>,
+            expected_detection_s=<span class="num">120</span>,
+            expected_remediation_s=<span class="num">999</span>,  <span class="cmt"># escalate to human</span>
+            activate=<span class="kw">lambda</span> p: <span class="fn">_cascade_activate</span>(d),
+            deactivate=<span class="kw">lambda</span>: <span class="fn">_cascade_deactivate</span>(d),
+            verify_injected=<span class="kw">lambda</span>: asyncio.<span class="fn">sleep</span>(<span class="num">0</span>) <span class="kw">or</span> True,
+        ),
+    }
+
+
+<span class="kw">async def</span> <span class="fn">_check_service_down</span>(url: str) -> bool:
+    <span class="kw">try</span>:
+        <span class="kw">async with</span> httpx.<span class="cls">AsyncClient</span>(timeout=<span class="num">3</span>) <span class="kw">as</span> c:
+            r = <span class="kw">await</span> c.<span class="fn">get</span>(url)
+            <span class="kw">return</span> r.status_code != <span class="num">200</span>
+    <span class="kw">except</span>:
+        <span class="kw">return</span> True
+
+<span class="kw">async def</span> <span class="fn">_check_latency_high</span>(url: str, threshold_s: float) -> bool:
+    <span class="kw">import</span> time
+    start = time.<span class="fn">monotonic</span>()
+    <span class="kw">try</span>:
+        <span class="kw">async with</span> httpx.<span class="cls">AsyncClient</span>(timeout=<span class="num">10</span>) <span class="kw">as</span> c:
+            <span class="kw">await</span> c.<span class="fn">get</span>(url)
+        <span class="kw">return</span> time.<span class="fn">monotonic</span>() - start >= threshold_s
+    <span class="kw">except</span>:
+        <span class="kw">return</span> True
+
+<span class="kw">async def</span> <span class="fn">_cascade_activate</span>(d: <span class="cls">DockerChaos</span>):
+    <span class="kw">await</span> asyncio.<span class="fn">gather</span>(
+        d.<span class="fn">kill</span>(<span class="str">"postgres"</span>),
+        d.<span class="fn">set_env</span>(<span class="str">"order-service"</span>, <span class="str">"CHAOS_KAFKA_BLOCK"</span>, <span class="str">"true"</span>),
+        d.<span class="fn">set_env</span>(<span class="str">"api-gateway"</span>, <span class="str">"CHAOS_ERROR_RATE"</span>, <span class="str">"0.9"</span>),
+    )
+
+<span class="kw">async def</span> <span class="fn">_cascade_deactivate</span>(d: <span class="cls">DockerChaos</span>):
+    <span class="kw">await</span> asyncio.<span class="fn">gather</span>(
+        d.<span class="fn">restart</span>(<span class="str">"postgres"</span>),
+        d.<span class="fn">set_env</span>(<span class="str">"order-service"</span>, <span class="str">"CHAOS_KAFKA_BLOCK"</span>, <span class="str">"false"</span>),
+        d.<span class="fn">set_env</span>(<span class="str">"api-gateway"</span>, <span class="str">"CHAOS_ERROR_RATE"</span>, <span class="str">"0"</span>),
+    )
+</code></pre>
+</section>
+
+<!-- ── 05 ENGINE API ── -->
+<section class="section" id="engine-api">
+  <div class="sec-header">
+    <div class="sec-num c-red">05</div>
+    <div>
+      <div class="sec-title">Chaos Engine REST API — chaos_engine/api.py</div>
+      <div class="sec-desc">FastAPI app on port 9090 — the control plane for all chaos operations</div>
+    </div>
+  </div>
+
+  <h3>Endpoints</h3>
+  <table>
+    <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>GET</code></td><td><code>/scenarios</code></td><td>List all 18 scenarios with current state</td></tr>
+      <tr><td><code>POST</code></td><td><code>/scenarios/{name}/activate</code></td><td>Activate a chaos scenario (optional body: <code>{"params": {}}</code>)</td></tr>
+      <tr><td><code>POST</code></td><td><code>/scenarios/{name}/deactivate</code></td><td>Deactivate and restore normal state</td></tr>
+      <tr><td><code>GET</code></td><td><code>/scenarios/{name}/status</code></td><td>Get state, timestamps, SLO metrics for one scenario</td></tr>
+      <tr><td><code>POST</code></td><td><code>/scenarios/{name}/mark_detected</code></td><td>Called by DCA when it emits a CognitiveEvent for this scenario</td></tr>
+      <tr><td><code>POST</code></td><td><code>/scenarios/{name}/mark_remediated</code></td><td>Called by DCA Execution Runner after successful remediation</td></tr>
+      <tr><td><code>GET</code></td><td><code>/health</code></td><td>Liveness probe</td></tr>
+      <tr><td><code>GET</code></td><td><code>/metrics</code></td><td>Prometheus metrics (scenario counts, SLO durations)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">chaos_engine/api.py</span>
+    <span class="lang">Python</span>
+  </div>
+  <pre><code><span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, HTTPException
+<span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
+<span class="kw">from</span> chaos_engine.controller <span class="kw">import</span> ChaosController
+<span class="kw">from</span> chaos_engine.scenarios <span class="kw">import</span> build_scenarios
+<span class="kw">from</span> chaos_engine.injectors.docker_chaos <span class="kw">import</span> DockerChaos
+<span class="kw">from</span> chaos_engine.injectors.database_chaos <span class="kw">import</span> DatabaseChaos
+<span class="kw">from</span> chaos_engine.injectors.queue_chaos <span class="kw">import</span> QueueChaos
+<span class="kw">from</span> pydantic <span class="kw">import</span> BaseModel
+<span class="kw">from</span> prometheus_client <span class="kw">import</span> Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+<span class="kw">from</span> starlette.responses <span class="kw">import</span> Response
+
+ACTIVATIONS = <span class="cls">Counter</span>(<span class="str">"chaos_activations_total"</span>, <span class="str">"Total scenarios activated"</span>, [<span class="str">"scenario"</span>])
+DETECTION_TIME = <span class="cls">Histogram</span>(<span class="str">"chaos_detection_seconds"</span>, <span class="str">"Time from activate to DCA detection"</span>, [<span class="str">"scenario"</span>])
+REMEDIATION_TIME = <span class="cls">Histogram</span>(<span class="str">"chaos_remediation_seconds"</span>, <span class="str">"Time from activate to full remediation"</span>, [<span class="str">"scenario"</span>])
+
+controller: <span class="cls">ChaosController</span> | None = None
+
+<span class="op">@</span>asynccontextmanager
+<span class="kw">async def</span> <span class="fn">lifespan</span>(app: FastAPI):
+    <span class="kw">global</span> controller
+    docker_chaos = <span class="cls">DockerChaos</span>()
+    db_chaos     = <span class="cls">DatabaseChaos</span>(dsn=<span class="str">"postgresql://shopcore:shopcore@localhost:5432/shopcore"</span>)
+    queue_chaos  = <span class="cls">QueueChaos</span>(bootstrap=<span class="str">"localhost:9092"</span>)
+    scenarios    = <span class="fn">build_scenarios</span>(docker_chaos, db_chaos, queue_chaos)
+    controller   = <span class="cls">ChaosController</span>(scenarios)
+    <span class="kw">yield</span>
+
+app = <span class="cls">FastAPI</span>(title=<span class="str">"Chaos Engine API"</span>, version=<span class="str">"13.0.0"</span>, lifespan=lifespan)
+
+
+<span class="kw">class</span> <span class="cls">ActivateRequest</span>(<span class="cls">BaseModel</span>):
+    params: dict = {}
+
+
+<span class="op">@</span>app.<span class="fn">get</span>(<span class="str">"/scenarios"</span>)
+<span class="kw">async def</span> <span class="fn">list_scenarios</span>():
+    <span class="kw">return</span> {<span class="str">"scenarios"</span>: controller.<span class="fn">get_status</span>()}
+
+<span class="op">@</span>app.<span class="fn">post</span>(<span class="str">"/scenarios/{name}/activate"</span>)
+<span class="kw">async def</span> <span class="fn">activate</span>(name: str, body: <span class="cls">ActivateRequest</span> = <span class="cls">ActivateRequest</span>()):
+    <span class="kw">if</span> name <span class="kw">not in</span> controller.scenarios:
+        <span class="kw">raise</span> <span class="cls">HTTPException</span>(<span class="num">404</span>, <span class="str">f"Unknown scenario: {name}"</span>)
+    <span class="kw">await</span> controller.<span class="fn">activate</span>(name, body.params)
+    ACTIVATIONS.<span class="fn">labels</span>(scenario=name).<span class="fn">inc</span>()
+    <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"activated"</span>, <span class="str">"scenario"</span>: name}
+
+<span class="op">@</span>app.<span class="fn">post</span>(<span class="str">"/scenarios/{name}/deactivate"</span>)
+<span class="kw">async def</span> <span class="fn">deactivate</span>(name: str):
+    <span class="kw">if</span> name <span class="kw">not in</span> controller.scenarios:
+        <span class="kw">raise</span> <span class="cls">HTTPException</span>(<span class="num">404</span>, <span class="str">f"Unknown scenario: {name}"</span>)
+    <span class="kw">await</span> controller.<span class="fn">deactivate</span>(name)
+    <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"deactivated"</span>, <span class="str">"scenario"</span>: name}
+
+<span class="op">@</span>app.<span class="fn">post</span>(<span class="str">"/scenarios/{name}/mark_detected"</span>)
+<span class="kw">async def</span> <span class="fn">mark_detected</span>(name: str):
+    <span class="cmt"># Called by DCA CognitiveEvent webhook or test harness</span>
+    s = controller.scenarios.<span class="fn">get</span>(name)
+    <span class="kw">if</span> s <span class="kw">and</span> s.activated_at <span class="kw">and</span> <span class="kw">not</span> s.detected_at:
+        <span class="kw">await</span> controller.<span class="fn">mark_detected</span>(name)
+        <span class="kw">if</span> s.detected_at:
+            dt = (s.detected_at - s.activated_at).total_seconds()
+            DETECTION_TIME.<span class="fn">labels</span>(scenario=name).<span class="fn">observe</span>(dt)
+    <span class="kw">return</span> {<span class="str">"ok"</span>: True}
+
+<span class="op">@</span>app.<span class="fn">post</span>(<span class="str">"/scenarios/{name}/mark_remediated"</span>)
+<span class="kw">async def</span> <span class="fn">mark_remediated</span>(name: str):
+    s = controller.scenarios.<span class="fn">get</span>(name)
+    <span class="kw">if</span> s <span class="kw">and</span> s.activated_at <span class="kw">and</span> <span class="kw">not</span> s.remediated_at:
+        <span class="kw">await</span> controller.<span class="fn">mark_remediated</span>(name)
+        <span class="kw">if</span> s.remediated_at:
+            dt = (s.remediated_at - s.activated_at).total_seconds()
+            REMEDIATION_TIME.<span class="fn">labels</span>(scenario=name).<span class="fn">observe</span>(dt)
+    <span class="kw">return</span> {<span class="str">"ok"</span>: True}
+
+<span class="op">@</span>app.<span class="fn">get</span>(<span class="str">"/health"</span>)
+<span class="kw">async def</span> <span class="fn">health</span>(): <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"ok"</span>, <span class="str">"service"</span>: <span class="str">"chaos-engine"</span>}
+
+<span class="op">@</span>app.<span class="fn">get</span>(<span class="str">"/metrics"</span>)
+<span class="kw">async def</span> <span class="fn">metrics</span>():
+    <span class="kw">return</span> <span class="cls">Response</span>(<span class="fn">generate_latest</span>(), media_type=CONTENT_TYPE_LATEST)
+</code></pre>
+
+  <div class="callout info">
+    <div class="callout-icon">⚡</div>
+    <div class="callout-body">
+      <div class="callout-title">Run the API</div>
+      <div class="callout-text"><code>cd chaos_lab/chaos_engine && pip install fastapi uvicorn docker asyncpg aiokafka httpx prometheus-client && python -m uvicorn api:app --port 9090 --reload</code><br><br>Verify: <code>curl http://localhost:9090/scenarios | python -m json.tool</code> — should list all 18 scenarios.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 06 SCHEDULER ── -->
+<section class="section" id="scheduler">
+  <div class="sec-header">
+    <div class="sec-num c-red">06</div>
+    <div>
+      <div class="sec-title">Scheduler — chaos_engine/scheduler.py</div>
+      <div class="sec-desc">Randomized gauntlet that fires scenarios every 2–5 minutes for autonomous self-healing validation</div>
+    </div>
+  </div>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">chaos_engine/scheduler.py</span>
+    <span class="lang">Python</span>
+  </div>
+  <pre><code><span class="kw">import</span> asyncio, random, logging, argparse, httpx, time
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+
+logger = logging.<span class="fn">getLogger</span>(<span class="str">"chaos-scheduler"</span>)
+
+ALL_SCENARIOS = [
+    <span class="str">"product_service_crash"</span>, <span class="str">"slow_database_query"</span>, <span class="str">"db_pool_exhaustion"</span>,
+    <span class="str">"gateway_high_latency"</span>, <span class="str">"gateway_high_error_rate"</span>, <span class="str">"circuit_breaker_open"</span>,
+    <span class="str">"order_service_slow"</span>, <span class="str">"kafka_producer_blocked"</span>, <span class="str">"order_error_spike"</span>,
+    <span class="str">"auth_service_failure"</span>, <span class="str">"cache_miss_storm"</span>, <span class="str">"redis_memory_full"</span>,
+    <span class="str">"redis_eviction_storm"</span>, <span class="str">"kafka_consumer_lag"</span>, <span class="str">"database_lock_contention"</span>,
+    <span class="str">"notification_consumer_slow"</span>, <span class="str">"gateway_oom"</span>,
+    <span class="cmt"># cascade_failure excluded from random gauntlet — run manually</span>
+]
+
+CHAOS_API = <span class="str">"http://localhost:9090"</span>
+
+
+<span class="kw">async def</span> <span class="fn">run_gauntlet</span>(
+    mode: str = <span class="str">"random"</span>,
+    interval_min: int = <span class="num">120</span>,
+    interval_max: int = <span class="num">300</span>,
+    duration_minutes: int = <span class="num">60</span>,
+    max_concurrent: int = <span class="num">1</span>,
+    inject_duration_s: int = <span class="num">120</span>,
+) -> None:
+    deadline = time.<span class="fn">monotonic</span>() + duration_minutes * <span class="num">60</span>
+    scenario_list = ALL_SCENARIOS[:]
+    <span class="kw">if</span> mode == <span class="str">"sequential"</span>:
+        random.<span class="fn">shuffle</span>(scenario_list)
+    iteration = <span class="num">0</span>
+    active: list[str] = []
+
+    <span class="kw">async with</span> httpx.<span class="cls">AsyncClient</span>() <span class="kw">as</span> client:
+        <span class="kw">while</span> time.<span class="fn">monotonic</span>() < deadline:
+            iteration += <span class="num">1</span>
+
+            <span class="cmt"># Pick next scenario</span>
+            <span class="kw">if</span> mode == <span class="str">"sequential"</span>:
+                name = scenario_list[(iteration - <span class="num">1</span>) % len(scenario_list)]
+            <span class="kw">else</span>:
+                name = random.<span class="fn">choice</span>(scenario_list)
+
+            logger.<span class="fn">info</span>(<span class="str">f"[gauntlet] iter={iteration} → activating {name}"</span>)
+            <span class="kw">await</span> client.<span class="fn">post</span>(<span class="str">f"{CHAOS_API}/scenarios/{name}/activate"</span>)
+            active.<span class="fn">append</span>(name)
+
+            <span class="cmt"># Wait for DCA to detect + remediate</span>
+            <span class="kw">await</span> asyncio.<span class="fn">sleep</span>(inject_duration_s)
+
+            <span class="cmt"># Deactivate (safety cleanup even if DCA already healed)</span>
+            <span class="kw">await</span> client.<span class="fn">post</span>(<span class="str">f"{CHAOS_API}/scenarios/{name}/deactivate"</span>)
+            active.<span class="fn">remove</span>(name)
+
+            <span class="cmt"># Cool-down before next injection</span>
+            wait = random.<span class="fn">randint</span>(interval_min, interval_max)
+            logger.<span class="fn">info</span>(<span class="str">f"[gauntlet] cool-down {wait}s before next scenario"</span>)
+            <span class="kw">await</span> asyncio.<span class="fn">sleep</span>(wait)
+
+    logger.<span class="fn">info</span>(<span class="str">f"[gauntlet] complete after {iteration} iterations"</span>)
+
+
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+    parser = argparse.<span class="cls">ArgumentParser</span>()
+    parser.<span class="fn">add_argument</span>(<span class="str">"--mode"</span>,             default=<span class="str">"random"</span>)
+    parser.<span class="fn">add_argument</span>(<span class="str">"--interval-min"</span>,     type=int, default=<span class="num">120</span>)
+    parser.<span class="fn">add_argument</span>(<span class="str">"--interval-max"</span>,     type=int, default=<span class="num">300</span>)
+    parser.<span class="fn">add_argument</span>(<span class="str">"--duration-minutes"</span>, type=int, default=<span class="num">60</span>)
+    parser.<span class="fn">add_argument</span>(<span class="str">"--inject-duration-s"</span>,type=int, default=<span class="num">120</span>)
+    args = parser.<span class="fn">parse_args</span>()
+    asyncio.<span class="fn">run</span>(<span class="fn">run_gauntlet</span>(
+        mode=args.mode,
+        interval_min=args.interval_min,
+        interval_max=args.interval_max,
+        duration_minutes=args.duration_minutes,
+        inject_duration_s=args.inject_duration_s,
+    ))
+</code></pre>
+
+  <div class="callout warn">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <div class="callout-title">Always start with <code>max_concurrent=1</code></div>
+      <div class="callout-text">Running multiple simultaneous scenarios makes it hard to match CognitiveEvents back to their originating scenario. Keep concurrent=1 until your detection event carries a stable <code>scenario_name</code> field. Only enable concurrent after adding the <code>chaos_session_id</code> correlation header to every ShopCore request.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 07 DOCKER INJECTORS ── -->
+<section class="section" id="docker-chaos">
+  <div class="sec-header">
+    <div class="sec-num c-red">07</div>
+    <div>
+      <div class="sec-title">Docker Injection Helpers — chaos_engine/injectors/</div>
+      <div class="sec-desc">Low-level helpers for network-level chaos and direct infrastructure manipulation</div>
+    </div>
+  </div>
+
+  <h3>network_chaos.py — Packet-Level Failures</h3>
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">chaos_engine/injectors/network_chaos.py</span>
+    <span class="lang">Python</span>
+  </div>
+  <pre><code><span class="kw">import</span> asyncio, logging, docker
+
+logger = logging.<span class="fn">getLogger</span>(<span class="str">"network-chaos"</span>)
+
+<span class="kw">class</span> <span class="cls">NetworkChaos</span>:
+    <span class="str">"""
+    Uses Linux tc (traffic control) inside containers for real packet-level chaos.
+    Container must run in privileged mode or have NET_ADMIN capability.
+    """</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.client = docker.<span class="fn">from_env</span>()
+
+    <span class="kw">async def</span> <span class="fn">add_latency</span>(self, service: str, latency_ms: int, jitter_ms: int = <span class="num">10</span>) -> None:
+        <span class="str">"""Inject network latency via tc netem inside the container."""</span>
+        cmd = (<span class="str">f"tc qdisc add dev eth0 root netem "
+               f"delay {latency_ms}ms {jitter_ms}ms distribution normal"</span>)
+        <span class="kw">await</span> self.<span class="fn">_exec</span>(service, cmd)
+        logger.<span class="fn">info</span>(<span class="str">f"[network-chaos] {service}: latency {latency_ms}ms ±{jitter_ms}ms"</span>)
+
+    <span class="kw">async def</span> <span class="fn">add_packet_loss</span>(self, service: str, loss_pct: int) -> None:
+        cmd = <span class="str">f"tc qdisc add dev eth0 root netem loss {loss_pct}%"</span>
+        <span class="kw">await</span> self.<span class="fn">_exec</span>(service, cmd)
+
+    <span class="kw">async def</span> <span class="fn">remove</span>(self, service: str) -> None:
+        <span class="str">"""Remove all tc rules — restore clean networking."""</span>
+        <span class="kw">await</span> self.<span class="fn">_exec</span>(service, <span class="str">"tc qdisc del dev eth0 root 2>/dev/null || true"</span>)
+        logger.<span class="fn">info</span>(<span class="str">f"[network-chaos] {service}: network rules removed"</span>)
+
+    <span class="kw">async def</span> <span class="fn">_exec</span>(self, service: str, cmd: str) -> None:
+        containers = self.client.containers.<span class="fn">list</span>(filters={<span class="str">"name"</span>: service})
+        <span class="kw">if not</span> containers:
+            <span class="kw">raise</span> <span class="cls">RuntimeError</span>(<span class="str">f"Container not found: {service}"</span>)
+        container = containers[<span class="num">0</span>]
+        <span class="kw">await</span> asyncio.<span class="fn">to_thread</span>(container.exec_run, [<span class="str">"sh"</span>, <span class="str">"-c"</span>, cmd], privileged=True)
+</code></pre>
+</section>
+
+<!-- ── 08 DB & QUEUE INJECTORS ── -->
+<section class="section" id="db-chaos">
+  <div class="sec-header">
+    <div class="sec-num c-red">08</div>
+    <div>
+      <div class="sec-title">DB &amp; Queue Injection — database_chaos.py + queue_chaos.py</div>
+      <div class="sec-desc">Direct infrastructure manipulation for Postgres and Kafka/Redpanda</div>
+    </div>
+  </div>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">chaos_engine/injectors/database_chaos.py</span>
+    <span class="lang">Python</span>
+  </div>
+  <pre><code><span class="kw">import</span> asyncio, asyncpg, logging
+
+logger = logging.<span class="fn">getLogger</span>(<span class="str">"database-chaos"</span>)
+
+<span class="kw">class</span> <span class="cls">DatabaseChaos</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, dsn: str):
+        self.dsn = dsn
+
+    <span class="kw">async def</span> <span class="fn">inject_lock_contention</span>(self, table: str = <span class="str">"products"</span>) -> None:
+        <span class="str">"""Hold an exclusive lock to simulate lock wait timeouts."""</span>
+        conn = <span class="kw">await</span> asyncpg.<span class="fn">connect</span>(self.dsn)
+        <span class="kw">try</span>:
+            <span class="kw">await</span> conn.<span class="fn">execute</span>(<span class="str">f"BEGIN; LOCK TABLE {table} IN EXCLUSIVE MODE;"</span>)
+            logger.<span class="fn">info</span>(<span class="str">f"[db-chaos] lock held on {table} — will release after 120s"</span>)
+            <span class="kw">await</span> asyncio.<span class="fn">sleep</span>(<span class="num">120</span>)
+        <span class="kw">finally</span>:
+            <span class="kw">await</span> conn.<span class="fn">execute</span>(<span class="str">"ROLLBACK"</span>)
+            <span class="kw">await</span> conn.<span class="fn">close</span>()
+
+    <span class="kw">async def</span> <span class="fn">check_pool_exhausted</span>(self, db_name: str) -> bool:
+        <span class="str">"""Return True if active connections ≥ max_connections - 2."""</span>
+        conn = <span class="kw">await</span> asyncpg.<span class="fn">connect</span>(self.dsn)
+        row = <span class="kw">await</span> conn.<span class="fn">fetchrow</span>(
+            <span class="str">"""SELECT count(*) AS active,
+                      current_setting('max_connections')::int AS max_c
+               FROM   pg_stat_activity
+               WHERE  datname = $1"""</span>,
+            db_name
+        )
+        <span class="kw">await</span> conn.<span class="fn">close</span>()
+        <span class="kw">return</span> row[<span class="str">"active"</span>] >= row[<span class="str">"max_c"</span>] - <span class="num">2</span>
+
+    <span class="kw">async def</span> <span class="fn">inject_slow_query_rule</span>(self, delay_ms: int = <span class="num">3000</span>) -> None:
+        <span class="str">"""ALTER ROLE to apply statement_timeout as a blunt slow-query hammer."""</span>
+        conn = <span class="kw">await</span> asyncpg.<span class="fn">connect</span>(self.dsn)
+        <span class="kw">await</span> conn.<span class="fn">execute</span>(<span class="str">f"ALTER ROLE shopcore SET statement_timeout = '{delay_ms}ms'"</span>)
+        <span class="kw">await</span> conn.<span class="fn">close</span>()
+
+    <span class="kw">async def</span> <span class="fn">clear_slow_query_rule</span>(self) -> None:
+        conn = <span class="kw">await</span> asyncpg.<span class="fn">connect</span>(self.dsn)
+        <span class="kw">await</span> conn.<span class="fn">execute</span>(<span class="str">"ALTER ROLE shopcore RESET statement_timeout"</span>)
+        <span class="kw">await</span> conn.<span class="fn">close</span>()
+</code></pre>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">chaos_engine/injectors/queue_chaos.py</span>
+    <span class="lang">Python</span>
+  </div>
+  <pre><code><span class="kw">import</span> asyncio, logging
+<span class="kw">from</span> aiokafka.admin <span class="kw">import</span> AIOKafkaAdminClient
+
+logger = logging.<span class="fn">getLogger</span>(<span class="str">"queue-chaos"</span>)
+
+<span class="kw">class</span> <span class="cls">QueueChaos</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, bootstrap: str = <span class="str">"localhost:9092"</span>):
+        self.bootstrap = bootstrap
+
+    <span class="kw">async def</span> <span class="fn">stop_consumer_group</span>(self, group_id: str, topic: str) -> None:
+        <span class="str">"""Force the consumer group to stop by deleting its offset (creates lag)."""</span>
+        admin = <span class="cls">AIOKafkaAdminClient</span>(bootstrap_servers=self.bootstrap)
+        <span class="kw">await</span> admin.<span class="fn">start</span>()
+        <span class="kw">try</span>:
+            <span class="kw">await</span> admin.<span class="fn">delete_consumer_group_offsets</span>(
+                group_id=group_id,
+                partitions=[(<span class="str">f"{topic}"</span>, <span class="num">0</span>)]
+            )
+            logger.<span class="fn">info</span>(<span class="str">f"[queue-chaos] deleted offset for {group_id} on {topic}"</span>)
+        <span class="kw">finally</span>:
+            <span class="kw">await</span> admin.<span class="fn">close</span>()
+
+    <span class="kw">async def</span> <span class="fn">check_consumer_lag</span>(self, group_id: str, topic: str, threshold: int = <span class="num">100</span>) -> bool:
+        admin = <span class="cls">AIOKafkaAdminClient</span>(bootstrap_servers=self.bootstrap)
+        <span class="kw">await</span> admin.<span class="fn">start</span>()
+        <span class="kw">try</span>:
+            offsets = <span class="kw">await</span> admin.<span class="fn">list_consumer_group_offsets</span>(group_id)
+            <span class="cmt"># Simplified: check if offset count is over threshold</span>
+            <span class="kw">return</span> len(offsets) == <span class="num">0</span> <span class="kw">or</span> any(v.offset > threshold <span class="kw">for</span> v <span class="kw">in</span> offsets.<span class="fn">values</span>())
+        <span class="kw">finally</span>:
+            <span class="kw">await</span> admin.<span class="fn">close</span>()
+</code></pre>
+</section>
+
+<!-- ── 09 ACTION REGISTRY ── -->
+<section class="section" id="action-registry">
+  <div class="sec-header">
+    <div class="sec-num c-green">09</div>
+    <div>
+      <div class="sec-title">Action Registry — remediation/action_registry.py</div>
+      <div class="sec-desc">Maps every CognitiveEvent type to its remediation handler so the DCA Execution Runner can auto-heal</div>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>CognitiveEvent Type</th><th>Handler</th><th>Action Function</th><th>Severity</th></tr></thead>
+    <tbody>
+      <tr><td><code>service_unreachable</code></td><td>service_handler</td><td><code>restart_service</code></td><td><span class="badge b-critical">Auto</span></td></tr>
+      <tr><td><code>service_crashed</code></td><td>service_handler</td><td><code>restart_service</code></td><td><span class="badge b-critical">Auto</span></td></tr>
+      <tr><td><code>service_error_spike</code></td><td>service_handler</td><td><code>scale_service</code></td><td><span class="badge b-critical">Auto</span></td></tr>
+      <tr><td><code>slow_query_detected</code></td><td>database_handler</td><td><code>kill_blocking_query</code></td><td><span class="badge b-high">Auto</span></td></tr>
+      <tr><td><code>db_pool_exhausted</code></td><td>database_handler</td><td><code>reset_pool</code></td><td><span class="badge b-critical">Auto</span></td></tr>
+      <tr><td><code>database_lock_wait_high</code></td><td>database_handler</td><td><code>kill_blocking_query</code></td><td><span class="badge b-high">Auto</span></td></tr>
+      <tr><td><code>high_latency_detected</code></td><td>service_handler</td><td><code>restart_service</code></td><td><span class="badge b-high">Auto</span></td></tr>
+      <tr><td><code>auth_service_failure</code></td><td>service_handler</td><td><code>restart_service</code></td><td><span class="badge b-critical">Auto</span></td></tr>
+      <tr><td><code>cache_miss_rate_high</code></td><td>cache_handler</td><td><code>flush_cache_pattern</code></td><td><span class="badge b-med">Auto</span></td></tr>
+      <tr><td><code>redis_memory_critical</code></td><td>cache_handler</td><td><code>adjust_maxmemory</code></td><td><span class="badge b-high">Auto</span></td></tr>
+      <tr><td><code>redis_eviction_storm</code></td><td>cache_handler</td><td><code>flush_cache_pattern</code></td><td><span class="badge b-med">Auto</span></td></tr>
+      <tr><td><code>consumer_lag_critical</code></td><td>queue_handler</td><td><code>reset_consumer_offset</code></td><td><span class="badge b-high">Auto</span></td></tr>
+      <tr><td><code>kafka_producer_blocked</code></td><td>queue_handler</td><td><code>restart_service</code></td><td><span class="badge b-high">Auto</span></td></tr>
+      <tr><td><code>order_processing_slow</code></td><td>service_handler</td><td><code>restart_service</code></td><td><span class="badge b-high">Auto</span></td></tr>
+      <tr><td><code>cascade_failure_detected</code></td><td>—</td><td><code>escalate_to_human</code></td><td><span class="badge b-critical">Manual</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">remediation/action_registry.py</span>
+    <span class="lang">Python</span>
+  </div>
+  <pre><code><span class="kw">from</span> remediation.handlers.service_handler  <span class="kw">import</span> ServiceHandler
+<span class="kw">from</span> remediation.handlers.database_handler <span class="kw">import</span> DatabaseHandler
+<span class="kw">from</span> remediation.handlers.cache_handler    <span class="kw">import</span> CacheHandler
+<span class="kw">from</span> remediation.handlers.queue_handler    <span class="kw">import</span> QueueHandler
+<span class="kw">from</span> remediation.handlers.config_handler   <span class="kw">import</span> ConfigHandler
+<span class="kw">from</span> typing <span class="kw">import</span> Callable, Awaitable, Any
+<span class="kw">import</span> logging
+
+logger = logging.<span class="fn">getLogger</span>(<span class="str">"action-registry"</span>)
+
+<span class="cls">ActionFn</span> = Callable[[dict], Awaitable[dict]]
+
+<span class="kw">class</span> <span class="cls">ActionRegistry</span>:
+    <span class="str">"""
+    Maps CognitiveEvent.event_type → callable remediation action.
+    The DCA Execution Runner calls: registry.get_action(event_type)(context)
+    """</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, svc: <span class="cls">ServiceHandler</span>, db: <span class="cls">DatabaseHandler</span>,
+                       cache: <span class="cls">CacheHandler</span>, queue: <span class="cls">QueueHandler</span>, config: <span class="cls">ConfigHandler</span>):
+        self._map: dict[str, <span class="cls">ActionFn</span>] = {
+            <span class="str">"service_unreachable"</span>:      svc.restart_service,
+            <span class="str">"service_crashed"</span>:          svc.restart_service,
+            <span class="str">"service_error_spike"</span>:      svc.scale_service,
+            <span class="str">"high_latency_detected"</span>:    svc.restart_service,
+            <span class="str">"auth_service_failure"</span>:     svc.restart_service,
+            <span class="str">"order_processing_slow"</span>:    svc.restart_service,
+            <span class="str">"slow_query_detected"</span>:      db.kill_blocking_query,
+            <span class="str">"db_pool_exhausted"</span>:        db.reset_pool,
+            <span class="str">"database_lock_wait_high"</span>:  db.kill_blocking_query,
+            <span class="str">"database_error_spike"</span>:     db.set_statement_timeout,
+            <span class="str">"cache_miss_rate_high"</span>:     cache.flush_cache_pattern,
+            <span class="str">"redis_memory_critical"</span>:    cache.adjust_maxmemory,
+            <span class="str">"redis_eviction_storm"</span>:     cache.flush_cache_pattern,
+            <span class="str">"consumer_lag_critical"</span>:    queue.reset_consumer_offset,
+            <span class="str">"kafka_producer_blocked"</span>:   queue.scale_consumer_group,
+            <span class="str">"cascade_failure_detected"</span>: self.<span class="fn">_escalate</span>,
+        }
+
+    <span class="kw">def</span> <span class="fn">get_action</span>(self, event_type: str) -> <span class="cls">ActionFn</span> | None:
+        action = self._map.<span class="fn">get</span>(event_type)
+        <span class="kw">if not</span> action:
+            logger.<span class="fn">warning</span>(<span class="str">f"No registered action for event_type={event_type}"</span>)
+        <span class="kw">return</span> action
+
+    <span class="kw">async def</span> <span class="fn">_escalate</span>(self, ctx: dict) -> dict:
+        logger.<span class="fn">critical</span>(<span class="str">f"CASCADE FAILURE — escalating to human: {ctx}"</span>)
+        <span class="cmt"># In Phase 14: this will page on-call via PagerDuty</span>
+        <span class="kw">return</span> {<span class="str">"action"</span>: <span class="str">"escalate_to_human"</span>, <span class="str">"status"</span>: <span class="str">"paged"</span>}
+</code></pre>
+</section>
+
+<!-- ── 10–14 HANDLERS ── -->
+<section class="section" id="service-handler">
+  <div class="sec-header">
+    <div class="sec-num c-green">10</div>
+    <div>
+      <div class="sec-title">Service Handler — remediation/handlers/service_handler.py</div>
+      <div class="sec-desc">restart_service · scale_service · health_gate</div>
+    </div>
+  </div>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">remediation/handlers/service_handler.py</span>
+    <span class="lang">Python</span>
+  </div>
+  <pre><code><span class="kw">import</span> asyncio, logging, httpx, docker
+
+logger = logging.<span class="fn">getLogger</span>(<span class="str">"service-handler"</span>)
+
+<span class="kw">class</span> <span class="cls">ServiceHandler</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.client = docker.<span class="fn">from_env</span>()
+
+    <span class="kw">async def</span> <span class="fn">restart_service</span>(self, ctx: dict) -> dict:
+        <span class="str">"""
+        ctx must contain: {"service_id": "product-service"}
+        Restarts the named Docker container and waits for health check.
+        """</span>
+        service = ctx.<span class="fn">get</span>(<span class="str">"service_id"</span>) <span class="kw">or</span> ctx.<span class="fn">get</span>(<span class="str">"entity_id"</span>, <span class="str">""</span>).<span class="fn">replace</span>(<span class="str">"svc:"</span>, <span class="str">""</span>)
+        containers = self.client.containers.<span class="fn">list</span>(filters={<span class="str">"name"</span>: service})
+        <span class="kw">if not</span> containers:
+            logger.<span class="fn">error</span>(<span class="str">f"[service-handler] container not found: {service}"</span>)
+            <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"error"</span>, <span class="str">"reason"</span>: <span class="str">"container_not_found"</span>}
+
+        container = containers[<span class="num">0</span>]
+        logger.<span class="fn">info</span>(<span class="str">f"[service-handler] restarting {service}"</span>)
+        <span class="kw">await</span> asyncio.<span class="fn">to_thread</span>(container.restart, timeout=<span class="num">30</span>)
+
+        <span class="cmt"># Wait for health endpoint to come back up (max 60s)</span>
+        health_url = <span class="str">f"http://localhost:{ctx.get('port', 8001)}/health"</span>
+        <span class="kw">for</span> _ <span class="kw">in</span> range(<span class="num">12</span>):
+            <span class="kw">await</span> asyncio.<span class="fn">sleep</span>(<span class="num">5</span>)
+            <span class="kw">try</span>:
+                <span class="kw">async with</span> httpx.<span class="cls">AsyncClient</span>(timeout=<span class="num">3</span>) <span class="kw">as</span> c:
+                    r = <span class="kw">await</span> c.<span class="fn">get</span>(health_url)
+                    <span class="kw">if</span> r.status_code == <span class="num">200</span>:
+                        logger.<span class="fn">info</span>(<span class="str">f"[service-handler] {service} healthy after restart"</span>)
+                        <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"ok"</span>, <span class="str">"action"</span>: <span class="str">"restart_service"</span>, <span class="str">"service"</span>: service}
+            <span class="kw">except</span>:
+                <span class="kw">pass</span>
+
+        logger.<span class="fn">error</span>(<span class="str">f"[service-handler] {service} did not recover after restart"</span>)
+        <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"timeout"</span>, <span class="str">"service"</span>: service}
+
+    <span class="kw">async def</span> <span class="fn">scale_service</span>(self, ctx: dict) -> dict:
+        <span class="str">"""Scale up replicas via docker compose. For now, restart is the proxy."""</span>
+        <span class="cmt"># Phase 14: integrate with docker compose --scale or k8s HPA</span>
+        logger.<span class="fn">info</span>(<span class="str">f"[service-handler] scale_service → falling back to restart for {ctx.get('service_id')}"</span>)
+        <span class="kw">return await</span> self.<span class="fn">restart_service</span>(ctx)
+</code></pre>
+</section>
+
+<section class="section" id="db-handler">
+  <div class="sec-header">
+    <div class="sec-num c-green">11</div>
+    <div>
+      <div class="sec-title">Database Handler — remediation/handlers/database_handler.py</div>
+      <div class="sec-desc">kill_blocking_query · reset_pool · set_statement_timeout</div>
+    </div>
+  </div>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">remediation/handlers/database_handler.py</span>
+    <span class="lang">Python</span>
+  </div>
+  <pre><code><span class="kw">import</span> asyncpg, logging
+
+logger = logging.<span class="fn">getLogger</span>(<span class="str">"database-handler"</span>)
+
+<span class="kw">class</span> <span class="cls">DatabaseHandler</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, dsn: str = <span class="str">"postgresql://shopcore:shopcore@localhost:5432/shopcore"</span>):
+        self.dsn = dsn
+
+    <span class="kw">async def</span> <span class="fn">kill_blocking_query</span>(self, ctx: dict) -> dict:
+        <span class="str">"""
+        Kill queries running longer than the threshold (default 5s).
+        Returns count of queries killed.
+        """</span>
+        threshold_s = ctx.<span class="fn">get</span>(<span class="str">"threshold_s"</span>, <span class="num">5</span>)
+        conn = <span class="kw">await</span> asyncpg.<span class="fn">connect</span>(self.dsn)
+        <span class="kw">try</span>:
+            rows = <span class="kw">await</span> conn.<span class="fn">fetch</span>(
+                <span class="str">"""
+                SELECT pg_terminate_backend(pid) AS killed, pid, query
+                FROM   pg_stat_activity
+                WHERE  state = 'active'
+                  AND  query_start < now() - ($1 * interval '1 second')
+                  AND  pid <> pg_backend_pid()
+                """,</span>
+                threshold_s
+            )
+            killed = [r <span class="kw">for</span> r <span class="kw">in</span> rows <span class="kw">if</span> r[<span class="str">"killed"</span>]]
+            logger.<span class="fn">info</span>(<span class="str">f"[db-handler] killed {len(killed)} blocking queries"</span>)
+            <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"ok"</span>, <span class="str">"killed"</span>: len(killed)}
+        <span class="kw">finally</span>:
+            <span class="kw">await</span> conn.<span class="fn">close</span>()
+
+    <span class="kw">async def</span> <span class="fn">reset_pool</span>(self, ctx: dict) -> dict:
+        <span class="str">"""Terminate all idle connections to force pool reset."""</span>
+        conn = <span class="kw">await</span> asyncpg.<span class="fn">connect</span>(self.dsn)
+        <span class="kw">try</span>:
+            rows = <span class="kw">await</span> conn.<span class="fn">fetch</span>(
+                <span class="str">"""
+                SELECT pg_terminate_backend(pid)
+                FROM   pg_stat_activity
+                WHERE  state = 'idle'
+                  AND  pid <> pg_backend_pid()
+                  AND  datname = current_database()
+                """</span>
+            )
+            logger.<span class="fn">info</span>(<span class="str">f"[db-handler] reset pool — terminated {len(rows)} idle connections"</span>)
+            <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"ok"</span>, <span class="str">"terminated"</span>: len(rows)}
+        <span class="kw">finally</span>:
+            <span class="kw">await</span> conn.<span class="fn">close</span>()
+
+    <span class="kw">async def</span> <span class="fn">set_statement_timeout</span>(self, ctx: dict) -> dict:
+        <span class="str">"""Apply a statement_timeout to stop runaway queries."""</span>
+        timeout_ms = ctx.<span class="fn">get</span>(<span class="str">"timeout_ms"</span>, <span class="num">2000</span>)
+        conn = <span class="kw">await</span> asyncpg.<span class="fn">connect</span>(self.dsn)
+        <span class="kw">try</span>:
+            <span class="kw">await</span> conn.<span class="fn">execute</span>(<span class="str">f"ALTER ROLE shopcore SET statement_timeout = '{timeout_ms}ms'"</span>)
+            logger.<span class="fn">info</span>(<span class="str">f"[db-handler] statement_timeout set to {timeout_ms}ms"</span>)
+            <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"ok"</span>, <span class="str">"timeout_ms"</span>: timeout_ms}
+        <span class="kw">finally</span>:
+            <span class="kw">await</span> conn.<span class="fn">close</span>()
+</code></pre>
+</section>
+
+<section class="section" id="cache-handler">
+  <div class="sec-header">
+    <div class="sec-num c-green">12</div>
+    <div>
+      <div class="sec-title">Cache Handler — remediation/handlers/cache_handler.py</div>
+      <div class="sec-desc">flush_cache_pattern · warm_cache · adjust_maxmemory</div>
+    </div>
+  </div>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">remediation/handlers/cache_handler.py</span>
+    <span class="lang">Python</span>
+  </div>
+  <pre><code><span class="kw">import</span> aioredis, logging
+
+logger = logging.<span class="fn">getLogger</span>(<span class="str">"cache-handler"</span>)
+
+<span class="kw">class</span> <span class="cls">CacheHandler</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, redis_url: str = <span class="str">"redis://localhost:6379"</span>):
+        self.redis_url = redis_url
+
+    <span class="kw">async def</span> <span class="fn">flush_cache_pattern</span>(self, ctx: dict) -> dict:
+        <span class="str">"""Delete all keys matching a pattern. Default: flush cart:* keys."""</span>
+        pattern = ctx.<span class="fn">get</span>(<span class="str">"pattern"</span>, <span class="str">"cart:*"</span>)
+        redis = <span class="kw">await</span> aioredis.<span class="fn">from_url</span>(self.redis_url)
+        <span class="kw">try</span>:
+            keys = <span class="kw">await</span> redis.<span class="fn">keys</span>(pattern)
+            <span class="kw">if</span> keys:
+                deleted = <span class="kw">await</span> redis.<span class="fn">delete</span>(*keys)
+                logger.<span class="fn">info</span>(<span class="str">f"[cache-handler] flushed {deleted} keys matching {pattern}"</span>)
+                <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"ok"</span>, <span class="str">"deleted"</span>: deleted}
+            <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"ok"</span>, <span class="str">"deleted"</span>: <span class="num">0</span>}
+        <span class="kw">finally</span>:
+            <span class="kw">await</span> redis.<span class="fn">close</span>()
+
+    <span class="kw">async def</span> <span class="fn">adjust_maxmemory</span>(self, ctx: dict) -> dict:
+        <span class="str">"""Reset Redis maxmemory to a sane value after OOM scenario."""</span>
+        new_limit = ctx.<span class="fn">get</span>(<span class="str">"maxmemory"</span>, <span class="str">"256mb"</span>)
+        redis = <span class="kw">await</span> aioredis.<span class="fn">from_url</span>(self.redis_url)
+        <span class="kw">try</span>:
+            <span class="kw">await</span> redis.<span class="fn">config_set</span>(<span class="str">"maxmemory"</span>, new_limit)
+            logger.<span class="fn">info</span>(<span class="str">f"[cache-handler] maxmemory reset to {new_limit}"</span>)
+            <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"ok"</span>, <span class="str">"maxmemory"</span>: new_limit}
+        <span class="kw">finally</span>:
+            <span class="kw">await</span> redis.<span class="fn">close</span>()
+</code></pre>
+</section>
+
+<section class="section" id="queue-handler">
+  <div class="sec-header">
+    <div class="sec-num c-green">13</div>
+    <div>
+      <div class="sec-title">Queue Handler — remediation/handlers/queue_handler.py</div>
+      <div class="sec-desc">reset_consumer_offset · scale_consumer_group · drain_dlq</div>
+    </div>
+  </div>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">remediation/handlers/queue_handler.py</span>
+    <span class="lang">Python</span>
+  </div>
+  <pre><code><span class="kw">from</span> aiokafka.admin <span class="kw">import</span> AIOKafkaAdminClient
+<span class="kw">from</span> aiokafka <span class="kw">import</span> AIOKafkaConsumer
+<span class="kw">import</span> asyncio, logging
+
+logger = logging.<span class="fn">getLogger</span>(<span class="str">"queue-handler"</span>)
+
+<span class="kw">class</span> <span class="cls">QueueHandler</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, bootstrap: str = <span class="str">"localhost:9092"</span>):
+        self.bootstrap = bootstrap
+
+    <span class="kw">async def</span> <span class="fn">reset_consumer_offset</span>(self, ctx: dict) -> dict:
+        <span class="str">"""
+        Reset the consumer group offset to latest to clear accumulated lag.
+        ctx: {"group_id": "order-processor", "topic": "order-events"}
+        """</span>
+        group_id = ctx.<span class="fn">get</span>(<span class="str">"group_id"</span>, <span class="str">"order-processor"</span>)
+        topic    = ctx.<span class="fn">get</span>(<span class="str">"topic"</span>,    <span class="str">"order-events"</span>)
+
+        consumer = <span class="cls">AIOKafkaConsumer</span>(
+            topic,
+            bootstrap_servers=self.bootstrap,
+            group_id=group_id,
+            auto_offset_reset=<span class="str">"latest"</span>,
+        )
+        <span class="kw">await</span> consumer.<span class="fn">start</span>()
+        <span class="kw">try</span>:
+            <span class="kw">await</span> consumer.<span class="fn">seek_to_end</span>()
+            <span class="kw">await</span> consumer.<span class="fn">commit</span>()
+            logger.<span class="fn">info</span>(<span class="str">f"[queue-handler] reset offset for {group_id}/{topic} to latest"</span>)
+            <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"ok"</span>, <span class="str">"action"</span>: <span class="str">"reset_consumer_offset"</span>, <span class="str">"group_id"</span>: group_id}
+        <span class="kw">finally</span>:
+            <span class="kw">await</span> consumer.<span class="fn">stop</span>()
+
+    <span class="kw">async def</span> <span class="fn">scale_consumer_group</span>(self, ctx: dict) -> dict:
+        <span class="cmt"># Phase 14: docker compose --scale notification-service=3</span>
+        logger.<span class="fn">info</span>(<span class="str">f"[queue-handler] scale_consumer_group called for {ctx.get('group_id')}"</span>)
+        <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"ok"</span>, <span class="str">"note"</span>: <span class="str">"scaling not yet implemented — restart triggered"</span>}
+</code></pre>
+</section>
+
+<section class="section" id="config-handler">
+  <div class="sec-header">
+    <div class="sec-num c-green">14</div>
+    <div>
+      <div class="sec-title">Config Handler — remediation/handlers/config_handler.py</div>
+      <div class="sec-desc">rollback_config · reload_config — resets chaos env vars and restarts the service</div>
+    </div>
+  </div>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">remediation/handlers/config_handler.py</span>
+    <span class="lang">Python</span>
+  </div>
+  <pre><code><span class="kw">import</span> asyncio, docker, logging
+
+logger = logging.<span class="fn">getLogger</span>(<span class="str">"config-handler"</span>)
+
+<span class="cmt"># Canonical "clean" env vars for each service — what we roll back TO</span>
+SAFE_ENV: dict[str, dict[str, str]] = {
+    <span class="str">"api-gateway"</span>:     {<span class="str">"CHAOS_LATENCY_MS"</span>: <span class="str">"0"</span>, <span class="str">"CHAOS_ERROR_RATE"</span>: <span class="str">"0"</span>, <span class="str">"CHAOS_CIRCUIT_OPEN"</span>: <span class="str">"false"</span>},
+    <span class="str">"product-service"</span>: {<span class="str">"CHAOS_SLOW_QUERY_MS"</span>: <span class="str">"0"</span>, <span class="str">"CHAOS_POOL_EXHAUST"</span>: <span class="str">"false"</span>, <span class="str">"CHAOS_DB_ERROR_RATE"</span>: <span class="str">"0"</span>},
+    <span class="str">"order-service"</span>:   {<span class="str">"CHAOS_ORDER_DELAY_MS"</span>: <span class="str">"0"</span>, <span class="str">"CHAOS_KAFKA_BLOCK"</span>: <span class="str">"false"</span>, <span class="str">"CHAOS_ORDER_FAIL_RATE"</span>: <span class="str">"0"</span>},
+    <span class="str">"user-service"</span>:    {<span class="str">"CHAOS_AUTH_FAIL_RATE"</span>: <span class="str">"0"</span>},
+    <span class="str">"cart-service"</span>:    {<span class="str">"CHAOS_CACHE_MISS"</span>: <span class="str">"false"</span>, <span class="str">"CHAOS_CART_FAIL_RATE"</span>: <span class="str">"0"</span>},
+}
+
+<span class="kw">class</span> <span class="cls">ConfigHandler</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.docker = docker.<span class="fn">from_env</span>()
+
+    <span class="kw">async def</span> <span class="fn">rollback_config</span>(self, ctx: dict) -> dict:
+        <span class="str">"""Reset all chaos env vars for a service to their safe defaults."""</span>
+        service = ctx.<span class="fn">get</span>(<span class="str">"service_id"</span>, <span class="str">""</span>).<span class="fn">replace</span>(<span class="str">"svc:"</span>, <span class="str">""</span>)
+        safe = SAFE_ENV.<span class="fn">get</span>(service, {})
+        <span class="kw">if not</span> safe:
+            logger.<span class="fn">warning</span>(<span class="str">f"[config-handler] no safe env map for {service}"</span>)
+            <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"skipped"</span>}
+
+        containers = self.docker.containers.<span class="fn">list</span>(filters={<span class="str">"name"</span>: service})
+        <span class="kw">if not</span> containers:
+            <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"error"</span>, <span class="str">"reason"</span>: <span class="str">"not_found"</span>}
+
+        container = containers[<span class="num">0</span>]
+        env_list = [<span class="str">f"{k}={v}"</span> <span class="kw">for</span> k, v <span class="kw">in</span> safe.<span class="fn">items</span>()]
+        <span class="kw">await</span> asyncio.<span class="fn">to_thread</span>(container.client.api.<span class="fn">update_container</span>, container.id, Env=env_list)
+        logger.<span class="fn">info</span>(<span class="str">f"[config-handler] rolled back {service} to safe env"</span>)
+        <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"ok"</span>, <span class="str">"service"</span>: service, <span class="str">"reset_keys"</span>: list(safe.<span class="fn">keys</span>())}
+
+    <span class="kw">async def</span> <span class="fn">reload_config</span>(self, ctx: dict) -> dict:
+        <span class="str">"""Rollback config then restart the service."""</span>
+        <span class="kw">await</span> self.<span class="fn">rollback_config</span>(ctx)
+        containers = self.docker.containers.<span class="fn">list</span>(filters={<span class="str">"name"</span>: ctx.<span class="fn">get</span>(<span class="str">"service_id"</span>, <span class="str">""</span>)})
+        <span class="kw">if</span> containers:
+            <span class="kw">await</span> asyncio.<span class="fn">to_thread</span>(containers[<span class="num">0</span>].restart, timeout=<span class="num">30</span>)
+        <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"ok"</span>, <span class="str">"action"</span>: <span class="str">"reload_config"</span>}
+</code></pre>
+</section>
+
+<!-- ── 15 CONNECTING SHOPCORE ── -->
+<section class="section" id="shopcore-connect">
+  <div class="sec-header">
+    <div class="sec-num c-purple">15</div>
+    <div>
+      <div class="sec-title">Connecting ShopCore to the Chaos Engine</div>
+      <div class="sec-desc">How the Chaos Engine talks to ShopCore — port map, network, chaos hooks</div>
+    </div>
+  </div>
+
+  <h3>Port Map — Everything Running Locally</h3>
+  <div class="port-grid">
+    <div class="port-card"><div class="port-num">3000</div><div class="port-name">React Frontend</div><div class="port-desc">Product grid, cart, checkout SPA</div></div>
+    <div class="port-card"><div class="port-num">8000</div><div class="port-name">API Gateway</div><div class="port-desc">Routes all external traffic</div></div>
+    <div class="port-card"><div class="port-num">8001</div><div class="port-name">Product Service</div><div class="port-desc">PostgreSQL-backed CRUD</div></div>
+    <div class="port-card"><div class="port-num">8002</div><div class="port-name">Order Service</div><div class="port-desc">Orders + Kafka publisher</div></div>
+    <div class="port-card"><div class="port-num">8003</div><div class="port-name">User Service</div><div class="port-desc">JWT auth + Redis sessions</div></div>
+    <div class="port-card"><div class="port-num">8004</div><div class="port-name">Cart Service</div><div class="port-desc">Redis-backed cart state</div></div>
+    <div class="port-card"><div class="port-num">8080</div><div class="port-name">DCA Perception API</div><div class="port-desc">Receives browser events</div></div>
+    <div class="port-card"><div class="port-num">9090</div><div class="port-name">Chaos Engine API</div><div class="port-desc">Activate/deactivate scenarios</div></div>
+    <div class="port-card"><div class="port-num">9091</div><div class="port-name">Prometheus</div><div class="port-desc">Metrics scraper</div></div>
+    <div class="port-card"><div class="port-num">9093</div><div class="port-name">AlertManager</div><div class="port-desc">Alert routing to DCA</div></div>
+    <div class="port-card"><div class="port-num">5432</div><div class="port-name">PostgreSQL</div><div class="port-desc">Shared database</div></div>
+    <div class="port-card"><div class="port-num">6379</div><div class="port-name">Redis</div><div class="port-desc">Sessions + cart cache</div></div>
+    <div class="port-card"><div class="port-num">9092</div><div class="port-name">Redpanda (Kafka)</div><div class="port-desc">order-events topic</div></div>
+  </div>
+
+  <h3>How Chaos Engine Reaches ShopCore</h3>
+  <p>The Chaos Engine runs inside the same Docker network (<code>shopcore</code>) as all ShopCore services. It connects three ways:</p>
+
+  <div class="callout info">
+    <div class="callout-icon">1️⃣</div>
+    <div class="callout-body">
+      <div class="callout-title">Docker API — Container Env Mutation</div>
+      <div class="callout-text">The Chaos Engine mounts <code>/var/run/docker.sock</code> so it can call <code>docker update</code> on running containers to mutate env vars like <code>CHAOS_SLOW_QUERY_MS=3000</code>. ShopCore services read these on every request (not at startup), so the failure is live-injected with zero restart.</div>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <div class="callout-icon">2️⃣</div>
+    <div class="callout-body">
+      <div class="callout-title">Direct asyncpg — Database Injection</div>
+      <div class="callout-text">For DB scenarios (lock contention, pool exhaustion), the Chaos Engine opens its own asyncpg connection to <code>postgresql://shopcore:shopcore@postgres:5432/shopcore</code> and runs SQL directly: <code>LOCK TABLE products</code>, <code>pg_terminate_backend</code>, <code>ALTER ROLE SET statement_timeout</code>.</div>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <div class="callout-icon">3️⃣</div>
+    <div class="callout-body">
+      <div class="callout-title">AIOKafkaAdminClient — Queue Injection</div>
+      <div class="callout-text">For Kafka scenarios, the Chaos Engine uses <code>AIOKafkaAdminClient</code> connecting to <code>redpanda:9092</code> to delete consumer group offsets (triggering lag) or stop consumer groups externally.</div>
+    </div>
+  </div>
+
+  <h3>Signal Flow: ShopCore → DCA</h3>
+  <div class="flow">
+    <div class="flow-row">
+      <div class="flow-box red">ShopCore Service emits anomalous log</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Fluent Bit tails /var/log/containers/</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box blue">Redpanda: raw.logs topic</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-box red">Prometheus scrapes /metrics on all services</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box yellow">alert.rules.yml fires</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box blue">AlertManager → DCA webhook</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-box red">Health check misses on /health endpoint</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">DCA APIPoller (15s interval)</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box blue">cognitive.events Kafka topic</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-box blue">cognitive.events</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box purple">DCA Reasoning Engine → remediation plan</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box green">Execution Runner calls handler → ShopCore heals</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 16 SOURCES YAML ── -->
+<section class="section" id="sources-yaml">
+  <div class="sec-header">
+    <div class="sec-num c-purple">16</div>
+    <div>
+      <div class="sec-title">sources.yaml — ShopCore Perception Entries</div>
+      <div class="sec-desc">Append these to your existing sources.yaml so the DCA perception layer watches all ShopCore signals</div>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <div class="callout-title">Append, don't replace</div>
+      <div class="callout-text">Add these entries inside the existing <code>sources:</code> list. Do not overwrite the file — your existing Phase 1–11 sources must remain active.</div>
+    </div>
+  </div>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">instrumentation/sources.yaml — ShopCore entries to append</span>
+    <span class="lang">YAML</span>
+  </div>
+  <pre><code><span class="cmt">  # ── SHOPCORE API HEALTH POLLING ────────────────────────────────────────</span>
+  - id: svc:api-gateway
+    type: api
+    tags: [shopcore, gateway, critical]
+    url: http://localhost:8000/health
+    poll_interval_s: 15
+    timeout_s: 3.0
+    latency_warn_ms: 200
+    latency_high_ms: 1000
+
+  - id: svc:product-service
+    type: api
+    tags: [shopcore, products, critical]
+    url: http://localhost:8001/health
+    poll_interval_s: 15
+    timeout_s: 3.0
+
+  - id: svc:order-service
+    type: api
+    tags: [shopcore, orders, critical]
+    url: http://localhost:8002/health
+    poll_interval_s: 15
+    timeout_s: 3.0
+
+  - id: svc:user-service
+    type: api
+    tags: [shopcore, auth, critical]
+    url: http://localhost:8003/health
+    poll_interval_s: 15
+    timeout_s: 3.0
+
+  - id: svc:cart-service
+    type: api
+    tags: [shopcore, cart]
+    url: http://localhost:8004/health
+    poll_interval_s: 15
+    timeout_s: 3.0
+
+  <span class="cmt"># ── SHOPCORE DATABASE DIRECT MONITORING ────────────────────────────────</span>
+  - id: db:shopcore-postgres
+    type: database
+    tags: [shopcore, production, critical]
+    dsn: postgresql://shopcore:shopcore@localhost:5432/shopcore
+    slow_query_ms: 100.0
+    pool_warn_pct: 0.70
+    pool_critical_pct: 0.90
+    replication_lag_warn_s: 30.0
+    lock_wait_warn_s: 5.0
+    poll_interval_s: 15
+
+  <span class="cmt"># ── SHOPCORE REDIS MONITORING ───────────────────────────────────────────</span>
+  - id: cache:shopcore-redis
+    type: redis
+    tags: [shopcore, cache]
+    url: redis://localhost:6379
+    memory_warn_pct: 0.70
+    memory_critical_pct: 0.85
+    eviction_rate_warn: 100
+    poll_interval_s: 15
+
+  <span class="cmt"># ── SHOPCORE KAFKA QUEUE MONITORING ────────────────────────────────────</span>
+  - id: queue:order-events
+    type: queue
+    tags: [shopcore, orders]
+    broker_type: kafka
+    queue_name: order-events
+    consumer_group: order-processor
+    poll_interval_s: 15
+    lag_warn: 100
+    lag_critical: 1000
+    kafka_bootstrap: localhost:9092
+
+  <span class="cmt"># ── SHOPCORE LOG SOURCES (mapped from Fluent Bit tags) ─────────────────</span>
+  - id: svc:api-gateway
+    type: log
+    tags: [shopcore, gateway, critical]
+    fluent_bit_tag: api-gateway
+    log_format: json
+
+  - id: svc:product-service
+    type: log
+    tags: [shopcore, products]
+    fluent_bit_tag: product-service
+    log_format: json
+
+  - id: svc:order-service
+    type: log
+    tags: [shopcore, orders]
+    fluent_bit_tag: order-service
+    log_format: json
+
+  - id: svc:user-service
+    type: log
+    tags: [shopcore, auth]
+    fluent_bit_tag: user-service
+    log_format: json
+
+  - id: svc:cart-service
+    type: log
+    tags: [shopcore, cart]
+    fluent_bit_tag: cart-service
+    log_format: json
+</code></pre>
+</section>
+
+<!-- ── 17 FLUENT BIT + PROMETHEUS ── -->
+<section class="section" id="fluent-bit">
+  <div class="sec-header">
+    <div class="sec-num c-purple">17</div>
+    <div>
+      <div class="sec-title">Fluent Bit + Prometheus Config</div>
+      <div class="sec-desc">instrumentation/fluent-bit.conf and instrumentation/prometheus.yml — ship every signal to the DCA</div>
+    </div>
+  </div>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">instrumentation/fluent-bit.conf</span>
+    <span class="lang">Fluent Bit</span>
+  </div>
+  <pre><code><span class="cmt"># Tails Docker container logs for all ShopCore services → Redpanda raw.logs</span>
+
+[SERVICE]
+    Flush        2
+    Daemon       Off
+    Log_Level    info
+
+<span class="cmt"># ── INPUTS ──────────────────────────────────────────────────────────────</span>
+[INPUT]
+    Name              tail
+    Path              /var/log/containers/*api-gateway*.log
+    Tag               api-gateway
+    Parser            docker
+    Refresh_Interval  5
+    Mem_Buf_Limit     50MB
+
+[INPUT]
+    Name              tail
+    Path              /var/log/containers/*product-service*.log
+    Tag               product-service
+    Parser            docker
+    Refresh_Interval  5
+    Mem_Buf_Limit     50MB
+
+[INPUT]
+    Name              tail
+    Path              /var/log/containers/*order-service*.log
+    Tag               order-service
+    Parser            docker
+    Refresh_Interval  5
+    Mem_Buf_Limit     50MB
+
+[INPUT]
+    Name              tail
+    Path              /var/log/containers/*user-service*.log
+    Tag               user-service
+    Parser            docker
+    Refresh_Interval  5
+
+[INPUT]
+    Name              tail
+    Path              /var/log/containers/*cart-service*.log
+    Tag               cart-service
+    Parser            docker
+    Refresh_Interval  5
+
+<span class="cmt"># ── FILTER: parse inner JSON log line ───────────────────────────────────</span>
+[FILTER]
+    Name          parser
+    Match         *
+    Key_Name      log
+    Parser        json
+    Reserve_Data  True
+
+<span class="cmt"># ── OUTPUT: Redpanda raw.logs topic ─────────────────────────────────────</span>
+[OUTPUT]
+    Name           kafka
+    Match          *
+    Brokers        redpanda:9092
+    Topics         raw.logs
+    Timestamp_Key  timestamp
+    Retry_Limit    3
+
+[PARSER]
+    Name        docker
+    Format      json
+    Time_Key    time
+    Time_Format %Y-%m-%dT%H:%M:%S.%L
+    Time_Keep   On
+</code></pre>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">instrumentation/prometheus.yml</span>
+    <span class="lang">YAML</span>
+  </div>
+  <pre><code>global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - alert.rules.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: [<span class="str">"alertmanager:9093"</span>]
+
+scrape_configs:
+
+  - job_name: api-gateway
+    static_configs:
+      - targets: [<span class="str">"api-gateway:8000"</span>]
+    metrics_path: /metrics
+
+  - job_name: product-service
+    static_configs:
+      - targets: [<span class="str">"product-service:8001"</span>]
+    metrics_path: /metrics
+
+  - job_name: order-service
+    static_configs:
+      - targets: [<span class="str">"order-service:8002"</span>]
+    metrics_path: /metrics
+
+  - job_name: user-service
+    static_configs:
+      - targets: [<span class="str">"user-service:8003"</span>]
+    metrics_path: /metrics
+
+  - job_name: cart-service
+    static_configs:
+      - targets: [<span class="str">"cart-service:8004"</span>]
+    metrics_path: /metrics
+
+  - job_name: chaos-engine
+    static_configs:
+      - targets: [<span class="str">"chaos-engine:9090"</span>]
+    metrics_path: /metrics
+</code></pre>
+</section>
+
+<!-- ── 18 DOCKER COMPOSE ── -->
+<section class="section" id="docker-compose">
+  <div class="sec-header">
+    <div class="sec-num c-purple">18</div>
+    <div>
+      <div class="sec-title">docker-compose.yml — Full Stack with Chaos Engine</div>
+      <div class="sec-desc">The single compose file that brings up ShopCore + infrastructure + Chaos Engine + DCA perception</div>
+    </div>
+  </div>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">target_system/docker-compose.yml</span>
+    <span class="lang">YAML</span>
+  </div>
+  <pre><code>version: <span class="str">'3.8'</span>
+
+networks:
+  shopcore:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  redpanda_data:
+
+services:
+
+  <span class="cmt"># ── INFRASTRUCTURE ──────────────────────────────────────────────────────</span>
+
+  postgres:
+    image: timescale/timescaledb:latest-pg15
+    environment:
+      POSTGRES_USER: shopcore
+      POSTGRES_PASSWORD: shopcore
+      POSTGRES_DB: shopcore
+    ports: [<span class="str">"5432:5432"</span>]
+    volumes: [<span class="str">"postgres_data:/var/lib/postgresql/data"</span>]
+    networks: [shopcore]
+    command: postgres -c max_connections=100 -c shared_buffers=256MB -c log_min_duration_statement=100
+
+  redis:
+    image: redis/redis-stack:latest
+    ports: [<span class="str">"6379:6379"</span>]
+    volumes: [<span class="str">"redis_data:/data"</span>]
+    networks: [shopcore]
+
+  redpanda:
+    image: redpandadata/redpanda:latest
+    ports: [<span class="str">"9092:9092"</span>, <span class="str">"9644:9644"</span>]
+    volumes: [<span class="str">"redpanda_data:/var/lib/redpanda/data"</span>]
+    networks: [shopcore]
+    command: >
+      redpanda start --smp 1 --memory 512M
+      --kafka-addr 0.0.0.0:9092
+      --advertise-kafka-addr redpanda:9092
+
+  fluent-bit:
+    image: fluent/fluent-bit:latest
+    volumes:
+      - /var/lib/docker/containers:/var/log/containers:ro
+      - ./instrumentation/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+    networks: [shopcore]
+    depends_on: [redpanda]
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports: [<span class="str">"9091:9090"</span>]
+    volumes:
+      - ./instrumentation/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./instrumentation/alert.rules.yml:/etc/prometheus/alert.rules.yml
+    networks: [shopcore]
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    ports: [<span class="str">"9093:9093"</span>]
+    volumes:
+      - ./instrumentation/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    networks: [shopcore]
+
+  <span class="cmt"># ── SHOPCORE SERVICES ────────────────────────────────────────────────────</span>
+
+  api-gateway:
+    build: ./api_gateway
+    ports: [<span class="str">"8000:8000"</span>]
+    environment:
+      PRODUCT_SERVICE_URL: http://product-service:8001
+      ORDER_SERVICE_URL:   http://order-service:8002
+      USER_SERVICE_URL:    http://user-service:8003
+      CHAOS_LATENCY_MS:    <span class="str">"0"</span>
+      CHAOS_ERROR_RATE:    <span class="str">"0"</span>
+      CHAOS_CIRCUIT_OPEN:  <span class="str">"false"</span>
+    labels:
+      - <span class="str">"com.shopcore.service=api-gateway"</span>
+    networks: [shopcore]
+    depends_on: [product-service, order-service, user-service]
+
+  product-service:
+    build: ./product_service
+    ports: [<span class="str">"8001:8001"</span>]
+    environment:
+      DATABASE_URL:        postgresql://shopcore:shopcore@postgres:5432/shopcore
+      CHAOS_SLOW_QUERY_MS: <span class="str">"0"</span>
+      CHAOS_POOL_EXHAUST:  <span class="str">"false"</span>
+      CHAOS_DB_ERROR_RATE: <span class="str">"0"</span>
+    labels:
+      - <span class="str">"com.shopcore.service=product-service"</span>
+    networks: [shopcore]
+    depends_on: [postgres]
+
+  order-service:
+    build: ./order_service
+    ports: [<span class="str">"8002:8002"</span>]
+    environment:
+      DATABASE_URL:          postgresql://shopcore:shopcore@postgres:5432/shopcore
+      KAFKA_BOOTSTRAP:       redpanda:9092
+      CHAOS_ORDER_DELAY_MS:  <span class="str">"0"</span>
+      CHAOS_KAFKA_BLOCK:     <span class="str">"false"</span>
+      CHAOS_ORDER_FAIL_RATE: <span class="str">"0"</span>
+    labels:
+      - <span class="str">"com.shopcore.service=order-service"</span>
+    networks: [shopcore]
+    depends_on: [postgres, redpanda]
+
+  user-service:
+    build: ./user_service
+    ports: [<span class="str">"8003:8003"</span>]
+    environment:
+      REDIS_URL:            redis://redis:6379
+      JWT_SECRET:           <span class="str">"shopcore-dev-secret-change-in-prod"</span>
+      CHAOS_AUTH_FAIL_RATE: <span class="str">"0"</span>
+    labels:
+      - <span class="str">"com.shopcore.service=user-service"</span>
+    networks: [shopcore]
+    depends_on: [redis]
+
+  cart-service:
+    build: ./cart_service
+    ports: [<span class="str">"8004:8004"</span>]
+    environment:
+      REDIS_URL:            redis://redis:6379
+      CHAOS_CACHE_MISS:     <span class="str">"false"</span>
+      CHAOS_CART_FAIL_RATE: <span class="str">"0"</span>
+    labels:
+      - <span class="str">"com.shopcore.service=cart-service"</span>
+    networks: [shopcore]
+    depends_on: [redis]
+
+  frontend:
+    build: ./frontend
+    ports: [<span class="str">"3000:3000"</span>]
+    environment:
+      REACT_APP_API_URL:        http://localhost:8000
+      REACT_APP_PERCEPTION_URL: http://localhost:8080
+    networks: [shopcore]
+    depends_on: [api-gateway]
+
+  <span class="cmt"># ── CHAOS ENGINE ────────────────────────────────────────────────────────</span>
+
+  chaos-engine:
+    build: ../chaos_engine
+    ports: [<span class="str">"9090:9090"</span>]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  <span class="cmt"># required for container manipulation</span>
+    environment:
+      DOCKER_COMPOSE_PROJECT:  shopcore
+      DB_DSN:                  postgresql://shopcore:shopcore@postgres:5432/shopcore
+      KAFKA_BOOTSTRAP:         redpanda:9092
+    networks: [shopcore]
+    depends_on: [postgres, redpanda, redis]
+
+  <span class="cmt"># ── DCA PERCEPTION LAYER ────────────────────────────────────────────────</span>
+
+  perception-api:
+    image: your-dca-image:latest   <span class="cmt"># your existing Phase 1/2 image</span>
+    ports: [<span class="str">"8080:8080"</span>]
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      SOURCES_CONFIG:          /app/sources.yaml
+    volumes:
+      - ./instrumentation/sources.yaml:/app/sources.yaml
+    networks: [shopcore]
+    depends_on: [redpanda]
+</code></pre>
+</section>
+
+<!-- ── 19 STARTUP ── -->
+<section class="section" id="startup">
+  <div class="sec-header">
+    <div class="sec-num c-yellow">19</div>
+    <div>
+      <div class="sec-title">Startup Sequence</div>
+      <div class="sec-desc">Exact order of operations to bring up the full lab</div>
+    </div>
+  </div>
+
+  <ol class="steps">
+    <li>
+      <div>
+        <div class="step-title">Start the full ShopCore stack</div>
+        <div class="step-body">
+          <code>cd chaos_lab/target_system && docker compose up --build -d</code><br>
+          Wait ~45s for all services to initialize. Run <code>docker compose ps</code> — every service should show "Up" or "healthy".
+        </div>
+      </div>
+    </li>
+    <li>
+      <div>
+        <div class="step-title">Verify all health endpoints</div>
+        <div class="step-body">
+          <code>curl http://localhost:8000/health</code> → API Gateway<br>
+          <code>curl http://localhost:8001/health</code> → Product Service<br>
+          <code>curl http://localhost:8002/health</code> → Order Service<br>
+          <code>curl http://localhost:8003/health</code> → User Service<br>
+          <code>curl http://localhost:8004/health</code> → Cart Service<br>
+          All should return <code>{"status": "ok"}</code>.
+        </div>
+      </div>
+    </li>
+    <li>
+      <div>
+        <div class="step-title">Verify the Chaos Engine is live</div>
+        <div class="step-body">
+          <code>curl http://localhost:9090/scenarios | python -m json.tool</code><br>
+          Should return all 18 scenarios in state <code>"idle"</code>.
+        </div>
+      </div>
+    </li>
+    <li>
+      <div>
+        <div class="step-title">Append ShopCore entries to sources.yaml and restart DCA perception</div>
+        <div class="step-body">
+          Copy the sources.yaml entries from Section 16 into <code>cognitive_perception/sources.yaml</code>. Restart the perception service:<br>
+          <code>docker compose restart perception-api</code><br>
+          Check the DCA dashboard — all ShopCore entities should appear as "Healthy" (green).
+        </div>
+      </div>
+    </li>
+    <li>
+      <div>
+        <div class="step-title">Register the new action handlers with the DCA Execution Runner</div>
+        <div class="step-body">
+          Import and instantiate the new handlers in your Phase 10/11 action executor bootstrap:<br>
+          <code>from remediation.action_registry import ActionRegistry</code><br>
+          Wire the registry to the DCA's existing action execution pipeline so CognitiveEvents automatically trigger the correct handler.
+        </div>
+      </div>
+    </li>
+    <li>
+      <div>
+        <div class="step-title">Open the frontend and verify the full flow</div>
+        <div class="step-body">
+          Navigate to <code>http://localhost:3000</code>. Register an account, add items to cart, place an order. Check the DCA dashboard — all five ShopCore services should appear "Healthy".
+        </div>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<!-- ── 20 FIRST TEST ── -->
+<section class="section" id="first-test">
+  <div class="sec-header">
+    <div class="sec-num c-yellow">20</div>
+    <div>
+      <div class="sec-title">First Manual Chaos Test</div>
+      <div class="sec-desc">Step-by-step: inject a scenario, watch the DCA detect it, verify remediation</div>
+    </div>
+  </div>
+
+  <h3>Test: slow_database_query (ANM-04)</h3>
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">Terminal 1 — watch cognitive.events in real time</span>
+    <span class="lang">Shell</span>
+  </div>
+  <pre><code>kcat -b localhost:9092 -t cognitive.events -C -f <span class="str">'%s\n'</span> | python -m json.tool
+</code></pre>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">Terminal 2 — inject the slow query chaos</span>
+    <span class="lang">Shell</span>
+  </div>
+  <pre><code><span class="cmt"># Activate — 3s artificial SQL sleep on every product query</span>
+curl -X POST http://localhost:9090/scenarios/slow_database_query/activate \
+  -H <span class="str">"Content-Type: application/json"</span> -d <span class="str">'{}'</span>
+
+<span class="cmt"># Watch Terminal 1 — within 60s you should see:</span>
+<span class="cmt"># {"event_type": "slow_query_detected", "entity_id": "db:shopcore-postgres", ...}</span>
+
+<span class="cmt"># After DCA auto-remediates, deactivate the chaos</span>
+curl -X POST http://localhost:9090/scenarios/slow_database_query/deactivate
+
+<span class="cmt"># Check that DCA marked the detection and remediation timestamps</span>
+curl http://localhost:9090/scenarios/slow_database_query/status | python -m json.tool
+</code></pre>
+
+  <div class="callout tip">
+    <div class="callout-icon">✅</div>
+    <div class="callout-body">
+      <div class="callout-title">Expected Output in cognitive.events</div>
+      <div class="callout-text">
+        <code>{"event_type": "slow_query_detected", "entity_id": "db:shopcore-postgres", "severity": "high", "details": {"query_time_ms": 3041, "threshold_ms": 500}, "source": "metric_adapter", "timestamp": "..."}</code>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout tip">
+    <div class="callout-icon">🔧</div>
+    <div class="callout-body">
+      <div class="callout-title">Expected Remediation in Execution Runner logs</div>
+      <div class="callout-text">
+        <code>[database-handler] killed 2 blocking queries (threshold=5s)</code><br>
+        <code>[chaos-controller] slow_database_query remediated in 87.3s (SLO: 120s) ✅</code>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 21 TEST SUITE ── -->
+<section class="section" id="test-suite">
+  <div class="sec-header">
+    <div class="sec-num c-yellow">21</div>
+    <div>
+      <div class="sec-title">Full Test Suite</div>
+      <div class="sec-desc">Install deps, run detection tests, remediation tests, and the full E2E suite</div>
+    </div>
+  </div>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">Install test dependencies</span>
+    <span class="lang">Shell</span>
+  </div>
+  <pre><code>pip install pytest pytest-asyncio pytest-timeout httpx asyncpg aiokafka aioredis docker
+</code></pre>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">Run detection tests (fast — just checks CognitiveEvent appears within SLO)</span>
+    <span class="lang">Shell</span>
+  </div>
+  <pre><code>pytest tests/test_chaos_detection.py -v --timeout=120
+
+<span class="cmt"># 18 tests — one per scenario
+# Pass criteria: event_type matches expected AND appears within detection SLO</span>
+</code></pre>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">Run remediation tests (medium — verifies each handler produces a healthy state)</span>
+    <span class="lang">Shell</span>
+  </div>
+  <pre><code>pytest tests/test_remediation.py -v --timeout=180
+
+<span class="cmt"># 11 tests — one per critical/high handler
+# Pass criteria: handler returns {"status": "ok"} AND health endpoint is 200 after</span>
+</code></pre>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">Run full E2E suite (slow — full inject → detect → heal → verify loop)</span>
+    <span class="lang">Shell</span>
+  </div>
+  <pre><code>pytest tests/test_e2e_scenarios.py -v --timeout=300
+
+<span class="cmt"># 8 tests — one per critical/high scenario
+# Pass criteria: service is healthy after remediation within remediation SLO</span>
+</code></pre>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">Run everything with coverage</span>
+    <span class="lang">Shell</span>
+  </div>
+  <pre><code>pytest tests/ -v --timeout=300 --tb=short \
+  --cov=chaos_engine --cov=remediation \
+  --cov-report=term-missing \
+  --cov-report=html:htmlcov/
+</code></pre>
+
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">Run the randomized chaos gauntlet (60-minute autonomous validation)</span>
+    <span class="lang">Shell</span>
+  </div>
+  <pre><code>python chaos_engine/scheduler.py \
+  --mode random \
+  --interval-min 120 \
+  --interval-max 300 \
+  --duration-minutes 60 \
+  --inject-duration-s 120
+
+<span class="cmt"># The DCA should self-heal every injection without human intervention.
+# Watch the Phase 12 Observability Dashboard to track detection and remediation times.</span>
+</code></pre>
+</section>
+
+<!-- ── 22 SCORING ── -->
+<section class="section" id="scoring">
+  <div class="sec-header">
+    <div class="sec-num c-orange">22</div>
+    <div>
+      <div class="sec-title">Scoring &amp; Phase 13 Pass Criteria</div>
+      <div class="sec-desc">Quantitative definition of what "Phase 13 passed" means — run this scorecard CLI after the test suite</div>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon c-green">✅</div>
+        <div class="card-title">Required: Detection Score ≥ 90%</div>
+      </div>
+      <div class="card-body">At least 16 of 18 scenarios must produce a CognitiveEvent within their detection SLO. Measured by <code>test_chaos_detection.py</code>.</div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon c-green">✅</div>
+        <div class="card-title">Required: Remediation Score ≥ 75%</div>
+      </div>
+      <div class="card-body">At least 6 of 8 critical/high scenarios must self-heal within their remediation SLO. Measured by <code>test_e2e_scenarios.py</code>.</div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon c-green">✅</div>
+        <div class="card-title">Required: Zero Data Loss</div>
+      </div>
+      <div class="card-body">No CognitiveEvent on <code>cognitive.perception_failures</code> that isn't also retried or escalated. Failures must never be silently dropped.</div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon c-yellow">⭐</div>
+        <div class="card-title">Stretch: Playbook Learning</div>
+      </div>
+      <div class="card-body">After 3 successful remediations of <code>slow_query_detected</code>, the fast-path rule engine should handle it without LLM inference. Verify via Phase 10 playbook store.</div>
+    </div>
+  </div>
+
+  <h3>Scorecard CLI — tests/score_phase13.py</h3>
+  <div class="code-top">
+    <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+    <span class="fname">tests/score_phase13.py</span>
+    <span class="lang">Python</span>
+  </div>
+  <pre><code><span class="str">"""Run after the test suite to print a Phase 13 pass/fail scorecard."""</span>
+<span class="kw">import</span> json, sys
+<span class="kw">from</span> pathlib <span class="kw">import</span> Path
+
+<span class="kw">def</span> <span class="fn">score</span>(results_json: str):
+    results      = json.<span class="fn">loads</span>(<span class="cls">Path</span>(results_json).<span class="fn">read_text</span>())
+    det_pass     = results[<span class="str">"detection_pass"</span>]
+    det_total    = results[<span class="str">"detection_total"</span>]
+    remed_pass   = results[<span class="str">"remediation_pass"</span>]
+    remed_total  = results[<span class="str">"remediation_total"</span>]
+
+    pct_d = det_pass   / det_total   * <span class="num">100</span>
+    pct_r = remed_pass / remed_total * <span class="num">100</span>
+
+    print(<span class="str">f"\n{'═'*52}"</span>)
+    print(<span class="str">f"  PHASE 13 CHAOS LAB SCORECARD"</span>)
+    print(<span class="str">f"{'═'*52}"</span>)
+    print(<span class="str">f"  Detection:    {det_pass}/{det_total} ({pct_d:.0f}%)  {'✅ PASS' if pct_d >= 90 else '❌ FAIL'}"</span>)
+    print(<span class="str">f"  Remediation:  {remed_pass}/{remed_total} ({pct_r:.0f}%)  {'✅ PASS' if pct_r >= 75 else '❌ FAIL'}"</span>)
+    phase_pass = pct_d >= <span class="num">90</span> <span class="kw">and</span> pct_r >= <span class="num">75</span>
+    print(<span class="str">f"\n  PHASE 13: {'✅ PASSED — Ready for Phase 14' if phase_pass else '❌ FAILED — Fix SLOs above'}"</span>)
+    print(<span class="str">f"{'═'*52}\n"</span>)
+    <span class="kw">return</span> phase_pass
+
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+    sys.<span class="fn">exit</span>(<span class="num">0</span> <span class="kw">if</span> <span class="fn">score</span>(sys.argv[<span class="num">1</span>]) <span class="kw">else</span> <span class="num">1</span>)
+</code></pre>
+
+  <h3>Cumulative Test Count</h3>
+  <table>
+    <thead><tr><th>Phase</th><th>New Tests</th><th>Running Total</th></tr></thead>
+    <tbody>
+      <tr><td>Phases 1–11</td><td>176</td><td>176</td></tr>
+      <tr><td>Phase 13 — test_chaos_detection.py</td><td>18</td><td>194</td></tr>
+      <tr><td>Phase 13 — test_remediation.py</td><td>11</td><td>205</td></tr>
+      <tr><td>Phase 13 — test_e2e_scenarios.py</td><td>8</td><td>213</td></tr>
+      <tr><td>Phase 13 — test_chaos_controller.py</td><td>8</td><td><strong>221</strong></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout tip">
+    <div class="callout-icon">🏁</div>
+    <div class="callout-body">
+      <div class="callout-title">Phase 13 Complete — Proceed to Phase 14: Production Hardening</div>
+      <div class="callout-text">When the scorecard shows ✅ on both Detection (≥90%) and Remediation (≥75%), your DCA has proven it can detect, reason about, plan for, and autonomously heal real infrastructure failures. Phase 14 adds rate limiting on action execution, multi-tenancy isolation, audit logging for all remediation actions, and hardened security for the Chaos API itself.</div>
+    </div>
+  </div>
+
+  <h3>What Connects to the Architecture Later (Phase 14+)</h3>
+  <ul class="checklist">
+    <li><span class="chk">→</span>The Chaos Engine's <code>/metrics</code> endpoint will be scraped by your production Prometheus to give chaos SLO visibility alongside service SLOs.</li>
+    <li><span class="chk">→</span>The <code>mark_detected</code> and <code>mark_remediated</code> endpoints will be called by the DCA's CognitiveEvent webhook automatically — no manual curl required in Phase 14.</li>
+    <li><span class="chk">→</span>ShopCore will be replaced by (or augmented with) your real production microservices in Phase 15 — the same Chaos Engine scenarios work against any service that exposes the same chaos env-var hooks.</li>
+    <li><span class="chk">→</span>The ActionRegistry will gain a PagerDuty escalation path in Phase 14 for the <code>cascade_failure_detected</code> event type that currently only logs.</li>
+    <li><span class="chk">→</span>The Scheduler's randomized gauntlet becomes a nightly CI job in Phase 15 — running against a staging clone of production, with automated pass/fail gating on the scorecard.</li>
+  </ul>
+</section>
+
+</main>
+</div>
+</div>
+
+<script>
+  // Active nav link highlighting
+  const sections = document.querySelectorAll('.section');
+  const links    = document.querySelectorAll('nav a');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`nav a[href="#${e.target.id}"]`);
+        if (active) {
+          active.classList.add('active');
+          active.scrollIntoView({ block: 'nearest' });
+        }
+      }
+    });
+  }, { rootMargin: '-10% 0px -80% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

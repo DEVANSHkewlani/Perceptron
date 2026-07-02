@@ -1,0 +1,254 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.area-btn{width:100%;text-align:left;padding:14px 16px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);background:var(--color-background-primary);cursor:pointer;display:flex;align-items:center;gap:12px;transition:border-color .15s,background .15s}
+.area-btn:hover{background:var(--color-background-secondary);border-color:var(--color-border-secondary)}
+.area-btn.active{border-color:var(--color-border-primary);background:var(--color-background-secondary)}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.area-title{font-size:14px;font-weight:500;color:var(--color-text-primary)}
+.area-sub{font-size:12px;color:var(--color-text-secondary);margin-top:2px}
+.chevron{margin-left:auto;font-size:16px;color:var(--color-text-tertiary);transition:transform .2s}
+.chevron.open{transform:rotate(90deg)}
+.panel{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);background:var(--color-background-primary);overflow:hidden}
+.concept-row{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-bottom:0.5px solid var(--color-border-tertiary);cursor:pointer;transition:background .12s}
+.concept-row:last-child{border-bottom:none}
+.concept-row:hover{background:var(--color-background-secondary)}
+.concept-row.selected{background:var(--color-background-secondary)}
+.concept-label{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.concept-desc{font-size:12px;color:var(--color-text-secondary);margin-top:3px;line-height:1.5}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;margin-top:5px;font-weight:500}
+.detail-box{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:16px;background:var(--color-background-primary)}
+.detail-box h3{font-size:15px;font-weight:500;color:var(--color-text-primary);margin-bottom:8px}
+.detail-box p{font-size:13px;color:var(--color-text-secondary);line-height:1.65;margin-bottom:10px}
+.detail-box p:last-child{margin-bottom:0}
+.takeaway{background:var(--color-background-secondary);border-left:3px solid;border-radius:0;padding:10px 12px;margin-top:10px;font-size:12px;color:var(--color-text-secondary);line-height:1.6}
+.ask-btn{width:100%;margin-top:12px;padding:9px 14px;font-size:13px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;cursor:pointer;color:var(--color-text-primary);text-align:left;transition:background .12s}
+.ask-btn:hover{background:var(--color-background-secondary)}
+.week-badge{font-size:11px;padding:2px 10px;border-radius:20px;font-weight:500;white-space:nowrap;flex-shrink:0}
+</style>
+
+<h2 class="sr-only">Mental model study guide — five areas to master before coding</h2>
+
+<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:16px;padding:4px 0 16px">
+
+<div id="area-list" style="display:flex;flex-direction:column;gap:8px"></div>
+
+<div id="right-col" style="display:flex;flex-direction:column;gap:12px">
+  <div id="concept-list" class="panel"></div>
+  <div id="detail-pane" style="display:none"></div>
+</div>
+
+</div>
+
+<script>
+const AREAS = [
+  {
+    id:'cog', label:'Cognitive architectures', week:'Week 1',
+    color:'#534AB7', bg:'#EEEDFE', textColor:'#3C3489',
+    tagBg:'#EEEDFE', tagColor:'#3C3489',
+    desc:'How minds are structured',
+    why:'Decades of research on how intelligent systems organise cognition, memory, and goals.',
+    takeaway:'Cognition is a structured set of cooperating systems — each with a distinct memory type and access pattern.',
+    concepts:[
+      {name:'SOAR', tag:'Architecture', desc:'State, Operator And Result. A cognitive architecture where a system maintains hierarchical goals and applies operators (actions) to move from one state toward a goal state. Introduced procedural memory as a first-class concept.',
+       detail:`SOAR is a general cognitive architecture developed at Carnegie Mellon and Michigan. Its core insight is that problem-solving is goal-directed state-space search. The system has a working memory (current facts), a long-term procedural memory (rules for how to act), and a mechanism for learning new rules when it gets stuck (chunking).\n\nFor your project: SOAR shows you that a reasoning system needs explicit goal representations, not just "prompt the LLM." It shows you why procedural memory (playbooks) is a separate store from episodic memory (what happened). It shows you why the planning system needs to decompose goals into sub-goals before acting.`,
+       prompt:'Explain SOAR cognitive architecture and how its concepts apply to our digital cognitive architecture'},
+      {name:'ACT-R', tag:'Architecture', desc:'Adaptive Control of Thought–Rational. Models cognition as multiple independent modules (perceptual, declarative, procedural, motor) that communicate through a central bottleneck.',
+       detail:`ACT-R (John Anderson, CMU) is the most empirically grounded cognitive architecture — its predictions match human reaction time data at millisecond granularity. The key idea: cognition is not one process. It is a chorus of specialised modules (vision, audition, declarative memory, procedural memory, goal, imaginal) that each work independently but communicate through a central buffer.\n\nFor your project: ACT-R directly maps to your memory system design. Its declarative module ≈ your semantic/episodic memory. Its procedural module ≈ your procedural memory. Its goal buffer ≈ your working memory's active task. The bottleneck idea explains why you need a Situation Assessor — because the reasoning engine (like ACT-R's central executive) can only handle one chunk of context at a time.`,
+       prompt:'Explain ACT-R cognitive architecture and how its module structure maps to our memory system design'},
+      {name:'Global Workspace Theory', tag:'Framework', desc:'A conscious "workspace" broadcasts information to specialised unconscious modules. Your World Model is a computational approximation of this broadcast mechanism.',
+       detail:`Global Workspace Theory (Bernard Baars, 1988) proposes that the brain has many specialised processors running in parallel, and consciousness is the mechanism that selects which information to broadcast to all of them. Think of it as a public noticeboard: most processing is private and local, but important information gets posted to the board and every module can read it.\n\nFor your project: this is the direct theoretical ancestor of your World Model. The World Model is the "global workspace" — a shared, authoritative, continuously updated representation that every component (reasoning, planning, memory agents) can query. The Situation Assessor is the selection mechanism: it decides what is important enough to post to the workspace. This is not a metaphor — it is the exact architectural principle.`,
+       prompt:'Explain Global Workspace Theory and how it relates to the World Model in our cognitive architecture'},
+      {name:'Active Inference', tag:'Framework', desc:'Agents act to minimise the gap between their model of the world and reality. Perception and action are both driven by prediction error.',
+       detail:`Active Inference (Karl Friston, 2010) proposes a unified theory of brain function: the brain is a prediction machine that constantly generates a model of the world, compares it against sensory input, and acts to reduce the discrepancy (prediction error). Crucially, agents can reduce prediction error two ways: by updating their model (perception/learning) or by acting to make reality conform to their predictions.\n\nFor your project: Active Inference is the theoretical backbone for why your feedback loop matters. The Feedback Loop is how the system reduces prediction error — it checks whether the world state matches what the plan expected, and updates accordingly. The World Model's "predictive state" component is a literal implementation of Active Inference's generative model.`,
+       prompt:'Explain Active Inference and how it relates to the feedback loop and predictive state in our architecture'},
+      {name:'Predictive Processing', tag:'Framework', desc:'The brain continuously predicts sensory input; perception is the correction of these predictions, not direct observation of reality.',
+       detail:`Predictive Processing (Andy Clark, Jakob Hohwy) extends Active Inference into a full theory of perception. The brain does not passively receive sensory data — it actively generates predictions about what it should be receiving, then only processes the error signal (the difference between prediction and reality). This is more efficient and faster than processing raw data.\n\nFor your project: this is why your temporal awareness layer tracks baselines and anomaly deviations rather than just raw values. A CPU at 85% is not interesting. A CPU at 85% when the model predicted 20% based on historical patterns is a huge prediction error — that is the signal worth acting on. The Confidence Score on events is the system's estimate of how surprising (prediction-error-laden) the observation is.`,
+       prompt:'Explain Predictive Processing and how it motivates anomaly detection and confidence scoring in our architecture'},
+    ]
+  },
+  {
+    id:'world', label:'World models', week:'Week 2',
+    color:'#0F6E56', bg:'#E1F5EE', textColor:'#085041',
+    tagBg:'#E1F5EE', tagColor:'#085041',
+    desc:'Compressed, predictive reality',
+    why:'A world model is not a database. It is a dynamic, compressed representation of reality that supports prediction — not just retrieval.',
+    takeaway:'Represent the world as compressed latent state capturing essential variables and causal relationships — not raw data.',
+    concepts:[
+      {name:'Latent state modeling', tag:'Concept', desc:'Represent the world as a compressed internal state vector, not raw observations. The compression captures what matters; everything else is noise.',
+       detail:`In machine learning, "latent" means hidden or internal. A latent state model compresses high-dimensional observations (millions of sensor readings, log lines, metric values) into a low-dimensional internal representation that captures the essential structure of the environment.\n\nThe classic example is a VAE (Variational Autoencoder): it takes an image and compresses it into a 128-dimensional vector. That vector is the "latent state." From it, you can reconstruct the image, generate variations, and — crucially — predict future states.\n\nFor your project: your World Model IS a latent state model. The Entity Registry + Relationship Map + Temporal State is your compressed representation. You don't store every raw log line in the World Model — you store the entities, their states, and their relationships. The compression is lossy by design: it discards irrelevant noise and retains causal structure.`,
+       prompt:'Explain latent state modeling in detail and how the World Model component implements it'},
+      {name:'Predictive world models', tag:'Concept', desc:'A model that answers not just "what is true now" but "what will be true in 5 minutes if no action is taken." The difference between a dashboard and a cognitive system.',
+       detail:`A predictive world model can simulate forward in time. Given the current state and a set of dynamics (how state evolves), it generates future states without needing to observe them. This is what enables proactive decision-making: act before the problem manifests, not after.\n\nThe canonical research line is Hafner et al.'s Dreamer (2020): a RL agent that learns a world model and uses it to plan entirely in imagination, then transfers those plans to reality. The agent never needs to take a risky real-world action to evaluate it — it evaluates in the model first.\n\nFor your project: your World Model's "predictive state" component (5/15/60-minute projections) is a lightweight version of this. Phase 12 (GNNs) is the full version — a graph neural network trained on your episodic history that can predict how graph state propagates forward in time.`,
+       prompt:'Explain predictive world models and how our architecture implements them in Phase 6 and Phase 12'},
+      {name:'Scene graphs', tag:'Structure', desc:'A hierarchical graph representing objects in an environment, their properties, and their spatial and semantic relationships.',
+       detail:`A scene graph is a data structure used in computer graphics and robotics to represent a scene as a graph of objects and their relationships. Each node is an entity (a robot arm, a table, a cup). Each edge is a relationship (the cup is ON the table, the arm is ABOVE the cup). Nodes carry properties (the cup is empty, the table is 90cm high).\n\nScene graphs are the bridge between raw perception and symbolic reasoning. A camera image is opaque to a reasoning engine. A scene graph extracted from that image is queryable, traversable, and can be reasoned over relationally.\n\nFor your project: your Knowledge Graph IS a scene graph for your software environment. Services, databases, users, and agents are the objects. DEPENDS_ON, COMMUNICATES_WITH, OWNS are the relationships. The perception layer's job of extracting entity_refs from raw signals is exactly the scene graph construction step.`,
+       prompt:'Explain scene graphs and how our knowledge graph is a scene graph for software environments'},
+      {name:'JEPA', tag:'Research', desc:'Joint Embedding Predictive Architecture (Yann LeCun). Predicts future world states in embedding space rather than pixel space — far more efficient.',
+       detail:`JEPA (LeCun, 2022) is LeCun's proposed alternative to generative models for world modeling. Instead of predicting future raw observations (expensive, often spurious detail), JEPA predicts future embeddings — compressed representations of observations. The key insight: you don't need to predict every pixel of the next video frame. You need to predict the abstract structure (where is the ball going, what is the relevant trajectory) without predicting irrelevant details (exact texture of the floor).\n\nThis is why JEPA is more efficient and more robust than generative world models. It focuses prediction on what matters semantically, not on pixel-perfect reconstruction.\n\nFor your project: this is the theoretical justification for your entity-and-relationship representation. You don't need to reconstruct raw log lines. You need to predict entity states and relationship changes. JEPA says: predict in embedding space (your structured World Model), not in observation space (raw logs).`,
+       prompt:'Explain JEPA and why predicting in embedding space is more appropriate for our world model than predicting raw data'},
+      {name:'Environment simulation', tag:'Concept', desc:'Running a mental simulation of the environment to test plans before executing them in reality. Prevents costly real-world mistakes.',
+       detail:`Environment simulation is used in robotics, game AI, and industrial control: before taking an action, the agent runs a simulation of the environment to predict the outcome. If the simulation shows the action will fail, the agent can revise the plan without any real-world cost.\n\nThe famous example is AlphaGo: before placing a stone, the system simulates thousands of possible game continuations. The stone placement that leads to the best outcomes in simulation is chosen.\n\nFor your project: your planning system performs a lightweight version of this. Before executing a rollback procedure, the plan checks preconditions and expected outcomes — this is a model-based check, not a real-world trial. Phase 12's GNN model enables full forward simulation: given the current graph state, simulate what happens if we restart service X, and evaluate the predicted outcome before committing.`,
+       prompt:'Explain environment simulation and how our planning system and predictive models implement plan-before-acting'},
+    ]
+  },
+  {
+    id:'agent', label:'Agentic systems', week:'Week 3',
+    color:'#993C1D', bg:'#FAECE7', textColor:'#712B13',
+    tagBg:'#FAECE7', tagColor:'#712B13',
+    desc:'Goal-directed autonomous execution',
+    why:'You need to understand how high-level goals decompose into tasks, get assigned to executors, and produce aggregated results.',
+    takeaway:'The planner decides what to do. The executor does it. This separation is non-negotiable for safe autonomous systems.',
+    concepts:[
+      {name:'LangGraph', tag:'Framework', desc:'Models agent behaviour as a stateful graph. Nodes are processing steps; edges are transitions. State persists across the entire execution, not just per-call.',
+       detail:`LangGraph (by LangChain, 2024) is the most architecturally aligned framework for your project. Unlike "chains" (linear sequences of LLM calls) or "agents" (reactive loops), LangGraph models execution as a stateful directed graph where each node processes the shared state and returns a modified version of it.\n\nThe key insight LangGraph gets right: state is the primary object. Every node reads from state and writes to state. This means the reasoning engine can inspect what the planner decided, the executor can check what the reasoner concluded, and the feedback loop can update the shared understanding — all through one typed state object.\n\nFor your project: your cognitive architecture IS a LangGraph — your perception, reasoning, planning, and execution layers are nodes. The World Model is the shared state that flows through all of them. Understanding LangGraph's state management, conditional edges, and human-in-the-loop patterns gives you concrete implementation patterns for the more abstract architecture.`,
+       prompt:'Explain LangGraph in detail — how stateful graphs work and how they map to our cognitive architecture components'},
+      {name:'Planner-executor separation', tag:'Pattern', desc:'The planner decides WHAT to do (goal → plan). The executor decides HOW to do it (plan step → action). Separation enables safe reasoning before commitment.',
+       detail:`The planner-executor architecture is the most important pattern in autonomous systems. Without it, the system that decides to "restart the database" is the same system that does it — there is no intermediate step where the plan can be reviewed, validated, or rejected.\n\nWith separation:\n1. The Planner receives a decision from the Reasoning Engine ("restart postgres-primary")\n2. The Planner generates a structured plan with preconditions, steps, expected outcomes, rollback\n3. The plan is validated (can we execute this? are preconditions met?)\n4. If requires_human_approval=true, the plan is surfaced to a human\n5. The Executor carries out each step and reports results back to the Planner\n6. The Planner monitors success criteria\n\nThis separation is what makes it safe to build auto-executing systems. The Planner is a checkpoint, not just a translator.`,
+       prompt:'Explain the planner-executor pattern in detail and why our architecture implements them as separate components'},
+      {name:'AutoGen', tag:'Framework', desc:'Multi-agent conversation framework. Agents message each other to accomplish tasks. Useful for understanding agent communication patterns.',
+       detail:`AutoGen (Microsoft Research, 2023) models multi-agent coordination as structured conversations between agents. Each agent has a role, a system prompt, and a set of tools. Agents message each other, and through their conversation they collectively accomplish tasks that no single agent could do alone.\n\nThe key concepts AutoGen demonstrates:\n- GroupChat: multiple agents with different roles discussing a problem\n- ConversableAgent: any agent that can both send and receive messages\n- UserProxy: an agent that can execute code and report results back\n- Nested chats: one conversation can spawn sub-conversations\n\nFor your project: AutoGen's GroupChat maps to your multi-agent coordination protocol. The Monitor agent sees an anomaly and "messages" the Planner agent. The Planner "messages" a Specialist agent for domain expertise. The result is returned and the Planner generates a plan. AutoGen makes this pattern concrete.`,
+       prompt:'Explain AutoGen multi-agent framework and how its communication patterns apply to our agent coordination design'},
+      {name:'CrewAI', tag:'Framework', desc:'Defines agents with roles, goals, and backstories. Agents collaborate on tasks with explicit role boundaries and handoffs.',
+       detail:`CrewAI structures multi-agent systems around the metaphor of a crew — each agent has a role, a goal, and a backstory. Tasks are assigned to the most appropriate crew member. The Crew orchestrates who does what and in what order.\n\nWhat CrewAI gets right that is relevant for your project:\n- Role specialisation: a Security Analyst agent has a different system prompt, tools, and memory access than a Database Performance agent. This matches your "specialist agent" pattern.\n- Task delegation: the crew manager (your planner agent) can delegate sub-tasks to specialists without knowing their implementation details\n- Sequential vs parallel execution: tasks with dependencies run sequentially; independent tasks run in parallel\n\nWhat CrewAI doesn't get right: it lacks a proper world model. Each agent's context is largely re-synthesised from scratch per task. Your architecture improves on this by giving all agents shared access to a continuously maintained World Model.`,
+       prompt:'Explain CrewAI and how our architecture improves on it by adding a shared World Model'},
+      {name:'Distributed agent coordination', tag:'Pattern', desc:'How multiple agents share state, avoid conflicts, and coordinate on tasks across a shared environment without stepping on each other.',
+       detail:`Distributed agent coordination is the hardest problem in multi-agent systems. When multiple agents operate in the same environment, they can:\n- Generate conflicting plans (two agents both decide to restart the same database)\n- Create race conditions (agent A scales up while agent B scales down)\n- Consume each other's results without knowing it (both agents try to process the same alert)\n\nThe solutions your architecture uses:\n1. Shared event bus: all agents publish to and subscribe from the same Kafka bus. No agent has a private perception stream.\n2. Knowledge graph as coordination layer: when an agent picks up a task, it creates a Task node assigned to itself. Other agents can see this and avoid duplicate work.\n3. Planner as arbiter: when two agents generate conflicting plans targeting the same entity, the conflict is detected by the knowledge graph and escalated to the planner agent for resolution.\n4. Event sourcing: the event bus is the authoritative record. If two agents both publish events, the world model incorporates both. Conflicts surface through inconsistency in the model, not through race conditions.`,
+       prompt:'Explain distributed agent coordination patterns and how our architecture handles conflicts and shared state'},
+    ]
+  },
+  {
+    id:'graph', label:'Graph intelligence', week:'Week 4',
+    color:'#854F0B', bg:'#FAEEDA', textColor:'#633806',
+    tagBg:'#FAEEDA', tagColor:'#633806',
+    desc:'Reasoning over relationships',
+    why:'The world is not rows in a table. Services depend on services. Events cause events. Only a graph can represent this for causal reasoning.',
+    takeaway:'Model entities, relationships, and properties in Neo4j. Use Cypher to traverse paths, find neighbors, and compute blast radius.',
+    concepts:[
+      {name:'Property graphs', tag:'Structure', desc:'Graph model where both nodes AND edges carry arbitrary key-value properties. The standard for knowledge graphs.',
+       detail:`A property graph is a graph where:\n- Nodes represent entities and carry properties (key-value pairs)\n- Edges represent relationships, are directed, have a type label, and also carry properties\n- Both nodes and edges can have multiple labels/types\n\nExample: a Service node might have {name: "auth-service", version: "2.3.1", health: "degraded", last_seen: "2024-01-15T14:23:11Z"}. A DEPENDS_ON edge between auth-service and postgres-primary might have {weight: 0.95, first_seen: "2023-06-01", last_confirmed: "2024-01-15"}.\n\nThis is fundamentally different from a relational database where relationships are implicit (foreign keys) and carry no properties. In a property graph, the relationship IS a first-class data structure. The weight on a DEPENDS_ON edge — expressing how strongly confirmed this dependency is — has no natural home in a relational model.`,
+       prompt:'Explain property graphs and why they are the right data structure for our knowledge graph'},
+      {name:'Neo4j and Cypher', tag:'Tool', desc:'The leading graph database. Cypher is its query language — expressive, readable, and designed for graph traversal patterns.',
+       detail:`Neo4j is the most widely used graph database. It implements the property graph model natively — nodes and relationships are first-class storage objects, not simulated through join tables.\n\nCypher is Neo4j's query language. It uses ASCII art to describe graph patterns:\n\nMATCH (s:Service)-[:DEPENDS_ON]->(db:Database {name: 'postgres-primary'})\nWHERE s.health_status = 'healthy'\nRETURN s.name, s.owner_team\n\nThis finds all healthy services that depend on postgres-primary. In SQL this would require a join table, two JOINs, and is less readable. In Cypher it reads like a diagram of the graph pattern.\n\nKey Cypher patterns to learn:\n- MATCH: find patterns\n- CREATE / MERGE: create nodes and relationships (MERGE = create if not exists)\n- SET: update properties\n- DELETE / DETACH DELETE: remove nodes/relationships\n- WITH: pipeline results\n- CALL db.index.fulltext.queryNodes: full-text search`,
+       prompt:'Teach me Neo4j and Cypher from scratch — the key patterns I need for our knowledge graph'},
+      {name:'Knowledge graphs', tag:'Concept', desc:'A semantic network of entities and relationships encoding domain knowledge. Self-populating from perception events.',
+       detail:`A knowledge graph is a graph database populated with domain knowledge — what exists, how things relate, what properties they have, what patterns hold. Famous examples: Google's Knowledge Graph (entities in search), Wikidata (structured Wikipedia facts), enterprise knowledge graphs in pharma and finance.\n\nWhat makes your knowledge graph special is that it is self-populating and continuously maintained. Most knowledge graphs are built by humans or one-time ETL processes. Yours is built by the perception layer: every time an event arrives with entity_refs, the graph updater automatically ensures those entities exist and updates their relationships.\n\nThis means your knowledge graph is:\n- Always current (updated in real-time from perception events)\n- Evidence-based (relationships only exist if observed events support them)\n- Confidence-weighted (edge weights reflect how many times a relationship has been observed)\n- Self-healing (edges that are no longer observed decay and eventually get pruned)`,
+       prompt:'Explain knowledge graphs — what makes them different from regular databases and how ours self-populates'},
+      {name:'Graph traversal and path queries', tag:'Skill', desc:'Finding paths between nodes, computing reachability, and traversing neighbor chains — the core operations for blast radius and causal chain analysis.',
+       detail:`Graph traversal is the act of following edges from node to node to answer relational questions. The key traversal patterns for your architecture:\n\n1. Blast radius: given a node that is failing, which other nodes are affected?\nMATCH (source:Service {name: $id})<-[:DEPENDS_ON*1..5]-(affected)\nRETURN affected.name, length(path) as hops\nThe *1..5 means "follow DEPENDS_ON edges between 1 and 5 hops." This finds all transitively dependent services.\n\n2. Causal chain: given an event, what caused it and what will it cause?\nMATCH path = (root:Event)-[:TRIGGERS*]->(e:Event {id: $event_id})\nRETURN path\n\n3. Shortest path: what is the dependency chain between two services?\nMATCH path = shortestPath((a:Service)-[*]-(b:Service))\nRETURN path\n\n4. Subgraph extraction: find all entities in a cluster:\nMATCH (s:Service)-[:PART_OF]->(cluster:Cluster {name: "production-west"})\nRETURN s, cluster`,
+       prompt:'Teach me graph traversal patterns in Cypher — blast radius, causal chains, and path queries for our architecture'},
+      {name:'RDF and ontologies', tag:'Concept', desc:'Resource Description Framework — a standard for representing knowledge as subject-predicate-object triples. Ontologies define the vocabulary of a knowledge graph.',
+       detail:`RDF (Resource Description Framework) is the W3C standard for representing knowledge as triples: (subject, predicate, object). "auth-service DEPENDS_ON postgres-primary" is an RDF triple. SPARQL is the query language for RDF.\n\nAn ontology defines the vocabulary — the allowed node types, relationship types, and their constraints. OWL (Web Ontology Language) lets you define things like: "a Service can DEPENDS_ON a Database or another Service, but not a User."\n\nFor your project, you don't need to implement RDF/SPARQL directly — Neo4j's property graph with Cypher is more practical. But understanding ontology design is valuable because it is the principled way to define your graph schema. Before writing code, you are essentially designing an ontology: what are the node types? What are the valid relationship types? What properties are required vs optional? This is exactly the graph schema design step in Phase 4.`,
+       prompt:'Explain RDF and ontologies and how they inform our knowledge graph schema design in Phase 4'},
+    ]
+  },
+  {
+    id:'temporal', label:'Temporal intelligence', week:'Week 5',
+    color:'#185FA5', bg:'#E6F1FB', textColor:'#0C447C',
+    tagBg:'#E6F1FB', tagColor:'#0C447C',
+    desc:'Reasoning across time',
+    why:'A fact true now may not be true in 10 minutes. A static snapshot is always stale. You need trajectory — where state has been and where it is going.',
+    takeaway:'The event sourcing pattern: the authoritative record is a stream of events, not a snapshot. Current state is always derived from event history.',
+    concepts:[
+      {name:'Event sourcing', tag:'Pattern', desc:'The authoritative record is a log of events — not a snapshot of current state. Current state is always derived by replaying the event log.',
+       detail:`Event sourcing is an architectural pattern where, instead of storing the current state of an entity ("the account balance is $2,340"), you store every event that changed that entity ("deposited $500", "withdrew $200", "deposited $40"). Current state is derived by replaying the event log.\n\nThis has profound implications:\n- You can reconstruct any past state by replaying events up to time T\n- You can replay events through a new version of your world model to test how it would have behaved historically\n- Events are immutable — you never modify history, you only append\n- The event log is the single source of truth; the current-state view is a derived read model\n\nFor your project: your episodic memory IS an event sourcing system. Every perception event is appended to TimescaleDB. The World Model is a derived read model — a continuously maintained projection of the current state based on the event history. This is why you can replay events during debugging and why the World Model can always be rebuilt from scratch.`,
+       prompt:'Explain event sourcing in depth and how our episodic memory and world model implement this pattern'},
+      {name:'Apache Kafka', tag:'Tool', desc:'Distributed event streaming platform. The backbone of the perception layer. Provides durable, ordered, replayable event streams.',
+       detail:`Apache Kafka is a distributed log. Producers write events to named topics. Consumers read from topics, maintaining their own offset (position). Multiple consumer groups can independently read the same topic from different offsets simultaneously.\n\nKey Kafka concepts for your architecture:\n- Topic: a named, ordered, durable log. Your perception events go to a topic like "cognitive.events"\n- Partition: topics are split into partitions for parallelism. Events with the same entity_id go to the same partition to preserve order\n- Consumer group: a set of consumers that together read a topic. Each partition is read by exactly one consumer in the group. Your memory router, world model updater, and graph updater are different consumer groups on the same topic\n- Offset: position in the log. You can replay from any offset — invaluable for debugging and for bootstrapping new components\n- Retention: Kafka keeps events for a configurable period (default 7 days). Combined with your TimescaleDB episodic memory, you have full event history indefinitely\n\nRedpanda is a Kafka-compatible drop-in replacement. Simpler setup, same API — use it for development.`,
+       prompt:'Explain Apache Kafka in depth — topics, partitions, consumer groups, and how we use it as the event bus'},
+      {name:'TimescaleDB', tag:'Tool', desc:'PostgreSQL extension for time-series data. Hypertables automatically partition data by time. Fast range queries and continuous aggregates.',
+       detail:`TimescaleDB extends PostgreSQL to handle time-series data efficiently. The core abstraction is the hypertable: a table that is automatically partitioned by time into chunks (typically 1 day or 1 week per chunk). Queries that filter by time range only scan the relevant chunks, not the entire table.\n\nKey TimescaleDB features for your architecture:\n- Hypertables: CREATE TABLE events (...) and then SELECT create_hypertable('events', 'timestamp'). Done — all partitioning is automatic.\n- Continuous aggregates: precomputed, automatically refreshed materialized views. "For each hour, what was the average latency of each service?" is computed incrementally as new events arrive, not at query time.\n- Compression: old chunks are automatically compressed. 90% storage reduction is typical for time-series data.\n- Downsampling: automatically create coarser-grained aggregates as data ages (5-minute averages → hourly averages → daily averages)\n\nFor your temporal state tracker: store every metric observation in a hypertable. Use continuous aggregates to maintain rolling baselines. Anomaly detection queries become simple: SELECT * FROM metric_observations WHERE value > (SELECT avg + 3*stddev FROM baseline WHERE metric_id = $id)`,
+       prompt:'Explain TimescaleDB in depth — hypertables, continuous aggregates, and how we use it for episodic memory and baseline tracking'},
+      {name:'Time-series analysis', tag:'Skill', desc:'Statistical techniques for analysing data indexed by time: trend decomposition, seasonality, anomaly detection, forecasting.',
+       detail:`Time-series analysis is the statistical toolbox for temporal intelligence. Key techniques:\n\n1. Z-score anomaly detection: (current_value - rolling_mean) / rolling_stddev. If |z| > 3, it's anomalous. Simple, works for stationary signals.\n\n2. Trend decomposition (STL): decompose a signal into trend + seasonality + residual. The residual is where anomalies live. Essential for signals with weekly patterns (CPU usage is always higher on weekdays).\n\n3. CUSUM (Cumulative Sum): detects gradual drift. Accumulates small deviations; fires when the cumulative sum exceeds a threshold. Z-score misses slow drift; CUSUM catches it.\n\n4. Exponential smoothing: weight recent observations more heavily. Use for short-term baselines.\n\n5. Prophet (Facebook/Meta): automatic seasonality detection, holiday effects, trend change points. Excellent for business metrics with weekly and yearly patterns.\n\n6. Temporal Fusion Transformer (TFT): state-of-the-art multivariate forecasting. Takes multiple related time series as input and produces calibrated probabilistic forecasts. Use in Phase 12.`,
+       prompt:'Explain time-series analysis techniques — z-score, CUSUM, STL decomposition, and Prophet — and how each applies to our temporal awareness layer'},
+      {name:'Sequence modeling', tag:'Concept', desc:'Learning patterns from ordered sequences of events. The foundation of predicting what event comes next given what has happened.',
+       detail:`Sequence modeling is the field of learning from ordered data. The key insight: the order of events matters, not just their presence. "CPU spikes, then memory grows, then service crashes" is a meaningful causal sequence. "CPU spikes at 3am every Tuesday" is a temporal pattern. Sequence models capture these.\n\nRelevant sequence modeling approaches for your architecture:\n\n1. Markov chains: the simplest — next state depends only on current state. Good for modelling known state machines (service lifecycle: running → degraded → down → restarting).\n\n2. HMMs (Hidden Markov Models): latent state sequences. Good for modelling when you can't observe the true system state directly, only noisy signals.\n\n3. LSTMs/GRUs: deep learning sequence models. Given a sequence of events, predict the next event or classify the sequence. Useful for anomaly detection over event sequences.\n\n4. Transformers: attention-based sequence models. The same architecture as LLMs, applied to event sequences. Can capture long-range dependencies — "this pattern of events last Tuesday predicts this pattern today."\n\nFor Phase 12: your episodic memory contains thousands of event sequences. A sequence model trained on this data can predict what typically happens next given a current sequence — enabling proactive intervention.`,
+       prompt:'Explain sequence modeling and how we can use it on our episodic memory to predict event sequences and enable proactive intervention'},
+    ]
+  }
+];
+
+let currentArea = null;
+let currentConcept = null;
+
+function renderAreas(){
+  const list = document.getElementById('area-list');
+  list.innerHTML = '';
+  AREAS.forEach(a => {
+    const btn = document.createElement('button');
+    btn.className = 'area-btn' + (currentArea === a.id ? ' active' : '');
+    btn.innerHTML = `
+      <span class="dot" style="background:${a.color}"></span>
+      <div style="flex:1;min-width:0">
+        <div class="area-title">${a.label}</div>
+        <div class="area-sub">${a.desc}</div>
+      </div>
+      <span class="week-badge" style="background:${a.bg};color:${a.textColor}">${a.week}</span>
+      <span class="chevron ${currentArea === a.id ? 'open' : ''}"><i class="ti ti-chevron-right" aria-hidden="true"></i></span>
+    `;
+    btn.onclick = () => selectArea(a.id);
+    list.appendChild(btn);
+  });
+}
+
+function renderConcepts(area){
+  const list = document.getElementById('concept-list');
+  if(!area){ list.innerHTML=''; return; }
+  list.innerHTML = area.concepts.map((c,i) => `
+    <div class="concept-row ${currentConcept === area.id+i ? 'selected' : ''}" onclick="selectConcept('${area.id}',${i})">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span class="concept-label">${c.name}</span>
+          <span class="tag" style="background:${area.tagBg};color:${area.textColor}">${c.tag}</span>
+        </div>
+        <div class="concept-desc">${c.desc}</div>
+      </div>
+      <i class="ti ti-chevron-right" style="font-size:14px;color:var(--color-text-tertiary);margin-top:2px;flex-shrink:0" aria-hidden="true"></i>
+    </div>
+  `).join('');
+}
+
+function renderDetail(area, ci){
+  const pane = document.getElementById('detail-pane');
+  if(area === null || ci === null){ pane.style.display='none'; return; }
+  const a = AREAS.find(x=>x.id===area);
+  const c = a.concepts[ci];
+  const paras = c.detail.split('\n\n').map(p=>`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');
+  pane.style.display='block';
+  pane.innerHTML = `
+    <div class="detail-box" style="border-left:3px solid ${a.color};border-radius:0 var(--border-radius-md) var(--border-radius-md) 0">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <h3 style="color:var(--color-text-primary)">${c.name}</h3>
+        <span class="tag" style="background:${a.tagBg};color:${a.textColor}">${c.tag}</span>
+      </div>
+      ${paras}
+      <div class="takeaway" style="border-color:${a.color}">
+        <strong style="color:${a.textColor}">Why it matters for your build:</strong> ${c.desc}
+      </div>
+      <button class="ask-btn" onclick="sendPrompt('${c.prompt.replace(/'/g,"\\'")}')">Ask Claude to go deeper on ${c.name} ↗</button>
+    </div>
+  `;
+}
+
+function selectArea(id){
+  if(currentArea === id){ currentArea=null; currentConcept=null; }
+  else { currentArea=id; currentConcept=null; }
+  renderAreas();
+  const area = currentArea ? AREAS.find(a=>a.id===currentArea) : null;
+  renderConcepts(area);
+  renderDetail(null, null);
+}
+
+function selectConcept(areaId, ci){
+  const key = areaId+ci;
+  if(currentConcept === key){ currentConcept=null; renderDetail(null,null); }
+  else { currentArea=areaId; currentConcept=key; renderDetail(areaId, ci); }
+  const area = AREAS.find(a=>a.id===areaId);
+  renderConcepts(area);
+}
+
+renderAreas();
+renderConcepts(null);
+</script>

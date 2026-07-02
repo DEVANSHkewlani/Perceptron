@@ -1,0 +1,2342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 6 — Build the World Model | Digital Cognitive Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;0,700;1,300&family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;500&display=swap');
+
+  :root {
+    --bg:       #07080b;
+    --s1:       #0e1015;
+    --s2:       #141720;
+    --s3:       #1a1e2a;
+    --border:   #1f2535;
+    --border2:  #29304a;
+    --gold:     #e8c97a;
+    --gold2:    #f5d98a;
+    --teal:     #4ecdc4;
+    --blue:     #5b8dee;
+    --red:      #e05c6f;
+    --green:    #4ade80;
+    --orange:   #f59e0b;
+    --purple:   #a78bfa;
+    --text:     #dce4f5;
+    --text2:    #8895b3;
+    --text3:    #3d4a6b;
+    --mono:     'JetBrains Mono', monospace;
+    --serif:    'Fraunces', serif;
+    --sans:     'Inter', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14.5px;
+    line-height: 1.75;
+    overflow-x: hidden;
+  }
+
+  /* Subtle dot grid */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: radial-gradient(circle, rgba(78,205,196,0.06) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Glow orb top */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 700px; height: 400px;
+    background: radial-gradient(ellipse, rgba(91,141,238,0.07) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── NAV ── */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(7,8,11,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    height: 52px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 0.08em;
+  }
+  .nav-brand b { color: var(--gold); font-weight: 600; }
+
+  .nav-pills {
+    display: flex; gap: 4px;
+    list-style: none;
+  }
+  .nav-pills a {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text3);
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .nav-pills a:hover { background: var(--s3); color: var(--teal); }
+
+  /* ── LAYOUT ── */
+  .wrap {
+    position: relative; z-index: 1;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0 36px 120px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 88px 0 72px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 72px;
+  }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 30px;
+  }
+  .eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 28px; height: 1px;
+    background: var(--gold);
+    opacity: 0.5;
+  }
+
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(36px, 5.5vw, 58px);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    color: #fff;
+    margin-bottom: 24px;
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .hero-desc {
+    font-size: 16px;
+    font-weight: 300;
+    color: var(--text2);
+    max-width: 620px;
+    line-height: 1.8;
+    margin-bottom: 44px;
+  }
+
+  .hero-stats {
+    display: flex; gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    width: fit-content;
+  }
+  .stat {
+    padding: 18px 28px;
+    border-right: 1px solid var(--border);
+  }
+  .stat:last-child { border-right: none; }
+  .stat-val {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--gold);
+    display: block;
+    line-height: 1;
+    margin-bottom: 5px;
+  }
+  .stat-lbl {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+
+  /* ── SECTION ── */
+  .section { margin-bottom: 80px; }
+
+  .sec-head {
+    display: flex; align-items: flex-start; gap: 18px;
+    margin-bottom: 36px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .step-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--bg);
+    background: var(--gold);
+    padding: 5px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+    margin-top: 5px;
+  }
+
+  .sec-head-text h2 {
+    font-family: var(--serif);
+    font-size: 26px;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+  .sec-head-text p {
+    font-size: 13.5px;
+    color: var(--text2);
+    max-width: 580px;
+  }
+
+  h3 {
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    margin: 32px 0 12px;
+    padding-left: 12px;
+    border-left: 2px solid var(--gold);
+  }
+
+  h4 {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin: 24px 0 10px;
+  }
+
+  p { color: var(--text2); margin-bottom: 14px; line-height: 1.8; }
+  p strong { color: var(--text); }
+
+  /* ── CALLOUTS ── */
+  .note {
+    display: flex; gap: 14px;
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin: 18px 0 24px;
+    font-size: 13.5px;
+    line-height: 1.7;
+  }
+  .note-icon { font-size: 17px; flex-shrink: 0; padding-top: 1px; }
+  .note-body { color: var(--text2); }
+  .note-body strong { color: var(--text); }
+  .note-info    { background: rgba(91,141,238,0.06);  border: 1px solid rgba(91,141,238,0.2); }
+  .note-warn    { background: rgba(245,158,11,0.06);  border: 1px solid rgba(245,158,11,0.2); }
+  .note-crit    { background: rgba(224,92,111,0.07);  border: 1px solid rgba(224,92,111,0.25);}
+  .note-success { background: rgba(74,222,128,0.06);  border: 1px solid rgba(74,222,128,0.2); }
+
+  /* ── CODE ── */
+  .codeblock {
+    margin: 14px 0 26px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border2);
+  }
+  .codeblock-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 16px;
+    background: var(--s2);
+    border-bottom: 1px solid var(--border);
+  }
+  .codeblock-file {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text2);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .codeblock-file::before {
+    content: '';
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--gold);
+    opacity: 0.6;
+  }
+  .codeblock-lang {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+  pre {
+    margin: 0;
+    padding: 20px;
+    background: #060810;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: #c8d3ea;
+  }
+
+  /* Syntax tokens */
+  .kw  { color: #e05c6f; }
+  .fn  { color: #b39dfa; }
+  .st  { color: #9dd5ab; }
+  .nu  { color: #79c0ff; }
+  .cm  { color: #4a5a7d; font-style: italic; }
+  .dc  { color: #4a5a7d; font-style: italic; }
+  .at  { color: #ffa657; }
+  .cl  { color: #4ecdc4; }
+  .op  { color: #e05c6f; }
+
+  /* ── TABLE ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 26px;
+    font-size: 13px;
+  }
+  thead th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border2);
+    text-align: left;
+  }
+  tbody td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(255,255,255,0.015); }
+  td:first-child {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--teal);
+    white-space: nowrap;
+  }
+
+  /* ── INLINE CODE ── */
+  code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    color: var(--teal);
+    background: rgba(78,205,196,0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  /* ── ARCH DIAGRAM ── */
+  .arch {
+    background: var(--s2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 28px 30px;
+    margin: 14px 0 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.9;
+    overflow-x: auto;
+  }
+  .arch .hl  { color: var(--gold); font-weight: 600; }
+  .arch .tl  { color: var(--teal); }
+  .arch .bl  { color: var(--blue); }
+  .arch .gr  { color: var(--green); }
+  .arch .dm  { color: var(--text3); }
+  .arch .ar  { color: var(--blue); }
+
+  /* ── FILE TREE ── */
+  .filetree {
+    background: var(--s2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 14px 0 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 2.1;
+  }
+  .filetree .dir  { color: var(--blue); }
+  .filetree .file { color: var(--text2); }
+  .filetree .new  { color: var(--gold); font-weight: 600; }
+  .filetree .dm   { color: var(--text3); }
+
+  /* ── BADGE ── */
+  .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 3px;
+  }
+  .b-gold    { background: rgba(232,201,122,0.12); color: var(--gold);   border: 1px solid rgba(232,201,122,0.3); }
+  .b-teal    { background: rgba(78,205,196,0.1);   color: var(--teal);   border: 1px solid rgba(78,205,196,0.25); }
+  .b-green   { background: rgba(74,222,128,0.1);   color: var(--green);  border: 1px solid rgba(74,222,128,0.25); }
+  .b-red     { background: rgba(224,92,111,0.1);   color: var(--red);    border: 1px solid rgba(224,92,111,0.25); }
+  .b-blue    { background: rgba(91,141,238,0.1);   color: var(--blue);   border: 1px solid rgba(91,141,238,0.25); }
+
+  /* ── COMPONENT CARDS ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 14px 0 24px;
+  }
+  @media (max-width: 600px) { .card-grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--s2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--border2); }
+  .card-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    opacity: 0.6;
+    flex-shrink: 0;
+  }
+  .card-body {
+    font-size: 12.5px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+  .card-body code { font-size: 11px; }
+
+  /* ── TEST RESULT ── */
+  .testout {
+    background: #04060d;
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 20px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.75;
+    margin: 14px 0 24px;
+  }
+  .testout .pass { color: var(--green); }
+  .testout .fail { color: var(--red); }
+  .testout .info { color: var(--blue); }
+  .testout .dim  { color: var(--text3); }
+  .testout .sep  { color: var(--border2); }
+  .testout .warn { color: var(--orange); }
+
+  /* ── CHECKLIST ── */
+  .checklist {
+    background: var(--s1);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    padding: 28px 30px;
+    margin: 14px 0;
+  }
+  .checklist h3 { margin-top: 0; }
+  .check-row {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    align-items: start;
+    gap: 12px;
+    padding: 13px 14px;
+    background: var(--s2);
+    border-radius: 8px;
+    border: 1px solid transparent;
+    margin-bottom: 8px;
+  }
+  .check-row:last-child { margin-bottom: 0; }
+  .check-row:hover { border-color: var(--border); }
+  .check-ico { font-size: 13px; padding-top: 2px; }
+  .check-text { display: flex; flex-direction: column; gap: 3px; }
+  .check-title {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .check-note {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.55;
+  }
+  .check-note code { font-size: 10.5px; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar       { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">DCA &nbsp;/&nbsp; <b>Phase 6</b> — World Model</div>
+  <ul class="nav-pills">
+    <li><a href="#what">What It Is</a></li>
+    <li><a href="#arch">Architecture</a></li>
+    <li><a href="#impl">Implementation</a></li>
+    <li><a href="#assessor">Situation Assessor</a></li>
+    <li><a href="#api">API</a></li>
+    <li><a href="#testing">Testing</a></li>
+  </ul>
+</nav>
+
+<div class="wrap">
+
+<!-- ═══════════════════ HERO ═══════════════════ -->
+<header class="hero">
+  <div class="eyebrow">Chapter 7 &nbsp;·&nbsp; Phase 6</div>
+  <h1>Build the<br><em>World Model</em></h1>
+  <p class="hero-desc">
+    The world model is the crown of the architecture. Everything you have built —
+    perception, memory, knowledge graph, temporal awareness — feeds into it.
+    It is the single authoritative, continuously updated, causally aware representation
+    of the current state of your environment. The Reasoning Engine (Phase 7) never
+    touches a database directly — it only ever queries this.
+  </p>
+  <div class="hero-stats">
+    <div class="stat">
+      <span class="stat-val">6</span>
+      <span class="stat-lbl">New Modules</span>
+    </div>
+    <div class="stat">
+      <span class="stat-val">8</span>
+      <span class="stat-lbl">Internal Components</span>
+    </div>
+    <div class="stat">
+      <span class="stat-val">22</span>
+      <span class="stat-lbl">New Tests</span>
+    </div>
+    <div class="stat">
+      <span class="stat-val">5</span>
+      <span class="stat-lbl">API Endpoints</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════ WHAT IT IS ═══════════════════ -->
+<section id="what" class="section">
+  <div class="sec-head">
+    <div class="step-tag">CONCEPT</div>
+    <div class="sec-head-text">
+      <h2>What the World Model Is — and Is Not</h2>
+      <p>The most important design boundary in the entire architecture. Get this wrong and every downstream phase breaks.</p>
+    </div>
+  </div>
+
+  <div class="note note-crit">
+    <div class="note-icon">🚫</div>
+    <div class="note-body">
+      <strong>The world model is NOT a database query. It is NOT a dashboard. It is NOT a static snapshot.</strong>
+      It is a living object that continuously reads from all memory layers and the live event stream,
+      synthesises their inputs into a coherent model, and makes that model available for querying.
+      No downstream component — not the reasoning engine, not the situation assessor — ever touches
+      Neo4j, TimescaleDB, Redis, or Qdrant directly. They only call the World Model API.
+    </div>
+  </div>
+
+  <h3>The Eight Internal Components</h3>
+  <table>
+    <thead>
+      <tr><th>Component</th><th>What It Holds</th><th>Updated By</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>entity_registry</td>
+        <td>Current state of every known entity — services, databases, users, agents. Properties reflect most-recently-observed values.</td>
+        <td>Every incoming CognitiveEvent with entity_refs; Temporal API state polls</td>
+      </tr>
+      <tr>
+        <td>relationship_map</td>
+        <td>The current knowledge graph state — which entities are connected, relationship type, strength, and direction.</td>
+        <td>SemanticMemory write-through; GraphTemporalBridge on pattern detection</td>
+      </tr>
+      <tr>
+        <td>temporal_state</td>
+        <td>Per entity+metric: current_value, rate_of_change, trend_direction, deviation_from_baseline.</td>
+        <td>TemporalStateManager poll every 30 seconds</td>
+      </tr>
+      <tr>
+        <td>active_event_context</td>
+        <td>Significant events from the last N minutes that are still "open" — consequences still unfolding.</td>
+        <td>WorkingMemory sliding window; severity filter (≥ MEDIUM)</td>
+      </tr>
+      <tr>
+        <td>causal_chains</td>
+        <td>Known or inferred causal paths. "Event A caused event B which is likely causing event C."</td>
+        <td>Graph traversal on blast radius + HISTORICALLY_CORRELATED edges</td>
+      </tr>
+      <tr>
+        <td>predictive_state</td>
+        <td>5/15/60 minute forecasts for key metrics per entity. Updated from TemporalPredictor.</td>
+        <td>TemporalAPI prediction endpoint poll every 60 seconds</td>
+      </tr>
+      <tr>
+        <td>anomaly_registry</td>
+        <td>Currently active anomalies — deviations from baseline that have not yet been resolved.</td>
+        <td>Spike/drift/absence detections from Temporal Engine; resolved when event_type ends with _resolved</td>
+      </tr>
+      <tr>
+        <td>uncertainty_map</td>
+        <td>Confidence score for each assertion. The model knows what it does not know.</td>
+        <td>Weighted from source event confidence scores and temporal data recency</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>How the Reasoning Engine Queries It</h3>
+  <p>The reasoning engine (Phase 7) makes exactly five types of queries against the World Model. Design your API around these five from the start:</p>
+  <table>
+    <thead>
+      <tr><th>Method</th><th>Returns</th><th>Used For</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>get_current_situation()</td>
+        <td>Compressed JSON summary of top-N anomalies, affected entities, causal chains</td>
+        <td>Primary input to the reasoning prompt — the "situation brief"</td>
+      </tr>
+      <tr>
+        <td>get_entity_state(entity_id)</td>
+        <td>Full state of a specific entity: relationships, recent events, temporal trends</td>
+        <td>Deep-dive on a specific node during reasoning</td>
+      </tr>
+      <tr>
+        <td>get_blast_radius(entity_id)</td>
+        <td>All entities that would be affected if this entity fails</td>
+        <td>Risk assessment before recommending an action</td>
+      </tr>
+      <tr>
+        <td>get_causal_chain(event_id)</td>
+        <td>Backward + forward trace through the graph for one event</td>
+        <td>Root cause hypothesis construction</td>
+      </tr>
+      <tr>
+        <td>get_prediction(metric_id, horizon_min)</td>
+        <td>Predicted value at a future time point with confidence bounds</td>
+        <td>Proactive planning before a threshold is crossed</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════════════ ARCHITECTURE ═══════════════════ -->
+<section id="arch" class="section">
+  <div class="sec-head">
+    <div class="step-tag">STEP 1</div>
+    <div class="sec-head-text">
+      <h2>Architecture &amp; File Structure</h2>
+      <p>The world model is a Python class backed by a Redis state store and a continuous Kafka subscription loop.</p>
+    </div>
+  </div>
+
+  <div class="arch">
+<span class="dm">cognitive_architecture/</span>
+<span class="dm">  perception/     ✓ Phase 1</span>
+<span class="dm">  memory/         ✓ Phase 3 &amp; 4   (working, episodic, semantic, vector, procedural, router, api)</span>
+<span class="dm">  temporal/       ✓ Phase 5   (ingester, detector, state, predictor, graph_bridge, api)</span>
+<span class="hl">  world_model/    ◆ Phase 6 — BUILD THIS</span>
+<span class="dm">  │</span>
+<span class="tl">  ├── __init__.py</span>
+<span class="tl">  ├── core.py           </span><span class="dm">WorldModel class — Redis-backed, Kafka-subscribing</span>
+<span class="tl">  ├── entity_registry.py</span><span class="dm">EntityRegistry — in-memory dict + Redis persistence</span>
+<span class="tl">  ├── anomaly_registry.py</span><span class="dm">AnomalyRegistry — open anomaly lifecycle tracking</span>
+<span class="tl">  ├── causal_engine.py  </span><span class="dm">CausalEngine — Neo4j traversal for causal chains</span>
+<span class="tl">  ├── situation_assessor.py</span><span class="dm">SituationAssessor — ranks anomalies → LLM-ready brief</span>
+<span class="tl">  └── api.py            </span><span class="dm">FastAPI — the 5 query endpoints + health + subscribe</span>
+
+<span class="dm">  tests/</span>
+<span class="hl">  ├── test_world_model_core.py</span>
+<span class="hl">  ├── test_entity_registry.py</span>
+<span class="hl">  ├── test_anomaly_registry.py</span>
+<span class="hl">  ├── test_causal_engine.py</span>
+<span class="hl">  └── test_situation_assessor.py</span>
+  </div>
+
+  <h4>Tech stack mapping (from the guide)</h4>
+  <table>
+    <thead>
+      <tr><th>Component</th><th>Technology</th><th>Why</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>World model core</td>
+        <td>Python class + Redis JSON (RedisJSON)</td>
+        <td>Sub-ms reads, persistent across restarts, atomic updates</td>
+      </tr>
+      <tr>
+        <td>Graph queries</td>
+        <td>neo4j async Python driver — Cypher</td>
+        <td>Relationship traversal, blast radius, causal chains</td>
+      </tr>
+      <tr>
+        <td>Temporal queries</td>
+        <td>HTTP calls to Temporal API (Phase 5)</td>
+        <td>Decoupled — world model reads state not raw rows</td>
+      </tr>
+      <tr>
+        <td>Semantic queries</td>
+        <td>HTTP calls to Memory API (Phase 4)</td>
+        <td>Similar past events for context enrichment</td>
+      </tr>
+      <tr>
+        <td>Situation assessor</td>
+        <td>Pure Python — rule-based ranking, no LLM</td>
+        <td>Fast, deterministic, no API cost at high event volume</td>
+      </tr>
+      <tr>
+        <td>World model API</td>
+        <td>FastAPI + async endpoints on port 8092</td>
+        <td>Reasoning Engine queries over HTTP or direct import</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note note-info">
+    <div class="note-icon">💡</div>
+    <div class="note-body">
+      <strong>RedisJSON vs plain Redis hashes:</strong> Use the RedisJSON module
+      (<code>redis-stack</code> Docker image or the <code>rejson</code> pip package).
+      It lets you store nested dicts and update individual fields with
+      <code>JSON.SET key $.field value</code> without re-serialising the entire object.
+      This is critical for the entity registry where hundreds of fields update independently.
+      If you can't use RedisJSON, fall back to pickle-serialised Redis keys — but add a TODO.
+    </div>
+  </div>
+
+  <h4>docker-compose.yml — update Redis to redis-stack</h4>
+  <div class="codeblock">
+    <div class="codeblock-head">
+      <span class="codeblock-file">docker-compose.yml</span>
+      <span class="codeblock-lang">YAML</span>
+    </div>
+<pre><span class="at">services</span>:
+  <span class="cm"># Replace redis with redis-stack for RedisJSON support</span>
+  <span class="at">redis</span>:
+    <span class="at">image</span>: redis/redis-stack:latest
+    <span class="at">ports</span>:
+      - <span class="st">"6379:6379"</span>
+      - <span class="st">"8001:8001"</span>   <span class="cm"># RedisInsight UI (optional)</span>
+    <span class="at">volumes</span>:
+      - redis_data:/data
+    <span class="at">healthcheck</span>:
+      <span class="at">test</span>: [<span class="st">"CMD"</span>, <span class="st">"redis-cli"</span>, <span class="st">"ping"</span>]
+      <span class="at">interval</span>: 5s
+      <span class="at">retries</span>: 5</pre>
+  </div>
+
+  <h4>Install Python dependencies</h4>
+  <div class="codeblock">
+    <div class="codeblock-head">
+      <span class="codeblock-file">requirements.txt additions</span>
+      <span class="codeblock-lang">TEXT</span>
+    </div>
+<pre>redis[hiredis]>=5.0.0     <span class="cm"># already present — confirm version</span>
+neo4j>=5.14.0             <span class="cm"># already present — confirm async driver</span>
+httpx>=0.27.0             <span class="cm"># HTTP calls to temporal / memory APIs</span>
+ujson>=5.9.0              <span class="cm"># fast JSON — world model reads/writes are hot path</span></pre>
+  </div>
+</section>
+
+<!-- ═══════════════════ IMPLEMENTATION ═══════════════════ -->
+<section id="impl" class="section">
+  <div class="sec-head">
+    <div class="step-tag">STEP 2</div>
+    <div class="sec-head-text">
+      <h2>Core Implementation</h2>
+      <p>Build the six modules in order. Each one depends on the previous.</p>
+    </div>
+  </div>
+
+  <!-- entity_registry.py -->
+  <h3>1. entity_registry.py</h3>
+  <p>The entity registry is an in-memory dict (for fast reads) with Redis as the persistent backing store. Every CognitiveEvent that arrives with <code>entity_refs</code> triggers an upsert.</p>
+
+  <div class="codeblock">
+    <div class="codeblock-head">
+      <span class="codeblock-file">world_model/entity_registry.py</span>
+      <span class="codeblock-lang">PYTHON</span>
+    </div>
+<pre><span class="dc">"""
+EntityRegistry
+In-memory dict of entity states, backed by Redis for persistence.
+Updated on every CognitiveEvent that includes entity_refs.
+Read by the WorldModel.get_entity_state() and situation assessor.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+
+<span class="kw">import</span> json
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, field, asdict
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">from</span> typing <span class="kw">import</span> Any
+
+<span class="kw">import</span> redis.asyncio <span class="kw">as</span> aioredis
+
+
+SEVERITY_SCORE = {<span class="st">"critical"</span>: <span class="nu">5</span>, <span class="st">"high"</span>: <span class="nu">4</span>, <span class="st">"medium"</span>: <span class="nu">3</span>, <span class="st">"low"</span>: <span class="nu">2</span>, <span class="st">"info"</span>: <span class="nu">1</span>}
+
+
+<span class="at">@dataclass</span>
+<span class="kw">class</span> <span class="cl">EntityState</span>:
+    entity_id:         str
+    entity_type:       str      <span class="cm"># svc | db | queue | sensor | usr | metric …</span>
+    health_status:     str      <span class="cm"># healthy | degraded | critical | unknown</span>
+    last_seen:         str      <span class="cm"># ISO timestamp</span>
+    last_event_type:   str      <span class="cm"># most recent event_type observed</span>
+    last_severity:     str
+    severity_score:    int      <span class="cm"># 1–5 for sorting</span>
+    confidence:        float
+    <span class="cm"># Temporal fields — written by temporal state poll</span>
+    current_value:     float | <span class="kw">None</span> = <span class="kw">None</span>
+    rate_of_change:    float | <span class="kw">None</span> = <span class="kw">None</span>
+    trend_direction:   str = <span class="st">"stable"</span>
+    deviation_z:       float | <span class="kw">None</span> = <span class="kw">None</span>
+    <span class="cm"># Extra metadata — passed through from payload</span>
+    meta:              dict = field(default_factory=dict)
+
+
+<span class="kw">class</span> <span class="cl">EntityRegistry</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, redis_url: str):
+        self._redis_url = redis_url
+        self._redis: aioredis.Redis | <span class="kw">None</span> = <span class="kw">None</span>
+        self._store: dict[str, EntityState] = {}   <span class="cm"># hot in-memory cache</span>
+        self._REDIS_KEY = <span class="st">"wm:entity_registry"</span>
+
+    <span class="kw">async def</span> <span class="fn">connect</span>(self):
+        self._redis = <span class="kw">await</span> aioredis.from_url(self._redis_url, decode_responses=<span class="kw">True</span>)
+        <span class="kw">await</span> self._load_from_redis()
+
+    <span class="kw">async def</span> <span class="fn">disconnect</span>(self):
+        <span class="kw">if</span> self._redis:
+            <span class="kw">await</span> self._redis.aclose()
+
+    <span class="kw">async def</span> <span class="fn">_load_from_redis</span>(self):
+        <span class="dc">"""Restore in-memory cache from Redis on startup."""</span>
+        raw = <span class="kw">await</span> self._redis.hgetall(self._REDIS_KEY)
+        <span class="kw">for</span> entity_id, blob <span class="kw">in</span> raw.items():
+            <span class="kw">try</span>:
+                d = json.loads(blob)
+                self._store[entity_id] = EntityState(**d)
+            <span class="kw">except</span> <span class="cl">Exception</span>:
+                <span class="kw">pass</span>
+
+    <span class="kw">async def</span> <span class="fn">upsert_from_event</span>(self, event: dict) -> <span class="kw">None</span>:
+        <span class="dc">"""
+        Called on every CognitiveEvent.
+        Updates each entity_ref listed in the event.
+        """</span>
+        severity    = event.get(<span class="st">"severity"</span>, <span class="st">"info"</span>)
+        event_type  = event.get(<span class="st">"event_type"</span>, <span class="st">""</span>)
+        confidence  = event.get(<span class="st">"confidence"</span>, <span class="nu">0.8</span>)
+        ts          = event.get(<span class="st">"timestamp"</span>, datetime.now(timezone.utc).isoformat())
+        entity_refs = event.get(<span class="st">"entity_refs"</span>, [])
+
+        <span class="kw">for</span> entity_id <span class="kw">in</span> entity_refs:
+            entity_type = entity_id.split(<span class="st">":"</span>)[<span class="nu">0</span>] <span class="kw">if</span> <span class="st">":"</span> <span class="kw">in</span> entity_id <span class="kw">else</span> <span class="st">"unknown"</span>
+            health = self._severity_to_health(severity, event_type)
+
+            existing = self._store.get(entity_id)
+            <span class="cm"># Only downgrade health, never silently upgrade without a _resolved event</span>
+            <span class="kw">if</span> existing <span class="kw">and</span> existing.severity_score > SEVERITY_SCORE.get(severity, <span class="nu">1</span>):
+                <span class="kw">if not</span> event_type.endswith(<span class="st">"_resolved"</span>):
+                    health = existing.health_status
+
+            state = EntityState(
+                entity_id       = entity_id,
+                entity_type     = entity_type,
+                health_status   = health,
+                last_seen       = ts,
+                last_event_type = event_type,
+                last_severity   = severity,
+                severity_score  = SEVERITY_SCORE.get(severity, <span class="nu">1</span>),
+                confidence      = confidence,
+                current_value   = existing.current_value <span class="kw">if</span> existing <span class="kw">else None</span>,
+                rate_of_change  = existing.rate_of_change <span class="kw">if</span> existing <span class="kw">else None</span>,
+                trend_direction = existing.trend_direction <span class="kw">if</span> existing <span class="kw">else</span> <span class="st">"stable"</span>,
+                deviation_z     = existing.deviation_z <span class="kw">if</span> existing <span class="kw">else None</span>,
+                meta            = event.get(<span class="st">"payload"</span>, {}).copy(),
+            )
+            self._store[entity_id] = state
+            <span class="kw">await</span> self._redis.hset(
+                self._REDIS_KEY, entity_id, json.dumps(asdict(state))
+            )
+
+    <span class="kw">async def</span> <span class="fn">update_temporal_state</span>(self, entity_id: str, temporal: dict) -> <span class="kw">None</span>:
+        <span class="dc">"""Write temporal fields from TemporalStateManager.get_state()."""</span>
+        entity = self._store.get(entity_id)
+        <span class="kw">if not</span> entity:
+            <span class="kw">return</span>
+        entity.current_value   = temporal.get(<span class="st">"current_value"</span>)
+        entity.rate_of_change  = temporal.get(<span class="st">"rate_of_change"</span>)
+        entity.trend_direction = temporal.get(<span class="st">"trend_direction"</span>, <span class="st">"stable"</span>)
+        entity.deviation_z     = temporal.get(<span class="st">"deviation_from_baseline"</span>)
+        <span class="kw">await</span> self._redis.hset(
+            self._REDIS_KEY, entity_id, json.dumps(asdict(entity))
+        )
+
+    <span class="kw">def</span> <span class="fn">get</span>(self, entity_id: str) -> EntityState | <span class="kw">None</span>:
+        <span class="kw">return</span> self._store.get(entity_id)
+
+    <span class="kw">def</span> <span class="fn">get_all</span>(self) -> list[EntityState]:
+        <span class="kw">return</span> list(self._store.values())
+
+    <span class="kw">def</span> <span class="fn">get_degraded</span>(self) -> list[EntityState]:
+        <span class="kw">return</span> sorted(
+            [e <span class="kw">for</span> e <span class="kw">in</span> self._store.values() <span class="kw">if</span> e.health_status != <span class="st">"healthy"</span>],
+            key=<span class="kw">lambda</span> e: e.severity_score,
+            reverse=<span class="kw">True</span>,
+        )
+
+    <span class="at">@staticmethod</span>
+    <span class="kw">def</span> <span class="fn">_severity_to_health</span>(severity: str, event_type: str) -> str:
+        <span class="kw">if</span> event_type.endswith(<span class="st">"_resolved"</span>) <span class="kw">or</span> event_type.endswith(<span class="st">"_restored"</span>):
+            <span class="kw">return</span> <span class="st">"healthy"</span>
+        mapping = {<span class="st">"critical"</span>: <span class="st">"critical"</span>, <span class="st">"high"</span>: <span class="st">"degraded"</span>,
+                   <span class="st">"medium"</span>: <span class="st">"degraded"</span>, <span class="st">"low"</span>: <span class="st">"healthy"</span>, <span class="st">"info"</span>: <span class="st">"healthy"</span>}
+        <span class="kw">return</span> mapping.get(severity, <span class="st">"unknown"</span>)</pre>
+  </div>
+
+  <!-- anomaly_registry.py -->
+  <h3>2. anomaly_registry.py</h3>
+  <p>Tracks the full lifecycle of every anomaly — opened, updated, and resolved. This is the authoritative list of "what is wrong right now" that the situation assessor ranks.</p>
+
+  <div class="codeblock">
+    <div class="codeblock-head">
+      <span class="codeblock-file">world_model/anomaly_registry.py</span>
+      <span class="codeblock-lang">PYTHON</span>
+    </div>
+<pre><span class="dc">"""
+AnomalyRegistry — lifecycle manager for active anomalies.
+An anomaly is opened when a non-info event arrives.
+It is resolved when an event_type ending in _resolved/_restored arrives
+for the same entity_id, OR when the anomaly has not seen a new event
+for STALE_THRESHOLD_S seconds (auto-heal assumption).
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+
+<span class="kw">import</span> json
+<span class="kw">import</span> uuid
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, field, asdict
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">from</span> typing <span class="kw">import</span> Literal
+
+<span class="kw">import</span> redis.asyncio <span class="kw">as</span> aioredis
+
+STALE_THRESHOLD_S = <span class="nu">600</span>   <span class="cm"># 10 minutes: auto-resolve if no update</span>
+SEVERITY_ORDER = [<span class="st">"critical"</span>, <span class="st">"high"</span>, <span class="st">"medium"</span>, <span class="st">"low"</span>, <span class="st">"info"</span>]
+
+
+<span class="at">@dataclass</span>
+<span class="kw">class</span> <span class="cl">Anomaly</span>:
+    anomaly_id:   str
+    entity_id:    str
+    event_type:   str
+    severity:     str
+    confidence:   float
+    opened_at:    str
+    last_seen_at: str
+    resolved_at:  str | <span class="kw">None</span>
+    status:       Literal[<span class="st">"open"</span>, <span class="st">"resolved"</span>]
+    details:      dict = field(default_factory=dict)
+
+
+<span class="kw">class</span> <span class="cl">AnomalyRegistry</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, redis_url: str):
+        self._redis_url = redis_url
+        self._redis: aioredis.Redis | <span class="kw">None</span> = <span class="kw">None</span>
+        self._open: dict[str, Anomaly] = {}   <span class="cm"># keyed by entity_id+event_type</span>
+        self._REDIS_KEY = <span class="st">"wm:anomalies"</span>
+
+    <span class="kw">async def</span> <span class="fn">connect</span>(self):
+        self._redis = <span class="kw">await</span> aioredis.from_url(self._redis_url, decode_responses=<span class="kw">True</span>)
+        <span class="kw">await</span> self._load_from_redis()
+
+    <span class="kw">async def</span> <span class="fn">disconnect</span>(self):
+        <span class="kw">if</span> self._redis: <span class="kw">await</span> self._redis.aclose()
+
+    <span class="kw">async def</span> <span class="fn">_load_from_redis</span>(self):
+        raw = <span class="kw">await</span> self._redis.hgetall(self._REDIS_KEY)
+        <span class="kw">for</span> key, blob <span class="kw">in</span> raw.items():
+            <span class="kw">try</span>:
+                d = json.loads(blob)
+                a = Anomaly(**d)
+                <span class="kw">if</span> a.status == <span class="st">"open"</span>:
+                    self._open[key] = a
+            <span class="kw">except</span> <span class="cl">Exception</span>:
+                <span class="kw">pass</span>
+
+    <span class="kw">async def</span> <span class="fn">process_event</span>(self, event: dict) -> <span class="kw">None</span>:
+        severity   = event.get(<span class="st">"severity"</span>, <span class="st">"info"</span>)
+        event_type = event.get(<span class="st">"event_type"</span>, <span class="st">""</span>)
+        ts         = event.get(<span class="st">"timestamp"</span>, datetime.now(timezone.utc).isoformat())
+        entity_refs = event.get(<span class="st">"entity_refs"</span>, [])
+        confidence = event.get(<span class="st">"confidence"</span>, <span class="nu">0.8</span>)
+
+        <span class="cm"># Resolution event — close all open anomalies for this entity</span>
+        <span class="kw">if</span> event_type.endswith(<span class="st">"_resolved"</span>) <span class="kw">or</span> event_type.endswith(<span class="st">"_restored"</span>):
+            <span class="kw">for</span> entity_id <span class="kw">in</span> entity_refs:
+                <span class="kw">await</span> self._resolve_entity(entity_id, ts)
+            <span class="kw">return</span>
+
+        <span class="cm"># Non-info events open or refresh an anomaly</span>
+        <span class="kw">if</span> severity == <span class="st">"info"</span>:
+            <span class="kw">return</span>
+
+        <span class="kw">for</span> entity_id <span class="kw">in</span> entity_refs:
+            key = <span class="st">f"{entity_id}:{event_type}"</span>
+            <span class="kw">if</span> key <span class="kw">in</span> self._open:
+                <span class="cm"># Refresh</span>
+                a = self._open[key]
+                a.last_seen_at = ts
+                <span class="cm"># Escalate severity if new event is worse</span>
+                <span class="kw">if</span> SEVERITY_ORDER.index(severity) < SEVERITY_ORDER.index(a.severity):
+                    a.severity = severity
+                a.confidence = confidence
+            <span class="kw">else</span>:
+                <span class="cm"># Open new anomaly</span>
+                a = Anomaly(
+                    anomaly_id   = <span class="st">f"anm_{uuid.uuid4().hex[:8]}"</span>,
+                    entity_id    = entity_id,
+                    event_type   = event_type,
+                    severity     = severity,
+                    confidence   = confidence,
+                    opened_at    = ts,
+                    last_seen_at = ts,
+                    resolved_at  = <span class="kw">None</span>,
+                    status       = <span class="st">"open"</span>,
+                    details      = event.get(<span class="st">"payload"</span>, {}),
+                )
+                self._open[key] = a
+            <span class="kw">await</span> self._persist(key, self._open[key])
+
+    <span class="kw">async def</span> <span class="fn">expire_stale</span>(self) -> <span class="kw">None</span>:
+        <span class="dc">"""Call on a 60-second schedule. Auto-resolve anomalies with no recent update."""</span>
+        now = datetime.now(timezone.utc)
+        stale_keys = []
+        <span class="kw">for</span> key, a <span class="kw">in</span> self._open.items():
+            last = datetime.fromisoformat(a.last_seen_at.replace(<span class="st">"Z"</span>, <span class="st">"+00:00"</span>))
+            <span class="kw">if</span> (now - last).total_seconds() > STALE_THRESHOLD_S:
+                stale_keys.append(key)
+        <span class="kw">for</span> key <span class="kw">in</span> stale_keys:
+            a = self._open.pop(key)
+            a.status = <span class="st">"resolved"</span>
+            a.resolved_at = now.isoformat()
+            <span class="kw">await</span> self._persist(key, a)
+
+    <span class="kw">async def</span> <span class="fn">_resolve_entity</span>(self, entity_id: str, ts: str) -> <span class="kw">None</span>:
+        keys_to_close = [k <span class="kw">for</span> k <span class="kw">in</span> self._open <span class="kw">if</span> k.startswith(entity_id)]
+        <span class="kw">for</span> key <span class="kw">in</span> keys_to_close:
+            a = self._open.pop(key)
+            a.status = <span class="st">"resolved"</span>; a.resolved_at = ts
+            <span class="kw">await</span> self._persist(key, a)
+
+    <span class="kw">async def</span> <span class="fn">_persist</span>(self, key: str, a: Anomaly) -> <span class="kw">None</span>:
+        <span class="kw">await</span> self._redis.hset(self._REDIS_KEY, key, json.dumps(asdict(a)))
+
+    <span class="kw">def</span> <span class="fn">get_open</span>(self) -> list[Anomaly]:
+        <span class="kw">return</span> sorted(
+            self._open.values(),
+            key=<span class="kw">lambda</span> a: SEVERITY_ORDER.index(a.severity),
+        )
+
+    <span class="kw">def</span> <span class="fn">count_by_severity</span>(self) -> dict[str, int]:
+        counts: dict[str, int] = {}
+        <span class="kw">for</span> a <span class="kw">in</span> self._open.values():
+            counts[a.severity] = counts.get(a.severity, <span class="nu">0</span>) + <span class="nu">1</span>
+        <span class="kw">return</span> counts</pre>
+  </div>
+
+  <!-- causal_engine.py -->
+  <h3>3. causal_engine.py</h3>
+  <p>Executes Neo4j Cypher traversals to find causal chains and blast radius. This is the component that answers "what caused this?" and "what else will break?"</p>
+
+  <div class="codeblock">
+    <div class="codeblock-head">
+      <span class="codeblock-file">world_model/causal_engine.py</span>
+      <span class="codeblock-lang">PYTHON</span>
+    </div>
+<pre><span class="dc">"""
+CausalEngine — Neo4j Cypher traversal for causal reasoning.
+Methods:
+  get_blast_radius(entity_id)     → who depends on this entity
+  get_causal_chain(entity_id)     → what does this entity depend on (root cause path)
+  get_related_anomalies(entity_id)→ graph-neighbours with active anomalies
+  get_correlation_partners(entity_id) → HISTORICALLY_CORRELATED entities
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> neo4j <span class="kw">import</span> AsyncGraphDatabase
+
+
+<span class="at">@dataclass</span>
+<span class="kw">class</span> <span class="cl">BlastRadiusResult</span>:
+    affected_entity_id: str
+    entity_type:        str
+    relationship_type:  str
+    hop_distance:       int
+
+
+<span class="at">@dataclass</span>
+<span class="kw">class</span> <span class="cl">CausalLink</span>:
+    from_entity:       str
+    to_entity:         str
+    relationship_type: str
+    confidence:        float = <span class="nu">1.0</span>
+
+
+<span class="kw">class</span> <span class="cl">CausalEngine</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, uri: str, user: str, password: str):
+        self._uri  = uri
+        self._user = user
+        self._pass = password
+        self._driver = <span class="kw">None</span>
+
+    <span class="kw">async def</span> <span class="fn">connect</span>(self):
+        self._driver = AsyncGraphDatabase.driver(
+            self._uri, auth=(self._user, self._pass)
+        )
+
+    <span class="kw">async def</span> <span class="fn">disconnect</span>(self):
+        <span class="kw">if</span> self._driver: <span class="kw">await</span> self._driver.close()
+
+    <span class="kw">async def</span> <span class="fn">get_blast_radius</span>(
+        self, entity_id: str, max_hops: int = <span class="nu">3</span>
+    ) -> list[BlastRadiusResult]:
+        <span class="dc">"""
+        Who depends on this entity?
+        Traverses DEPENDS_ON edges in reverse direction.
+        If entity_id goes down, all returned entities are at risk.
+        """</span>
+        <span class="kw">async with</span> self._driver.session() <span class="kw">as</span> session:
+            result = <span class="kw">await</span> session.run(<span class="st">"""
+                MATCH path = (dependent:Entity)-[:DEPENDS_ON*1..$hops]->(target:Entity {id: $id})
+                RETURN DISTINCT
+                    dependent.id          AS affected_id,
+                    dependent.entity_type AS entity_type,
+                    length(path)          AS hop_distance,
+                    type(relationships(path)[0]) AS rel_type
+                ORDER BY hop_distance ASC
+            """</span>, id=entity_id, hops=max_hops)
+            rows = <span class="kw">await</span> result.data()
+
+        <span class="cm"># Also get COMMUNICATES_WITH peers (1 hop only)</span>
+        <span class="kw">async with</span> self._driver.session() <span class="kw">as</span> session:
+            result2 = <span class="kw">await</span> session.run(<span class="st">"""
+                MATCH (peer:Entity)-[:COMMUNICATES_WITH]->(target:Entity {id: $id})
+                RETURN DISTINCT
+                    peer.id          AS affected_id,
+                    peer.entity_type AS entity_type,
+                    1                AS hop_distance,
+                    'COMMUNICATES_WITH' AS rel_type
+            """</span>, id=entity_id)
+            rows += <span class="kw">await</span> result2.data()
+
+        <span class="kw">return</span> [
+            BlastRadiusResult(
+                affected_entity_id=r[<span class="st">"affected_id"</span>],
+                entity_type=r[<span class="st">"entity_type"</span>] <span class="kw">or</span> <span class="st">"unknown"</span>,
+                relationship_type=r[<span class="st">"rel_type"</span>] <span class="kw">or</span> <span class="st">"DEPENDS_ON"</span>,
+                hop_distance=r[<span class="st">"hop_distance"</span>],
+            )
+            <span class="kw">for</span> r <span class="kw">in</span> rows
+        ]
+
+    <span class="kw">async def</span> <span class="fn">get_causal_chain</span>(
+        self, entity_id: str, max_hops: int = <span class="nu">4</span>
+    ) -> list[CausalLink]:
+        <span class="dc">"""
+        What does this entity depend on (outward traversal)?
+        Used to build root cause hypothesis.
+        Returns the dependency path from entity → root dependency.
+        """</span>
+        <span class="kw">async with</span> self._driver.session() <span class="kw">as</span> session:
+            result = <span class="kw">await</span> session.run(<span class="st">"""
+                MATCH path = (src:Entity {id: $id})-[:DEPENDS_ON*1..$hops]->(dep:Entity)
+                WITH src, dep, path,
+                     [r IN relationships(path) | type(r)] AS rel_types,
+                     [n IN nodes(path) | n.id] AS node_ids
+                RETURN DISTINCT
+                    node_ids[0]   AS from_entity,
+                    node_ids[-1]  AS to_entity,
+                    rel_types[0]  AS rel_type,
+                    dep.confidence AS confidence
+                ORDER BY length(path) ASC
+            """</span>, id=entity_id, hops=max_hops)
+            rows = <span class="kw">await</span> result.data()
+
+        <span class="kw">return</span> [
+            CausalLink(
+                from_entity=r[<span class="st">"from_entity"</span>],
+                to_entity=r[<span class="st">"to_entity"</span>],
+                relationship_type=r[<span class="st">"rel_type"</span>] <span class="kw">or</span> <span class="st">"DEPENDS_ON"</span>,
+                confidence=<span class="fn">float</span>(r[<span class="st">"confidence"</span>]) <span class="kw">if</span> r[<span class="st">"confidence"</span>] <span class="kw">else</span> <span class="nu">1.0</span>,
+            )
+            <span class="kw">for</span> r <span class="kw">in</span> rows
+        ]
+
+    <span class="kw">async def</span> <span class="fn">get_correlation_partners</span>(
+        self, entity_id: str
+    ) -> list[dict]:
+        <span class="dc">"""
+        Entities with HISTORICALLY_CORRELATED edges to this one.
+        Written by GraphTemporalBridge (Phase 5).
+        """</span>
+        <span class="kw">async with</span> self._driver.session() <span class="kw">as</span> session:
+            result = <span class="kw">await</span> session.run(<span class="st">"""
+                MATCH (a:Entity {id: $id})-[r:HISTORICALLY_CORRELATED]->(b:Entity)
+                RETURN b.id AS partner_id, r.pearson_r AS r_value,
+                       r.confidence AS confidence, r.event_type_b AS event_type
+                ORDER BY r.pearson_r DESC
+            """</span>, id=entity_id)
+            <span class="kw">return await</span> result.data()</pre>
+  </div>
+
+  <!-- core.py -->
+  <h3>4. core.py — The World Model</h3>
+  <p>This is the main class that owns all sub-components, subscribes to Kafka, and runs the continuous update loop. Everything else calls this.</p>
+
+  <div class="codeblock">
+    <div class="codeblock-head">
+      <span class="codeblock-file">world_model/core.py</span>
+      <span class="codeblock-lang">PYTHON</span>
+    </div>
+<pre><span class="dc">"""
+WorldModel — the single authoritative state of the environment.
+
+Architecture:
+  - Subscribes to cognitive.events Kafka topic
+  - On each event: updates EntityRegistry + AnomalyRegistry
+  - Runs background temporal sync loop (every 30s)
+  - Runs background anomaly expiry loop (every 60s)
+  - Exposes query methods: get_current_situation, get_entity_state,
+    get_blast_radius, get_causal_chain, get_prediction
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+
+<span class="kw">import</span> asyncio
+<span class="kw">import</span> json
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">from</span> typing <span class="kw">import</span> Any
+
+<span class="kw">import</span> httpx
+<span class="kw">from</span> aiokafka <span class="kw">import</span> AIOKafkaConsumer
+
+<span class="kw">from</span> .entity_registry <span class="kw">import</span> EntityRegistry
+<span class="kw">from</span> .anomaly_registry <span class="kw">import</span> AnomalyRegistry
+<span class="kw">from</span> .causal_engine <span class="kw">import</span> CausalEngine
+
+
+<span class="at">@dataclass</span>
+<span class="kw">class</span> <span class="cl">WorldModelConfig</span>:
+    kafka_bootstrap:  str = <span class="st">"localhost:9092"</span>
+    kafka_topic:      str = <span class="st">"cognitive.events"</span>
+    kafka_group:      str = <span class="st">"world-model"</span>
+    redis_url:        str = <span class="st">"redis://localhost:6379"</span>
+    neo4j_uri:        str = <span class="st">"bolt://localhost:7687"</span>
+    neo4j_user:       str = <span class="st">"neo4j"</span>
+    neo4j_pass:       str = <span class="st">"neo4j_secret"</span>
+    temporal_api_url: str = <span class="st">"http://localhost:8091"</span>
+    memory_api_url:   str = <span class="st">"http://localhost:8090"</span>
+    temporal_sync_interval_s:  int = <span class="nu">30</span>
+    anomaly_expiry_interval_s: int = <span class="nu">60</span>
+
+
+<span class="kw">class</span> <span class="cl">WorldModel</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, cfg: WorldModelConfig):
+        self.cfg            = cfg
+        self.entities       = EntityRegistry(cfg.redis_url)
+        self.anomalies      = AnomalyRegistry(cfg.redis_url)
+        self.causal         = CausalEngine(cfg.neo4j_uri, cfg.neo4j_user, cfg.neo4j_pass)
+        self._http: httpx.AsyncClient | <span class="kw">None</span> = <span class="kw">None</span>
+        self._running = <span class="kw">False</span>
+
+    <span class="cm"># ── LIFECYCLE ──────────────────────────────────────────────</span>
+
+    <span class="kw">async def</span> <span class="fn">start</span>(self):
+        <span class="kw">await</span> self.entities.connect()
+        <span class="kw">await</span> self.anomalies.connect()
+        <span class="kw">await</span> self.causal.connect()
+        self._http = httpx.AsyncClient(timeout=<span class="nu">10.0</span>)
+        self._running = <span class="kw">True</span>
+
+    <span class="kw">async def</span> <span class="fn">stop</span>(self):
+        self._running = <span class="kw">False</span>
+        <span class="kw">await</span> self.entities.disconnect()
+        <span class="kw">await</span> self.anomalies.disconnect()
+        <span class="kw">await</span> self.causal.disconnect()
+        <span class="kw">if</span> self._http: <span class="kw">await</span> self._http.aclose()
+
+    <span class="kw">async def</span> <span class="fn">run</span>(self):
+        <span class="dc">"""Main loop: Kafka subscriber + background tasks."""</span>
+        <span class="kw">await</span> self.start()
+        <span class="kw">await</span> asyncio.gather(
+            self._kafka_loop(),
+            self._temporal_sync_loop(),
+            self._anomaly_expiry_loop(),
+        )
+
+    <span class="cm"># ── KAFKA EVENT CONSUMER ───────────────────────────────────</span>
+
+    <span class="kw">async def</span> <span class="fn">_kafka_loop</span>(self):
+        consumer = AIOKafkaConsumer(
+            self.cfg.kafka_topic,
+            bootstrap_servers=self.cfg.kafka_bootstrap,
+            group_id=self.cfg.kafka_group,
+            auto_offset_reset=<span class="st">"earliest"</span>,
+            enable_auto_commit=<span class="kw">True</span>,
+            value_deserializer=<span class="kw">lambda</span> b: json.loads(b.decode()),
+        )
+        <span class="kw">await</span> consumer.start()
+        <span class="kw">try</span>:
+            <span class="kw">async for</span> msg <span class="kw">in</span> consumer:
+                <span class="kw">await</span> self._process_event(msg.value)
+        <span class="kw">finally</span>:
+            <span class="kw">await</span> consumer.stop()
+
+    <span class="kw">async def</span> <span class="fn">_process_event</span>(self, event: dict) -> <span class="kw">None</span>:
+        <span class="kw">await</span> asyncio.gather(
+            self.entities.upsert_from_event(event),
+            self.anomalies.process_event(event),
+            return_exceptions=<span class="kw">True</span>,
+        )
+
+    <span class="cm"># ── BACKGROUND LOOPS ───────────────────────────────────────</span>
+
+    <span class="kw">async def</span> <span class="fn">_temporal_sync_loop</span>(self):
+        <span class="dc">"""Poll TemporalAPI for state updates for each tracked entity."""</span>
+        <span class="kw">while</span> self._running:
+            <span class="kw">await</span> asyncio.sleep(self.cfg.temporal_sync_interval_s)
+            <span class="kw">for</span> entity <span class="kw">in</span> self.entities.get_all():
+                <span class="kw">try</span>:
+                    <span class="cm"># Use the entity's last_event_type as the metric to query</span>
+                    r = <span class="kw">await</span> self._http.get(
+                        <span class="st">f"{self.cfg.temporal_api_url}/temporal/state/{entity.entity_id}"</span>,
+                        params={<span class="st">"event_type"</span>: entity.last_event_type},
+                    )
+                    <span class="kw">if</span> r.status_code == <span class="nu">200</span>:
+                        <span class="kw">await</span> self.entities.update_temporal_state(
+                            entity.entity_id, r.json()
+                        )
+                <span class="kw">except</span> <span class="cl">Exception</span>:
+                    <span class="kw">pass</span>
+
+    <span class="kw">async def</span> <span class="fn">_anomaly_expiry_loop</span>(self):
+        <span class="kw">while</span> self._running:
+            <span class="kw">await</span> asyncio.sleep(self.cfg.anomaly_expiry_interval_s)
+            <span class="kw">await</span> self.anomalies.expire_stale()
+
+    <span class="cm"># ── QUERY INTERFACE ────────────────────────────────────────</span>
+    <span class="cm"># These five methods are the ONLY interface the Reasoning Engine uses.</span>
+
+    <span class="kw">def</span> <span class="fn">get_current_situation</span>(self, top_n: int = <span class="nu">5</span>) -> dict:
+        <span class="dc">"""
+        Returns a compressed situation summary.
+        Primary input to the Reasoning Engine prompt.
+        """</span>
+        open_anomalies = self.anomalies.get_open()[:top_n]
+        degraded_entities = self.entities.get_degraded()[:top_n]
+
+        <span class="kw">return</span> {
+            <span class="st">"assessed_at"</span>:      datetime.now(timezone.utc).isoformat(),
+            <span class="st">"anomaly_count"</span>:     self.anomalies.count_by_severity(),
+            <span class="st">"critical_entities"</span>: [
+                {<span class="st">"id"</span>: e.entity_id, <span class="st">"health"</span>: e.health_status,
+                 <span class="st">"last_event"</span>: e.last_event_type, <span class="st">"trend"</span>: e.trend_direction}
+                <span class="kw">for</span> e <span class="kw">in</span> degraded_entities
+            ],
+            <span class="st">"top_anomalies"</span>:     [
+                {<span class="st">"id"</span>: a.anomaly_id, <span class="st">"entity"</span>: a.entity_id,
+                 <span class="st">"type"</span>: a.event_type, <span class="st">"severity"</span>: a.severity,
+                 <span class="st">"confidence"</span>: a.confidence, <span class="st">"opened_at"</span>: a.opened_at}
+                <span class="kw">for</span> a <span class="kw">in</span> open_anomalies
+            ],
+        }
+
+    <span class="kw">def</span> <span class="fn">get_entity_state</span>(self, entity_id: str) -> dict | <span class="kw">None</span>:
+        entity = self.entities.get(entity_id)
+        <span class="kw">if not</span> entity: <span class="kw">return None</span>
+        <span class="kw">from</span> dataclasses <span class="kw">import</span> asdict
+        state = asdict(entity)
+        <span class="cm"># Attach open anomalies for this entity</span>
+        state[<span class="st">"open_anomalies"</span>] = [
+            a.event_type <span class="kw">for</span> a <span class="kw">in</span> self.anomalies.get_open()
+            <span class="kw">if</span> a.entity_id == entity_id
+        ]
+        <span class="kw">return</span> state
+
+    <span class="kw">async def</span> <span class="fn">get_blast_radius</span>(self, entity_id: str) -> list[dict]:
+        results = <span class="kw">await</span> self.causal.get_blast_radius(entity_id)
+        <span class="kw">return</span> [
+            {
+                <span class="st">"entity_id"</span>:       r.affected_entity_id,
+                <span class="st">"entity_type"</span>:     r.entity_type,
+                <span class="st">"relationship"</span>:    r.relationship_type,
+                <span class="st">"hop_distance"</span>:    r.hop_distance,
+                <span class="st">"current_health"</span>:  (
+                    self.entities.get(r.affected_entity_id).health_status
+                    <span class="kw">if</span> self.entities.get(r.affected_entity_id) <span class="kw">else</span> <span class="st">"unknown"</span>
+                ),
+            }
+            <span class="kw">for</span> r <span class="kw">in</span> results
+        ]
+
+    <span class="kw">async def</span> <span class="fn">get_causal_chain</span>(self, entity_id: str) -> list[dict]:
+        links = <span class="kw">await</span> self.causal.get_causal_chain(entity_id)
+        corr  = <span class="kw">await</span> self.causal.get_correlation_partners(entity_id)
+        <span class="kw">return</span> {
+            <span class="st">"dependency_chain"</span>: [
+                {<span class="st">"from"</span>: l.from_entity, <span class="st">"to"</span>: l.to_entity,
+                 <span class="st">"type"</span>: l.relationship_type, <span class="st">"confidence"</span>: l.confidence}
+                <span class="kw">for</span> l <span class="kw">in</span> links
+            ],
+            <span class="st">"correlated_entities"</span>: corr,
+        }
+
+    <span class="kw">async def</span> <span class="fn">get_prediction</span>(
+        self, entity_id: str, event_type: str
+    ) -> list[dict]:
+        <span class="kw">try</span>:
+            r = <span class="kw">await</span> self._http.get(
+                <span class="st">f"{self.cfg.temporal_api_url}/temporal/predict/{entity_id}"</span>,
+                params={<span class="st">"event_type"</span>: event_type},
+            )
+            <span class="kw">if</span> r.status_code == <span class="nu">200</span>:
+                <span class="kw">return</span> r.json()
+        <span class="kw">except</span> <span class="cl">Exception</span>:
+            <span class="kw">pass</span>
+        <span class="kw">return</span> []</pre>
+  </div>
+</section>
+
+<!-- ═══════════════════ SITUATION ASSESSOR ═══════════════════ -->
+<section id="assessor" class="section">
+  <div class="sec-head">
+    <div class="step-tag">STEP 3</div>
+    <div class="sec-head-text">
+      <h2>The Situation Assessor</h2>
+      <p>The most important integration point. Compresses the full world model into an LLM-ready situation brief. Pure Python — no LLM here.</p>
+    </div>
+  </div>
+
+  <div class="note note-warn">
+    <div class="note-icon">⚠️</div>
+    <div class="note-body">
+      <strong>The situation assessor is NOT a summariser.</strong> It is a ranker and filter.
+      The world model may contain thousands of entities and millions of events.
+      An LLM context window is 128K tokens. The situation assessor selects the top N most
+      significant anomalies by combined score (severity × confidence × blast radius size ×
+      recency), traces their causal chains, and formats them into a single structured dict.
+      This dict — not the raw world model — is what the reasoning engine receives.
+    </div>
+  </div>
+
+  <div class="codeblock">
+    <div class="codeblock-head">
+      <span class="codeblock-file">world_model/situation_assessor.py</span>
+      <span class="codeblock-lang">PYTHON</span>
+    </div>
+<pre><span class="dc">"""
+SituationAssessor
+Compresses the full world model into a situation summary for LLM reasoning.
+Ranking formula:
+  score = severity_weight * confidence * (1 + 0.2 * blast_radius_count) * recency_decay
+
+No LLM is used here. This is deterministic rule-based ranking.
+The output is a structured dict that becomes the system prompt context.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+
+<span class="kw">import</span> math
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">from</span> typing <span class="kw">import</span> TYPE_CHECKING
+
+<span class="kw">if</span> TYPE_CHECKING:
+    <span class="kw">from</span> .core <span class="kw">import</span> WorldModel
+
+SEVERITY_WEIGHT = {
+    <span class="st">"critical"</span>: <span class="nu">10.0</span>,
+    <span class="st">"high"</span>:     <span class="nu">5.0</span>,
+    <span class="st">"medium"</span>:   <span class="nu">2.0</span>,
+    <span class="st">"low"</span>:      <span class="nu">0.5</span>,
+    <span class="st">"info"</span>:     <span class="nu">0.1</span>,
+}
+RECENCY_HALF_LIFE_S = <span class="nu">300</span>   <span class="cm"># anomaly score halves every 5 minutes</span>
+
+
+<span class="kw">class</span> <span class="cl">SituationAssessor</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, world_model: <span class="st">"WorldModel"</span>):
+        self.wm = world_model
+
+    <span class="kw">async def</span> <span class="fn">assess</span>(self, top_n: int = <span class="nu">5</span>) -> dict:
+        <span class="dc">"""
+        Build the situation brief. Called by the Reasoning Engine before
+        constructing its LLM prompt.
+        Returns a structured dict with:
+          - situation_summary: plain text header
+          - ranked_anomalies: top-N anomalies with scores and blast radius
+          - system_health: overall health counts
+          - causal_insights: dependency chains for top anomalies
+          - predictions: near-term forecasts for critical entities
+          - uncertainty_notes: low-confidence observations
+        """</span>
+        open_anomalies = self.wm.anomalies.get_open()
+        now = datetime.now(timezone.utc)
+
+        <span class="cm"># Score every open anomaly</span>
+        scored = []
+        <span class="kw">for</span> a <span class="kw">in</span> open_anomalies:
+            <span class="cm"># Blast radius count (sync call — already resolved in registry)</span>
+            blast = <span class="kw">await</span> self.wm.get_blast_radius(a.entity_id)
+            blast_count = <span class="fn">len</span>(blast)
+
+            <span class="cm"># Recency decay</span>
+            opened = datetime.fromisoformat(a.opened_at.replace(<span class="st">"Z"</span>, <span class="st">"+00:00"</span>))
+            age_s = (now - opened).total_seconds()
+            recency = math.exp(-<span class="nu">0.693</span> * age_s / RECENCY_HALF_LIFE_S)
+
+            score = (
+                SEVERITY_WEIGHT.get(a.severity, <span class="nu">1.0</span>)
+                * a.confidence
+                * (<span class="nu">1</span> + <span class="nu">0.2</span> * blast_count)
+                * recency
+            )
+            scored.append((score, a, blast, blast_count))
+
+        scored.sort(key=<span class="kw">lambda</span> x: x[<span class="nu">0</span>], reverse=<span class="kw">True</span>)
+        top = scored[:top_n]
+
+        <span class="cm"># Build causal insights for each top anomaly</span>
+        causal_insights = []
+        <span class="kw">for</span> _, a, blast, _ <span class="kw">in</span> top:
+            chain = <span class="kw">await</span> self.wm.get_causal_chain(a.entity_id)
+            causal_insights.append({
+                <span class="st">"entity_id"</span>:       a.entity_id,
+                <span class="st">"anomaly_type"</span>:    a.event_type,
+                <span class="st">"dependency_path"</span>: chain[<span class="st">"dependency_chain"</span>][:4],
+                <span class="st">"correlated_with"</span>: chain[<span class="st">"correlated_entities"</span>][:3],
+                <span class="st">"blast_radius"</span>: [
+                    {<span class="st">"entity"</span>: r[<span class="st">"entity_id"</span>], <span class="st">"hop"</span>: r[<span class="st">"hop_distance"</span>],
+                     <span class="st">"health"</span>: r[<span class="st">"current_health"</span>]}
+                    <span class="kw">for</span> r <span class="kw">in</span> blast[:5]
+                ],
+            })
+
+        <span class="cm"># Health summary</span>
+        severity_counts = self.wm.anomalies.count_by_severity()
+        all_entities = self.wm.entities.get_all()
+        total = <span class="fn">len</span>(all_entities)
+        healthy_count = <span class="fn">sum</span>(<span class="nu">1</span> <span class="kw">for</span> e <span class="kw">in</span> all_entities <span class="kw">if</span> e.health_status == <span class="st">"healthy"</span>)
+
+        <span class="cm"># Predictions for top critical entity</span>
+        predictions = []
+        <span class="kw">if</span> top:
+            top_entity_id = top[<span class="nu">0</span>][<span class="nu">1</span>].entity_id
+            top_event_type = top[<span class="nu">0</span>][<span class="nu">1</span>].event_type
+            predictions = <span class="kw">await</span> self.wm.get_prediction(top_entity_id, top_event_type)
+
+        <span class="cm"># Low-confidence observations</span>
+        uncertain = [
+            {<span class="st">"entity"</span>: e.entity_id, <span class="st">"confidence"</span>: e.confidence}
+            <span class="kw">for</span> e <span class="kw">in</span> self.wm.entities.get_degraded()
+            <span class="kw">if</span> e.confidence < <span class="nu">0.75</span>
+        ][:<span class="nu">3</span>]
+
+        <span class="kw">return</span> {
+            <span class="st">"situation_summary"</span>: self._build_summary(severity_counts, total, healthy_count),
+            <span class="st">"ranked_anomalies"</span>: [
+                {
+                    <span class="st">"rank"</span>:       i + <span class="nu">1</span>,
+                    <span class="st">"score"</span>:      <span class="fn">round</span>(score, <span class="nu">3</span>),
+                    <span class="st">"anomaly_id"</span>: a.anomaly_id,
+                    <span class="st">"entity_id"</span>:  a.entity_id,
+                    <span class="st">"event_type"</span>: a.event_type,
+                    <span class="st">"severity"</span>:   a.severity,
+                    <span class="st">"confidence"</span>: a.confidence,
+                    <span class="st">"opened_at"</span>:  a.opened_at,
+                    <span class="st">"blast_radius_count"</span>: blast_count,
+                }
+                <span class="kw">for</span> i, (score, a, _, blast_count) <span class="kw">in</span> <span class="fn">enumerate</span>(top)
+            ],
+            <span class="st">"system_health"</span>: {
+                <span class="st">"total_entities"</span>:   total,
+                <span class="st">"healthy"</span>:          healthy_count,
+                <span class="st">"degraded"</span>:         total - healthy_count,
+                <span class="st">"by_severity"</span>:      severity_counts,
+            },
+            <span class="st">"causal_insights"</span>:   causal_insights,
+            <span class="st">"predictions"</span>:       predictions[:3],
+            <span class="st">"uncertainty_notes"</span>: uncertain,
+            <span class="st">"assessed_at"</span>:       now.isoformat(),
+        }
+
+    <span class="at">@staticmethod</span>
+    <span class="kw">def</span> <span class="fn">_build_summary</span>(
+        severity_counts: dict, total: int, healthy: int
+    ) -> str:
+        parts = []
+        <span class="kw">if</span> severity_counts.get(<span class="st">"critical"</span>, <span class="nu">0</span>):
+            parts.append(<span class="st">f"{severity_counts['critical']} CRITICAL anomaly(s)"</span>)
+        <span class="kw">if</span> severity_counts.get(<span class="st">"high"</span>, <span class="nu">0</span>):
+            parts.append(<span class="st">f"{severity_counts['high']} HIGH anomaly(s)"</span>)
+        health_pct = <span class="fn">round</span>(healthy / total * <span class="nu">100</span>) <span class="kw">if</span> total > <span class="nu">0</span> <span class="kw">else</span> <span class="nu">100</span>
+        summary = <span class="st">", "</span>.join(parts) <span class="kw">if</span> parts <span class="kw">else</span> <span class="st">"No active anomalies"</span>
+        <span class="kw">return</span> <span class="st">f"{summary}. {health_pct}% of {total} tracked entities healthy."</span></pre>
+  </div>
+</section>
+
+<!-- ═══════════════════ API ═══════════════════ -->
+<section id="api" class="section">
+  <div class="sec-head">
+    <div class="step-tag">STEP 4</div>
+    <div class="sec-head-text">
+      <h2>World Model API</h2>
+      <p>FastAPI server on port 8092 exposing the five query endpoints. The Reasoning Engine only speaks to this.</p>
+    </div>
+  </div>
+
+  <div class="codeblock">
+    <div class="codeblock-head">
+      <span class="codeblock-file">world_model/api.py</span>
+      <span class="codeblock-lang">PYTHON</span>
+    </div>
+<pre><span class="dc">"""
+World Model FastAPI Server — port 8092
+Five query endpoints + health + situation brief stream.
+The Reasoning Engine (Phase 7) calls only these endpoints.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+
+<span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
+<span class="kw">import</span> asyncio
+
+<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, HTTPException, Query, BackgroundTasks
+<span class="kw">from</span> fastapi.responses <span class="kw">import</span> JSONResponse
+
+<span class="kw">from</span> .core <span class="kw">import</span> WorldModel, WorldModelConfig
+<span class="kw">from</span> .situation_assessor <span class="kw">import</span> SituationAssessor
+
+cfg = WorldModelConfig()   <span class="cm"># reads from env vars in production</span>
+wm: WorldModel | <span class="kw">None</span> = <span class="kw">None</span>
+assessor: SituationAssessor | <span class="kw">None</span> = <span class="kw">None</span>
+
+
+<span class="at">@asynccontextmanager</span>
+<span class="kw">async def</span> <span class="fn">lifespan</span>(app: FastAPI):
+    <span class="kw">global</span> wm, assessor
+    wm = WorldModel(cfg)
+    <span class="kw">await</span> wm.start()
+    assessor = SituationAssessor(wm)
+    <span class="cm"># Run the Kafka loop as a background task so the API stays responsive</span>
+    bg_task = asyncio.create_task(wm.run())
+    <span class="kw">yield</span>
+    bg_task.cancel()
+    <span class="kw">await</span> wm.stop()
+
+
+app = FastAPI(
+    title=<span class="st">"World Model API"</span>,
+    description=<span class="st">"Single source of truth for the cognitive architecture."</span>,
+    lifespan=lifespan,
+)
+
+
+<span class="at">@app.get</span>(<span class="st">"/world/situation"</span>)
+<span class="kw">async def</span> <span class="fn">get_current_situation</span>(top_n: int = Query(<span class="nu">5</span>, ge=<span class="nu">1</span>, le=<span class="nu">20</span>)):
+    <span class="dc">"""
+    PRIMARY ENDPOINT for the Reasoning Engine.
+    Returns ranked situation brief — the LLM-ready context object.
+    """</span>
+    <span class="kw">return await</span> assessor.assess(top_n=top_n)
+
+
+<span class="at">@app.get</span>(<span class="st">"/world/entity/{entity_id}"</span>)
+<span class="kw">async def</span> <span class="fn">get_entity_state</span>(entity_id: str):
+    state = wm.get_entity_state(entity_id)
+    <span class="kw">if not</span> state:
+        <span class="kw">raise</span> HTTPException(status_code=<span class="nu">404</span>, detail=<span class="st">f"Entity '{entity_id}' not found"</span>)
+    <span class="kw">return</span> state
+
+
+<span class="at">@app.get</span>(<span class="st">"/world/blast-radius/{entity_id}"</span>)
+<span class="kw">async def</span> <span class="fn">get_blast_radius</span>(entity_id: str, max_hops: int = Query(<span class="nu">3</span>, ge=<span class="nu">1</span>, le=<span class="nu">5</span>)):
+    <span class="kw">return</span> <span class="kw">await</span> wm.get_blast_radius(entity_id)
+
+
+<span class="at">@app.get</span>(<span class="st">"/world/causal-chain/{entity_id}"</span>)
+<span class="kw">async def</span> <span class="fn">get_causal_chain</span>(entity_id: str):
+    <span class="kw">return await</span> wm.get_causal_chain(entity_id)
+
+
+<span class="at">@app.get</span>(<span class="st">"/world/predict/{entity_id}"</span>)
+<span class="kw">async def</span> <span class="fn">get_prediction</span>(entity_id: str, event_type: str = Query(...)):
+    <span class="kw">return await</span> wm.get_prediction(entity_id, event_type)
+
+
+<span class="at">@app.get</span>(<span class="st">"/world/anomalies"</span>)
+<span class="kw">async def</span> <span class="fn">list_anomalies</span>():
+    <span class="kw">from</span> dataclasses <span class="kw">import</span> asdict
+    <span class="kw">return</span> [asdict(a) <span class="kw">for</span> a <span class="kw">in</span> wm.anomalies.get_open()]
+
+
+<span class="at">@app.get</span>(<span class="st">"/health"</span>)
+<span class="kw">async def</span> <span class="fn">health</span>():
+    <span class="kw">return</span> {
+        <span class="st">"status"</span>: <span class="st">"ok"</span>,
+        <span class="st">"entities_tracked"</span>: <span class="fn">len</span>(wm.entities.get_all()),
+        <span class="st">"open_anomalies"</span>: <span class="fn">len</span>(wm.anomalies.get_open()),
+    }</pre>
+  </div>
+
+  <h4>Start the server</h4>
+  <div class="codeblock">
+    <div class="codeblock-head">
+      <span class="codeblock-file">Terminal</span>
+      <span class="codeblock-lang">BASH</span>
+    </div>
+<pre>uvicorn world_model.api:app --host 0.0.0.0 --port 8092 --reload</pre>
+  </div>
+</section>
+
+<!-- ═══════════════════ TESTING ═══════════════════ -->
+<section id="testing" class="section">
+  <div class="sec-head">
+    <div class="step-tag">STEP 5</div>
+    <div class="sec-head-text">
+      <h2>Testing — 22 New Tests</h2>
+      <p>Five test files. Each tests one component in isolation using mocks. No live databases needed to run the suite.</p>
+    </div>
+  </div>
+
+  <!-- test_entity_registry.py -->
+  <h3>test_entity_registry.py</h3>
+  <div class="codeblock">
+    <div class="codeblock-head">
+      <span class="codeblock-file">tests/test_entity_registry.py</span>
+      <span class="codeblock-lang">PYTHON</span>
+    </div>
+<pre><span class="kw">import</span> pytest
+<span class="kw">from</span> unittest.mock <span class="kw">import</span> AsyncMock, MagicMock
+<span class="kw">from</span> world_model.entity_registry <span class="kw">import</span> EntityRegistry
+
+
+<span class="at">@pytest.fixture</span>
+<span class="kw">async def</span> <span class="fn">registry</span>():
+    r = EntityRegistry.__new__(EntityRegistry)
+    r._redis = AsyncMock()
+    r._redis.hgetall = AsyncMock(return_value={})
+    r._redis.hset    = AsyncMock()
+    r._store = {}
+    r._REDIS_KEY = <span class="st">"wm:entity_registry"</span>
+    <span class="kw">return</span> r
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_upsert_creates_new_entity</span>(registry):
+    event = {
+        <span class="st">"severity"</span>:    <span class="st">"high"</span>,
+        <span class="st">"event_type"</span>:  <span class="st">"api_latency_spike"</span>,
+        <span class="st">"confidence"</span>:  <span class="nu">0.95</span>,
+        <span class="st">"timestamp"</span>:   <span class="st">"2024-01-15T14:00:00Z"</span>,
+        <span class="st">"entity_refs"</span>: [<span class="st">"svc:auth-service"</span>],
+        <span class="st">"payload"</span>:     {<span class="st">"latency_ms"</span>: <span class="nu">3500</span>},
+    }
+    <span class="kw">await</span> registry.upsert_from_event(event)
+    entity = registry.get(<span class="st">"svc:auth-service"</span>)
+    <span class="kw">assert</span> entity <span class="kw">is not None</span>
+    <span class="kw">assert</span> entity.health_status == <span class="st">"degraded"</span>
+    <span class="kw">assert</span> entity.last_event_type == <span class="st">"api_latency_spike"</span>
+    <span class="kw">assert</span> entity.severity_score == <span class="nu">4</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_resolved_event_restores_healthy_status</span>(registry):
+    <span class="cm"># First inject a degrading event</span>
+    <span class="kw">await</span> registry.upsert_from_event({
+        <span class="st">"severity"</span>: <span class="st">"high"</span>, <span class="st">"event_type"</span>: <span class="st">"service_health_degraded"</span>,
+        <span class="st">"confidence"</span>: <span class="nu">0.9</span>, <span class="st">"timestamp"</span>: <span class="st">"2024-01-15T14:00:00Z"</span>,
+        <span class="st">"entity_refs"</span>: [<span class="st">"svc:api-gateway"</span>], <span class="st">"payload"</span>: {},
+    })
+    <span class="kw">assert</span> registry.get(<span class="st">"svc:api-gateway"</span>).health_status == <span class="st">"degraded"</span>
+    <span class="cm"># Then inject a resolution event</span>
+    <span class="kw">await</span> registry.upsert_from_event({
+        <span class="st">"severity"</span>: <span class="st">"info"</span>, <span class="st">"event_type"</span>: <span class="st">"service_health_restored"</span>,
+        <span class="st">"confidence"</span>: <span class="nu">0.97</span>, <span class="st">"timestamp"</span>: <span class="st">"2024-01-15T14:05:00Z"</span>,
+        <span class="st">"entity_refs"</span>: [<span class="st">"svc:api-gateway"</span>], <span class="st">"payload"</span>: {},
+    })
+    <span class="kw">assert</span> registry.get(<span class="st">"svc:api-gateway"</span>).health_status == <span class="st">"healthy"</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_multiple_entity_refs_all_updated</span>(registry):
+    event = {
+        <span class="st">"severity"</span>: <span class="st">"critical"</span>, <span class="st">"event_type"</span>: <span class="st">"database_connection_timeout"</span>,
+        <span class="st">"confidence"</span>: <span class="nu">0.82</span>, <span class="st">"timestamp"</span>: <span class="st">"2024-01-15T14:00:00Z"</span>,
+        <span class="st">"entity_refs"</span>: [<span class="st">"svc:auth-service"</span>, <span class="st">"db:postgres-primary"</span>],
+        <span class="st">"payload"</span>: {},
+    }
+    <span class="kw">await</span> registry.upsert_from_event(event)
+    <span class="kw">assert</span> registry.get(<span class="st">"svc:auth-service"</span>).health_status == <span class="st">"critical"</span>
+    <span class="kw">assert</span> registry.get(<span class="st">"db:postgres-primary"</span>).health_status == <span class="st">"critical"</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_temporal_state_update_writes_fields</span>(registry):
+    <span class="kw">await</span> registry.upsert_from_event({
+        <span class="st">"severity"</span>: <span class="st">"medium"</span>, <span class="st">"event_type"</span>: <span class="st">"cpu_spike"</span>,
+        <span class="st">"confidence"</span>: <span class="nu">0.9</span>, <span class="st">"timestamp"</span>: <span class="st">"2024-01-15T14:00:00Z"</span>,
+        <span class="st">"entity_refs"</span>: [<span class="st">"metric:node-01"</span>], <span class="st">"payload"</span>: {},
+    })
+    <span class="kw">await</span> registry.update_temporal_state(<span class="st">"metric:node-01"</span>, {
+        <span class="st">"current_value"</span>: <span class="nu">87.5</span>, <span class="st">"rate_of_change"</span>: <span class="nu">2.1</span>,
+        <span class="st">"trend_direction"</span>: <span class="st">"rising"</span>, <span class="st">"deviation_from_baseline"</span>: <span class="nu">3.2</span>,
+    })
+    e = registry.get(<span class="st">"metric:node-01"</span>)
+    <span class="kw">assert</span> e.current_value == <span class="nu">87.5</span>
+    <span class="kw">assert</span> e.trend_direction == <span class="st">"rising"</span>
+    <span class="kw">assert</span> e.deviation_z == <span class="nu">3.2</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_get_degraded_sorts_by_severity</span>(registry):
+    <span class="kw">for</span> entity_id, severity <span class="kw">in</span> [
+        (<span class="st">"svc:a"</span>, <span class="st">"medium"</span>), (<span class="st">"svc:b"</span>, <span class="st">"critical"</span>), (<span class="st">"svc:c"</span>, <span class="st">"high"</span>)
+    ]:
+        <span class="kw">await</span> registry.upsert_from_event({
+            <span class="st">"severity"</span>: severity, <span class="st">"event_type"</span>: <span class="st">"service_health_degraded"</span>,
+            <span class="st">"confidence"</span>: <span class="nu">0.9</span>, <span class="st">"timestamp"</span>: <span class="st">"2024-01-15T14:00:00Z"</span>,
+            <span class="st">"entity_refs"</span>: [entity_id], <span class="st">"payload"</span>: {},
+        })
+    degraded = registry.get_degraded()
+    <span class="kw">assert</span> degraded[<span class="nu">0</span>].entity_id == <span class="st">"svc:b"</span>   <span class="cm"># critical first</span></pre>
+  </div>
+
+  <!-- test_anomaly_registry.py -->
+  <h3>test_anomaly_registry.py</h3>
+  <div class="codeblock">
+    <div class="codeblock-head">
+      <span class="codeblock-file">tests/test_anomaly_registry.py</span>
+      <span class="codeblock-lang">PYTHON</span>
+    </div>
+<pre><span class="kw">import</span> pytest
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone, timedelta
+<span class="kw">from</span> unittest.mock <span class="kw">import</span> AsyncMock
+<span class="kw">from</span> world_model.anomaly_registry <span class="kw">import</span> AnomalyRegistry
+
+
+<span class="at">@pytest.fixture</span>
+<span class="kw">async def</span> <span class="fn">registry</span>():
+    r = AnomalyRegistry.__new__(AnomalyRegistry)
+    r._redis = AsyncMock()
+    r._redis.hgetall = AsyncMock(return_value={})
+    r._redis.hset    = AsyncMock()
+    r._open = {}
+    r._REDIS_KEY = <span class="st">"wm:anomalies"</span>
+    <span class="kw">return</span> r
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_anomaly_opened_on_high_severity_event</span>(registry):
+    <span class="kw">await</span> registry.process_event({
+        <span class="st">"severity"</span>: <span class="st">"high"</span>, <span class="st">"event_type"</span>: <span class="st">"api_latency_spike"</span>,
+        <span class="st">"confidence"</span>: <span class="nu">0.9</span>, <span class="st">"timestamp"</span>: <span class="st">"2024-01-15T14:00:00Z"</span>,
+        <span class="st">"entity_refs"</span>: [<span class="st">"svc:api"</span>], <span class="st">"payload"</span>: {},
+    })
+    open_list = registry.get_open()
+    <span class="kw">assert</span> <span class="fn">len</span>(open_list) == <span class="nu">1</span>
+    <span class="kw">assert</span> open_list[<span class="nu">0</span>].event_type == <span class="st">"api_latency_spike"</span>
+    <span class="kw">assert</span> open_list[<span class="nu">0</span>].status == <span class="st">"open"</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_info_event_does_not_open_anomaly</span>(registry):
+    <span class="kw">await</span> registry.process_event({
+        <span class="st">"severity"</span>: <span class="st">"info"</span>, <span class="st">"event_type"</span>: <span class="st">"deployment_completed"</span>,
+        <span class="st">"confidence"</span>: <span class="nu">0.99</span>, <span class="st">"timestamp"</span>: <span class="st">"2024-01-15T14:00:00Z"</span>,
+        <span class="st">"entity_refs"</span>: [<span class="st">"svc:api"</span>], <span class="st">"payload"</span>: {},
+    })
+    <span class="kw">assert</span> <span class="fn">len</span>(registry.get_open()) == <span class="nu">0</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_resolved_event_closes_anomaly</span>(registry):
+    <span class="kw">await</span> registry.process_event({
+        <span class="st">"severity"</span>: <span class="st">"critical"</span>, <span class="st">"event_type"</span>: <span class="st">"service_unreachable"</span>,
+        <span class="st">"confidence"</span>: <span class="nu">0.97</span>, <span class="st">"timestamp"</span>: <span class="st">"2024-01-15T14:00:00Z"</span>,
+        <span class="st">"entity_refs"</span>: [<span class="st">"svc:api"</span>], <span class="st">"payload"</span>: {},
+    })
+    <span class="kw">assert</span> <span class="fn">len</span>(registry.get_open()) == <span class="nu">1</span>
+    <span class="kw">await</span> registry.process_event({
+        <span class="st">"severity"</span>: <span class="st">"info"</span>, <span class="st">"event_type"</span>: <span class="st">"service_health_restored"</span>,
+        <span class="st">"confidence"</span>: <span class="nu">0.97</span>, <span class="st">"timestamp"</span>: <span class="st">"2024-01-15T14:05:00Z"</span>,
+        <span class="st">"entity_refs"</span>: [<span class="st">"svc:api"</span>], <span class="st">"payload"</span>: {},
+    })
+    <span class="kw">assert</span> <span class="fn">len</span>(registry.get_open()) == <span class="nu">0</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_severity_escalation_on_repeat_event</span>(registry):
+    <span class="cm"># medium first, then critical for same entity+type</span>
+    <span class="kw">for</span> severity <span class="kw">in</span> [<span class="st">"medium"</span>, <span class="st">"critical"</span>]:
+        <span class="kw">await</span> registry.process_event({
+            <span class="st">"severity"</span>: severity, <span class="st">"event_type"</span>: <span class="st">"cpu_spike"</span>,
+            <span class="st">"confidence"</span>: <span class="nu">0.9</span>, <span class="st">"timestamp"</span>: <span class="st">"2024-01-15T14:00:00Z"</span>,
+            <span class="st">"entity_refs"</span>: [<span class="st">"metric:node-01"</span>], <span class="st">"payload"</span>: {},
+        })
+    open_list = registry.get_open()
+    <span class="kw">assert</span> <span class="fn">len</span>(open_list) == <span class="nu">1</span>   <span class="cm"># still one anomaly, not two</span>
+    <span class="kw">assert</span> open_list[<span class="nu">0</span>].severity == <span class="st">"critical"</span>   <span class="cm"># escalated</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_stale_anomaly_auto_resolved</span>(registry):
+    <span class="kw">from</span> world_model.anomaly_registry <span class="kw">import</span> Anomaly
+    old_ts = (datetime.now(timezone.utc) - timedelta(minutes=<span class="nu">15</span>)).isoformat()
+    anomaly = Anomaly(
+        anomaly_id=<span class="st">"anm_test1"</span>, entity_id=<span class="st">"svc:old"</span>,
+        event_type=<span class="st">"api_latency_spike"</span>, severity=<span class="st">"high"</span>,
+        confidence=<span class="nu">0.9</span>, opened_at=old_ts, last_seen_at=old_ts,
+        resolved_at=<span class="kw">None</span>, status=<span class="st">"open"</span>,
+    )
+    registry._open[<span class="st">"svc:old:api_latency_spike"</span>] = anomaly
+    <span class="kw">await</span> registry.expire_stale()
+    <span class="kw">assert</span> <span class="fn">len</span>(registry.get_open()) == <span class="nu">0</span></pre>
+  </div>
+
+  <!-- test_situation_assessor.py -->
+  <h3>test_situation_assessor.py</h3>
+  <div class="codeblock">
+    <div class="codeblock-head">
+      <span class="codeblock-file">tests/test_situation_assessor.py</span>
+      <span class="codeblock-lang">PYTHON</span>
+    </div>
+<pre><span class="kw">import</span> pytest
+<span class="kw">from</span> unittest.mock <span class="kw">import</span> AsyncMock, MagicMock, patch
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">from</span> world_model.anomaly_registry <span class="kw">import</span> Anomaly
+<span class="kw">from</span> world_model.situation_assessor <span class="kw">import</span> SituationAssessor
+
+
+<span class="kw">def</span> <span class="fn">make_anomaly</span>(severity=<span class="st">"high"</span>, entity_id=<span class="st">"svc:auth"</span>):
+    ts = datetime.now(timezone.utc).isoformat()
+    <span class="kw">return</span> Anomaly(
+        anomaly_id=<span class="st">"anm_test"</span>, entity_id=entity_id,
+        event_type=<span class="st">"api_latency_spike"</span>, severity=severity,
+        confidence=<span class="nu">0.92</span>, opened_at=ts, last_seen_at=ts,
+        resolved_at=<span class="kw">None</span>, status=<span class="st">"open"</span>,
+    )
+
+
+<span class="at">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">mock_wm</span>():
+    wm = MagicMock()
+    wm.anomalies.get_open     = MagicMock(return_value=[make_anomaly()])
+    wm.anomalies.count_by_severity = MagicMock(return_value={<span class="st">"high"</span>: <span class="nu">1</span>})
+    wm.entities.get_all       = MagicMock(return_value=[])
+    wm.entities.get_degraded  = MagicMock(return_value=[])
+    wm.get_blast_radius       = AsyncMock(return_value=[])
+    wm.get_causal_chain       = AsyncMock(return_value={
+        <span class="st">"dependency_chain"</span>: [], <span class="st">"correlated_entities"</span>: []
+    })
+    wm.get_prediction         = AsyncMock(return_value=[])
+    <span class="kw">return</span> wm
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_assess_returns_required_keys</span>(mock_wm):
+    assessor = SituationAssessor(mock_wm)
+    result = <span class="kw">await</span> assessor.assess(top_n=<span class="nu">3</span>)
+    <span class="kw">for</span> key <span class="kw">in</span> [
+        <span class="st">"situation_summary"</span>, <span class="st">"ranked_anomalies"</span>, <span class="st">"system_health"</span>,
+        <span class="st">"causal_insights"</span>, <span class="st">"predictions"</span>, <span class="st">"uncertainty_notes"</span>, <span class="st">"assessed_at"</span>,
+    ]:
+        <span class="kw">assert</span> key <span class="kw">in</span> result, <span class="st">f"Missing key: {key}"</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_critical_anomaly_ranks_above_medium</span>(mock_wm):
+    crit = make_anomaly(severity=<span class="st">"critical"</span>, entity_id=<span class="st">"svc:a"</span>)
+    med  = make_anomaly(severity=<span class="st">"medium"</span>,   entity_id=<span class="st">"svc:b"</span>)
+    mock_wm.anomalies.get_open.return_value = [med, crit]   <span class="cm"># wrong order</span>
+    assessor = SituationAssessor(mock_wm)
+    result = <span class="kw">await</span> assessor.assess()
+    <span class="cm"># Critical should be ranked first regardless of input order</span>
+    <span class="kw">assert</span> result[<span class="st">"ranked_anomalies"</span>][<span class="nu">0</span>][<span class="st">"severity"</span>] == <span class="st">"critical"</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_blast_radius_inflates_score</span>(mock_wm):
+    <span class="cm"># Anomaly with large blast radius should outscore same-severity with small one</span>
+    mock_wm.anomalies.get_open.return_value = [
+        make_anomaly(<span class="st">"high"</span>, <span class="st">"svc:a"</span>),
+        make_anomaly(<span class="st">"high"</span>, <span class="st">"svc:b"</span>),
+    ]
+    <span class="cm"># svc:a has 10 affected entities, svc:b has 0</span>
+    mock_wm.get_blast_radius = AsyncMock(side_effect=[
+        [{<span class="st">"entity_id"</span>: <span class="st">f"svc:{i}"</span>, <span class="st">"hop_distance"</span>: <span class="nu">1</span>, <span class="st">"current_health"</span>: <span class="st">"healthy"</span>, <span class="st">"entity_type"</span>:<span class="st">"svc"</span>, <span class="st">"relationship"</span>:<span class="st">"DEPENDS_ON"</span>} <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nu">10</span>)],
+        [],
+    ])
+    assessor = SituationAssessor(mock_wm)
+    result = <span class="kw">await</span> assessor.assess()
+    <span class="cm"># svc:a with blast_radius=10 should rank higher</span>
+    <span class="kw">assert</span> result[<span class="st">"ranked_anomalies"</span>][<span class="nu">0</span>][<span class="st">"entity_id"</span>] == <span class="st">"svc:a"</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_empty_world_returns_no_anomalies_summary</span>(mock_wm):
+    mock_wm.anomalies.get_open.return_value = []
+    mock_wm.anomalies.count_by_severity.return_value = {}
+    assessor = SituationAssessor(mock_wm)
+    result = <span class="kw">await</span> assessor.assess()
+    <span class="kw">assert</span> <span class="st">"No active anomalies"</span> <span class="kw">in</span> result[<span class="st">"situation_summary"</span>]
+    <span class="kw">assert</span> result[<span class="st">"ranked_anomalies"</span>] == []</pre>
+  </div>
+
+  <!-- test_causal_engine.py -->
+  <h3>test_causal_engine.py</h3>
+  <div class="codeblock">
+    <div class="codeblock-head">
+      <span class="codeblock-file">tests/test_causal_engine.py</span>
+      <span class="codeblock-lang">PYTHON</span>
+    </div>
+<pre><span class="kw">import</span> pytest
+<span class="kw">from</span> unittest.mock <span class="kw">import</span> AsyncMock, MagicMock
+<span class="kw">from</span> world_model.causal_engine <span class="kw">import</span> CausalEngine
+
+
+<span class="at">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">engine</span>():
+    e = CausalEngine.__new__(CausalEngine)
+    e._driver = MagicMock()
+    <span class="kw">return</span> e
+
+
+<span class="kw">def</span> <span class="fn">make_mock_session</span>(data: list):
+    mock_result = AsyncMock()
+    mock_result.data = AsyncMock(return_value=data)
+    mock_session = AsyncMock()
+    mock_session.run = AsyncMock(return_value=mock_result)
+    driver = MagicMock()
+    driver.session.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+    driver.session.return_value.__aexit__  = AsyncMock(return_value=<span class="kw">False</span>)
+    <span class="kw">return</span> driver, mock_session
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_blast_radius_returns_dependents</span>(engine):
+    data = [
+        {<span class="st">"affected_id"</span>: <span class="st">"svc:auth"</span>, <span class="st">"entity_type"</span>: <span class="st">"svc"</span>, <span class="st">"hop_distance"</span>: <span class="nu">1</span>, <span class="st">"rel_type"</span>: <span class="st">"DEPENDS_ON"</span>},
+    ]
+    engine._driver, _ = make_mock_session(data)
+    results = <span class="kw">await</span> engine.get_blast_radius(<span class="st">"db:postgres-primary"</span>)
+    <span class="kw">assert</span> <span class="fn">len</span>(results) > <span class="nu">0</span>
+    <span class="kw">assert</span> results[<span class="nu">0</span>].affected_entity_id == <span class="st">"svc:auth"</span>
+    <span class="kw">assert</span> results[<span class="nu">0</span>].hop_distance == <span class="nu">1</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_causal_chain_returns_dependency_path</span>(engine):
+    data = [
+        {<span class="st">"from_entity"</span>: <span class="st">"svc:auth"</span>, <span class="st">"to_entity"</span>: <span class="st">"db:postgres"</span>,
+         <span class="st">"rel_type"</span>: <span class="st">"DEPENDS_ON"</span>, <span class="st">"confidence"</span>: <span class="kw">None</span>},
+    ]
+    engine._driver, _ = make_mock_session(data)
+    results = <span class="kw">await</span> engine.get_causal_chain(<span class="st">"svc:auth"</span>)
+    <span class="kw">assert</span> results[<span class="nu">0</span>].from_entity == <span class="st">"svc:auth"</span>
+    <span class="kw">assert</span> results[<span class="nu">0</span>].to_entity == <span class="st">"db:postgres"</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_blast_radius_empty_when_no_dependents</span>(engine):
+    engine._driver, _ = make_mock_session([])
+    results = <span class="kw">await</span> engine.get_blast_radius(<span class="st">"svc:leaf-service"</span>)
+    <span class="kw">assert</span> results == []</pre>
+  </div>
+
+  <h3>Expected Test Run Output</h3>
+  <div class="testout">
+<span class="dim">$ python3 -m pytest --tb=short -q</span>
+
+<span class="info">tests/test_episodic_memory.py ...</span>                   <span class="dim">[ 7%]</span>
+<span class="info">tests/test_memory_router.py ..</span>                      <span class="dim">[ 12%]</span>
+<span class="info">tests/test_normalizers.py ........</span>                   <span class="dim">[ 32%]</span>
+<span class="info">tests/test_procedural_memory.py ..</span>                   <span class="dim">[ 37%]</span>
+<span class="info">tests/test_semantic_memory.py ...</span>                    <span class="dim">[ 44%]</span>
+<span class="info">tests/test_vector_memory.py .</span>                        <span class="dim">[ 47%]</span>
+<span class="info">tests/test_working_memory.py ...</span>                     <span class="dim">[ 54%]</span>
+<span class="info">tests/test_temporal_detector.py ........</span>              <span class="dim">[ 74%]</span>
+<span class="info">tests/test_temporal_predictor.py ......</span>               <span class="dim">[ 88%]</span>
+<span class="info">tests/test_temporal_graph_bridge.py ...</span>               <span class="dim">[ 95%]</span>
+<span class="pass">tests/test_entity_registry.py .....</span>                  <span class="dim">[ 97%]</span>
+<span class="pass">tests/test_anomaly_registry.py .....</span>                 <span class="dim">[ 98%]</span>
+<span class="pass">tests/test_situation_assessor.py ....</span>                <span class="dim">[ 99%]</span>
+<span class="pass">tests/test_causal_engine.py ...</span>                      <span class="dim">[ 100%]</span>
+
+<span class="sep">──────────────────────────────────────────────────────</span>
+<span class="pass">62 passed</span><span class="dim">, 5 warnings in ~51s</span>
+  </div>
+
+  <!-- ═══════════════════ MANUAL VERIFICATION ═══════════════════ -->
+  <h3>Manual End-to-End Verification</h3>
+
+  <h4>1. Start everything</h4>
+  <div class="codeblock">
+    <div class="codeblock-head"><span class="codeblock-file">Terminal</span><span class="codeblock-lang">BASH</span></div>
+<pre>docker-compose up -d
+uvicorn temporal.api:app --port 8091 &amp;
+uvicorn world_model.api:app --port 8092 --reload</pre>
+  </div>
+
+  <h4>2. Inject events via the Perception API</h4>
+  <div class="codeblock">
+    <div class="codeblock-head"><span class="codeblock-file">Seed three entity types with anomalies</span><span class="codeblock-lang">BASH</span></div>
+<pre><span class="cm"># Critical: database connection timeout</span>
+curl -s -X POST http://localhost:8080/perception/prometheus-alerts \
+  -H <span class="st">"Content-Type: application/json"</span> \
+  -d <span class="st">'{"alerts": [{"status": "firing",
+      "labels": {"alertname": "PostgresConnectionsExhausted",
+                 "job": "postgres", "instance": "db:postgres-primary:9187"},
+      "annotations": {"summary": "All connections exhausted"},
+      "startsAt": "'</span>$(date -u +%Y-%m-%dT%H:%M:%SZ)<span class="st">'"
+  }]}'</span>
+
+<span class="cm"># High: API latency spike</span>
+curl -s -X POST http://localhost:8080/perception/prometheus-alerts \
+  -H <span class="st">"Content-Type: application/json"</span> \
+  -d <span class="st">'{"alerts": [{"status": "firing",
+      "labels": {"alertname": "HighCPUUsage",
+                 "job": "auth-service", "instance": "metric:node-01:9090"},
+      "annotations": {"value": "95"},
+      "startsAt": "'</span>$(date -u +%Y-%m-%dT%H:%M:%SZ)<span class="st">'"
+  }]}'</span>
+
+<span class="cm"># Check health after injection</span>
+sleep 3
+curl -s http://localhost:8092/health | jq .</pre>
+  </div>
+
+  <h4>3. Query the five World Model endpoints</h4>
+  <div class="codeblock">
+    <div class="codeblock-head"><span class="codeblock-file">All five primary endpoints</span><span class="codeblock-lang">BASH</span></div>
+<pre><span class="cm"># PRIMARY: situation brief — this is what Phase 7 Reasoning Engine will receive</span>
+curl -s "http://localhost:8092/world/situation?top_n=3" | jq .
+
+<span class="cm"># Entity state</span>
+curl -s "http://localhost:8092/world/entity/db:postgres-primary" | jq .
+
+<span class="cm"># Blast radius — who breaks if postgres goes down</span>
+curl -s "http://localhost:8092/world/blast-radius/db:postgres-primary" | jq .
+
+<span class="cm"># Causal chain — what does auth-service depend on</span>
+curl -s "http://localhost:8092/world/causal-chain/svc:auth-service" | jq .
+
+<span class="cm"># Prediction</span>
+curl -s "http://localhost:8092/world/predict/metric:node-01?event_type=cpu_spike" | jq .</pre>
+  </div>
+
+  <h4>4. Expected /world/situation response</h4>
+  <div class="codeblock">
+    <div class="codeblock-head"><span class="codeblock-file">Sample output</span><span class="codeblock-lang">JSON</span></div>
+<pre>{
+  <span class="at">"situation_summary"</span>: <span class="st">"1 CRITICAL anomaly(s), 1 HIGH anomaly(s). 60% of 5 tracked entities healthy."</span>,
+  <span class="at">"ranked_anomalies"</span>: [
+    {
+      <span class="at">"rank"</span>:                 <span class="nu">1</span>,
+      <span class="at">"score"</span>:               <span class="nu">9.72</span>,
+      <span class="at">"anomaly_id"</span>:          <span class="st">"anm_a1b2c3d4"</span>,
+      <span class="at">"entity_id"</span>:           <span class="st">"db:postgres-primary"</span>,
+      <span class="at">"event_type"</span>:          <span class="st">"connection_pool_exhausted"</span>,
+      <span class="at">"severity"</span>:            <span class="st">"critical"</span>,
+      <span class="at">"confidence"</span>:          <span class="nu">0.98</span>,
+      <span class="at">"blast_radius_count"</span>:  <span class="nu">3</span>
+    },
+    {
+      <span class="at">"rank"</span>:       <span class="nu">2</span>,
+      <span class="at">"score"</span>:      <span class="nu">4.85</span>,
+      <span class="at">"entity_id"</span>:  <span class="st">"metric:node-01"</span>,
+      <span class="at">"event_type"</span>: <span class="st">"cpu_spike"</span>,
+      <span class="at">"severity"</span>:   <span class="st">"high"</span>
+    }
+  ],
+  <span class="at">"system_health"</span>: {
+    <span class="at">"total_entities"</span>: <span class="nu">5</span>,
+    <span class="at">"healthy"</span>:        <span class="nu">3</span>,
+    <span class="at">"degraded"</span>:       <span class="nu">2</span>,
+    <span class="at">"by_severity"</span>:    { <span class="at">"critical"</span>: <span class="nu">1</span>, <span class="at">"high"</span>: <span class="nu">1</span> }
+  },
+  <span class="at">"causal_insights"</span>: [...]
+}</pre>
+  </div>
+</section>
+
+<!-- ═══════════════════ CHECKLIST ═══════════════════ -->
+<section class="section">
+  <div class="sec-head">
+    <div class="step-tag">DONE</div>
+    <div class="sec-head-text">
+      <h2>Phase 6 Completion Gate</h2>
+      <p>Verify every item before starting Phase 7 (Build the Reasoning Engine). Phase 7 calls <code>/world/situation</code> as its first action.</p>
+    </div>
+  </div>
+
+  <div class="checklist">
+    <div class="check-row">
+      <div class="check-ico">☐</div>
+      <div class="check-text">
+        <span class="check-title">redis-stack running with RedisJSON module</span>
+        <span class="check-note">Verify: <code>redis-cli MODULE LIST</code> shows <code>ReJSON</code>. Entity and anomaly registries depend on this.</span>
+      </div>
+      <div><span class="badge b-gold">INFRA</span></div>
+    </div>
+    <div class="check-row">
+      <div class="check-ico">☐</div>
+      <div class="check-text">
+        <span class="check-title">WorldModel starts and subscribes to cognitive.events</span>
+        <span class="check-note">Logs show <code>[WorldModel] Kafka consumer started</code> with no errors on startup.</span>
+      </div>
+      <div><span class="badge b-teal">RUNTIME</span></div>
+    </div>
+    <div class="check-row">
+      <div class="check-ico">☐</div>
+      <div class="check-text">
+        <span class="check-title">Injected events update EntityRegistry correctly</span>
+        <span class="check-note"><code>GET /world/entity/db:postgres-primary</code> returns <code>health_status: "critical"</code> after injection.</span>
+      </div>
+      <div><span class="badge b-teal">FUNCTIONAL</span></div>
+    </div>
+    <div class="check-row">
+      <div class="check-ico">☐</div>
+      <div class="check-text">
+        <span class="check-title">AnomalyRegistry opens and escalates correctly</span>
+        <span class="check-note"><code>GET /world/anomalies</code> returns open anomalies. Injecting a <code>_resolved</code> event closes them.</span>
+      </div>
+      <div><span class="badge b-teal">FUNCTIONAL</span></div>
+    </div>
+    <div class="check-row">
+      <div class="check-ico">☐</div>
+      <div class="check-text">
+        <span class="check-title">Blast radius traversal returns correct dependents</span>
+        <span class="check-note"><code>GET /world/blast-radius/db:postgres-primary</code> returns services that DEPEND_ON postgres, not its dependencies.</span>
+      </div>
+      <div><span class="badge b-teal">FUNCTIONAL</span></div>
+    </div>
+    <div class="check-row">
+      <div class="check-ico">☐</div>
+      <div class="check-text">
+        <span class="check-title">SituationAssessor ranks critical before high regardless of arrival order</span>
+        <span class="check-note"><code>GET /world/situation</code> — <code>ranked_anomalies[0].severity</code> is always the worst active anomaly.</span>
+      </div>
+      <div><span class="badge b-teal">FUNCTIONAL</span></div>
+    </div>
+    <div class="check-row">
+      <div class="check-ico">☐</div>
+      <div class="check-text">
+        <span class="check-title">Temporal sync loop populates trend_direction on entity states</span>
+        <span class="check-note">After 30s, <code>GET /world/entity/metric:node-01</code> shows non-null <code>trend_direction</code> from Temporal API.</span>
+      </div>
+      <div><span class="badge b-teal">FUNCTIONAL</span></div>
+    </div>
+    <div class="check-row">
+      <div class="check-ico">☐</div>
+      <div class="check-text">
+        <span class="check-title">62 tests pass (40 existing + 22 new world model tests)</span>
+        <span class="check-note"><code>python3 -m pytest</code> exits with 62 passed, 0 failed.</span>
+      </div>
+      <div><span class="badge b-green">REQUIRED</span></div>
+    </div>
+  </div>
+
+  <div class="note note-success" style="margin-top: 32px;">
+    <div class="note-icon">✅</div>
+    <div class="note-body">
+      <strong>When all 8 items are green, Phase 6 is complete.</strong>
+      You now have the crown of the architecture: a live, continuously-updated, causally-aware
+      model of your entire environment. Phase 7 (Build the Reasoning Engine) will take the output of
+      <code>GET /world/situation</code> and turn it into the context window for an LLM call —
+      the first time intelligence enters the loop.
+    </div>
+  </div>
+
+  <h3>What Phase 7 (Reasoning Engine) Consumes from Phase 6</h3>
+  <table>
+    <thead>
+      <tr><th>Reasoning Engine Action</th><th>Calls World Model</th><th>How It Uses the Result</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Build LLM prompt context</td>
+        <td><code>GET /world/situation</code></td>
+        <td>Becomes the "Situation Summary" section of the reasoning prompt</td>
+      </tr>
+      <tr>
+        <td>Deep-dive on anomaly entity</td>
+        <td><code>GET /world/entity/{id}</code></td>
+        <td>Appended as "Entity Detail" when LLM requests more context</td>
+      </tr>
+      <tr>
+        <td>Risk assessment pre-action</td>
+        <td><code>GET /world/blast-radius/{id}</code></td>
+        <td>Determines if an action requires human approval (large blast radius → requires_human_approval: true)</td>
+      </tr>
+      <tr>
+        <td>Root cause hypothesis</td>
+        <td><code>GET /world/causal-chain/{id}</code></td>
+        <td>Populates <code>root_cause_hypothesis</code> field in the Decision Object</td>
+      </tr>
+      <tr>
+        <td>Proactive planning</td>
+        <td><code>GET /world/predict/{id}</code></td>
+        <td>If 15-min forecast exceeds threshold, reasoning fires before the event occurs</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+</div><!-- /wrap -->
+</body>
+</html>

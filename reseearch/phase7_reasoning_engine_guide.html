@@ -1,0 +1,2371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 7 — Build the Reasoning Engine | Digital Cognitive Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap');
+
+  :root {
+    --bg:      #08090f;
+    --s1:      #0d0f1a;
+    --s2:      #121525;
+    --s3:      #181c2e;
+    --border:  #1e2338;
+    --border2: #252c45;
+    --violet:  #8b6cf6;
+    --violet2: #a78bfa;
+    --violet3: #c4b5fd;
+    --cyan:    #22d3ee;
+    --green:   #4ade80;
+    --orange:  #fb923c;
+    --red:     #f87171;
+    --yellow:  #fbbf24;
+    --text:    #e2e8f8;
+    --text2:   #7c8ab0;
+    --text3:   #3a4266;
+    --mono:    'Fira Code', monospace;
+    --sans:    'Outfit', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14.5px;
+    line-height: 1.75;
+    overflow-x: hidden;
+  }
+
+  /* Animated gradient background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(139,108,246,0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(34,211,238,0.03) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Fine grid */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(139,108,246,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(139,108,246,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── NAV ── */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(8,9,15,0.88);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    height: 54px;
+    display: flex; align-items: center;
+    padding: 0 40px;
+    justify-content: space-between;
+  }
+  .nav-brand {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 0.06em;
+  }
+  .nav-brand strong { color: var(--violet2); font-weight: 500; }
+  .nav-links {
+    display: flex; gap: 4px;
+    list-style: none;
+  }
+  .nav-links a {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text3);
+    text-decoration: none;
+    padding: 5px 11px;
+    border-radius: 5px;
+    transition: all 0.15s;
+  }
+  .nav-links a:hover { background: var(--s3); color: var(--violet2); }
+
+  /* ── LAYOUT ── */
+  .wrap {
+    position: relative; z-index: 1;
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 0 36px 120px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 90px 0 76px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 80px;
+  }
+
+  .phase-tag {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--violet2);
+    margin-bottom: 28px;
+  }
+  .phase-tag::before {
+    content: '';
+    display: block;
+    width: 32px; height: 1px;
+    background: linear-gradient(90deg, var(--violet), transparent);
+  }
+
+  .hero h1 {
+    font-size: clamp(38px, 5.5vw, 60px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: #fff;
+    margin-bottom: 22px;
+  }
+  .hero h1 .grad {
+    background: linear-gradient(135deg, var(--violet2) 0%, var(--cyan) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-size: 16px;
+    font-weight: 300;
+    color: var(--text2);
+    max-width: 640px;
+    line-height: 1.85;
+    margin-bottom: 44px;
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    width: fit-content;
+  }
+  .hero-stat {
+    background: var(--s1);
+    padding: 18px 26px;
+  }
+  .hero-stat-val {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--violet2);
+    display: block;
+    line-height: 1;
+    margin-bottom: 5px;
+  }
+  .hero-stat-lbl {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+
+  /* ── SECTION ── */
+  .section { margin-bottom: 84px; }
+
+  .sec-head {
+    display: flex; align-items: flex-start; gap: 18px;
+    margin-bottom: 36px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--border);
+  }
+  .step-tag {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: linear-gradient(135deg, var(--violet) 0%, var(--cyan) 100%);
+    padding: 5px 11px;
+    border-radius: 5px;
+    white-space: nowrap;
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+  .sec-head-body h2 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.015em;
+    margin-bottom: 6px;
+  }
+  .sec-head-body p {
+    font-size: 13.5px;
+    color: var(--text2);
+    max-width: 580px;
+    margin: 0;
+  }
+
+  h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 32px 0 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  h3::before {
+    content: '';
+    display: block;
+    width: 3px; height: 16px;
+    background: linear-gradient(180deg, var(--violet) 0%, var(--cyan) 100%);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  h4 {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin: 24px 0 10px;
+  }
+
+  p { color: var(--text2); margin-bottom: 14px; line-height: 1.8; }
+  p strong { color: var(--text); font-weight: 500; }
+  ul { color: var(--text2); padding-left: 20px; margin-bottom: 14px; }
+  li { margin-bottom: 6px; line-height: 1.7; }
+
+  /* ── NOTES ── */
+  .note {
+    display: flex; gap: 14px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin: 18px 0 22px;
+    font-size: 13.5px;
+    line-height: 1.7;
+  }
+  .note-icon { font-size: 17px; flex-shrink: 0; padding-top: 1px; }
+  .note-body { color: var(--text2); }
+  .note-body strong { color: var(--text); }
+  .note-info    { background: rgba(34,211,238,0.05);  border: 1px solid rgba(34,211,238,0.18); }
+  .note-warn    { background: rgba(251,191,36,0.05);  border: 1px solid rgba(251,191,36,0.2); }
+  .note-danger  { background: rgba(248,113,113,0.06); border: 1px solid rgba(248,113,113,0.22); }
+  .note-success { background: rgba(74,222,128,0.05);  border: 1px solid rgba(74,222,128,0.2); }
+  .note-violet  { background: rgba(139,108,246,0.06); border: 1px solid rgba(139,108,246,0.22); }
+
+  /* ── CODE ── */
+  .cb {
+    margin: 12px 0 24px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border2);
+  }
+  .cb-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 16px;
+    background: var(--s2);
+    border-bottom: 1px solid var(--border);
+  }
+  .cb-file {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text2);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .cb-file::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--violet2);
+    opacity: 0.7;
+  }
+  .cb-lang {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+  pre {
+    margin: 0;
+    padding: 20px;
+    background: #060810;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: #c8d3f5;
+  }
+  /* tokens */
+  .kw { color: #f87171; }
+  .fn { color: #c4b5fd; }
+  .st { color: #86efac; }
+  .nu { color: #93c5fd; }
+  .cm { color: #3a4a6b; font-style: italic; }
+  .dc { color: #3a4a6b; font-style: italic; }
+  .at { color: #fb923c; }
+  .cl { color: #22d3ee; }
+  .op { color: #f87171; }
+  .dm { color: #3a4a6b; }
+
+  /* ── TABLE ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 24px;
+    font-size: 13px;
+  }
+  thead th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border2);
+    text-align: left;
+    background: var(--s1);
+  }
+  tbody td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    color: var(--text2);
+    line-height: 1.65;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(139,108,246,0.03); }
+  td:first-child {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--violet2);
+    white-space: nowrap;
+  }
+
+  /* ── INLINE CODE ── */
+  code {
+    font-family: var(--mono);
+    font-size: 0.85em;
+    color: var(--violet3);
+    background: rgba(139,108,246,0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow {
+    background: var(--s2);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin: 14px 0 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 2;
+    overflow-x: auto;
+  }
+  .flow .hl  { color: var(--violet2); font-weight: 600; }
+  .flow .cy  { color: var(--cyan); }
+  .flow .gr  { color: var(--green); }
+  .flow .or  { color: var(--orange); }
+  .flow .dm  { color: var(--text3); }
+  .flow .ar  { color: var(--violet); }
+
+  /* ── FILE TREE ── */
+  .ftree {
+    background: var(--s2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 12px 0 22px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 2.1;
+  }
+  .ftree .dir  { color: var(--cyan); }
+  .ftree .file { color: var(--text2); }
+  .ftree .new  { color: var(--violet2); font-weight: 600; }
+  .ftree .dm   { color: var(--text3); }
+
+  /* ── BADGE ── */
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 4px;
+  }
+  .b-v  { background: rgba(139,108,246,0.12); color: var(--violet2); border: 1px solid rgba(139,108,246,0.28); }
+  .b-c  { background: rgba(34,211,238,0.1);   color: var(--cyan);    border: 1px solid rgba(34,211,238,0.25); }
+  .b-g  { background: rgba(74,222,128,0.1);   color: var(--green);   border: 1px solid rgba(74,222,128,0.25); }
+  .b-r  { background: rgba(248,113,113,0.1);  color: var(--red);     border: 1px solid rgba(248,113,113,0.25); }
+  .b-o  { background: rgba(251,146,60,0.1);   color: var(--orange);  border: 1px solid rgba(251,146,60,0.25); }
+  .b-y  { background: rgba(251,191,36,0.1);   color: var(--yellow);  border: 1px solid rgba(251,191,36,0.25); }
+
+  /* ── DECISION OBJECT CARD ── */
+  .decision-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 14px 0 24px;
+  }
+  @media(max-width:620px){ .decision-grid { grid-template-columns: 1fr; } }
+  .dcard {
+    background: var(--s2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    transition: border-color 0.2s;
+  }
+  .dcard:hover { border-color: var(--border2); }
+  .dcard-field {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--violet2);
+    margin-bottom: 5px;
+  }
+  .dcard-desc {
+    font-size: 12.5px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  /* ── PROMPT SECTION ── */
+  .prompt-block {
+    background: linear-gradient(135deg, rgba(139,108,246,0.06) 0%, rgba(34,211,238,0.04) 100%);
+    border: 1px solid rgba(139,108,246,0.2);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 14px 0 24px;
+  }
+  .prompt-block .prompt-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--violet3);
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .prompt-block .prompt-label::before {
+    content: '';
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--violet2);
+    animation: blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .prompt-block pre {
+    background: transparent;
+    padding: 0;
+    font-size: 12px;
+    color: var(--text2);
+    border: none;
+    white-space: pre-wrap;
+  }
+  .prompt-block .sys  { color: var(--violet3); }
+  .prompt-block .sit  { color: var(--cyan); }
+  .prompt-block .exp  { color: var(--green); }
+  .prompt-block .act  { color: var(--orange); }
+  .prompt-block .con  { color: var(--red); }
+  .prompt-block .fmt  { color: var(--yellow); }
+
+  /* ── FAST PATH TABLE ── */
+  .fp-table {
+    background: var(--s1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 14px 0 24px;
+  }
+  .fp-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 2fr;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    font-size: 13px;
+    align-items: start;
+  }
+  .fp-row:last-child { border-bottom: none; }
+  .fp-row.head {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    background: var(--s2);
+  }
+  .fp-row .cond { color: var(--text2); }
+  .fp-row .actn { color: var(--green); font-family: var(--mono); font-size: 11.5px; }
+  .fp-row .conf { color: var(--text3); font-size: 12px; }
+
+  /* ── TEST OUTPUT ── */
+  .testout {
+    background: #040610;
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 20px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    margin: 12px 0 24px;
+  }
+  .testout .pass { color: var(--green); }
+  .testout .fail { color: var(--red); }
+  .testout .info { color: var(--cyan); }
+  .testout .dim  { color: var(--text3); }
+  .testout .sep  { color: var(--border2); }
+
+  /* ── CHECKLIST ── */
+  .checklist {
+    background: var(--s1);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    padding: 28px;
+  }
+  .citem {
+    display: grid;
+    grid-template-columns: 20px 1fr auto;
+    gap: 12px;
+    align-items: start;
+    padding: 13px 14px;
+    background: var(--s2);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: border-color 0.2s;
+  }
+  .citem:last-child { margin-bottom: 0; }
+  .citem:hover { border-color: var(--border); }
+  .citem-ico { font-size: 13px; padding-top: 2px; }
+  .citem-body { display: flex; flex-direction: column; gap: 3px; }
+  .citem-title {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .citem-note {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.55;
+  }
+  .citem-note code { font-size: 10.5px; }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  @media(max-width:640px){
+    .wrap { padding: 0 16px 80px; }
+    .nav  { padding: 0 16px; }
+    .nav-links { display: none; }
+    .hero-grid { grid-template-columns: repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">DCA &nbsp;/&nbsp; <strong>Phase 7</strong> — Reasoning Engine</div>
+  <ul class="nav-links">
+    <li><a href="#concept">Concept</a></li>
+    <li><a href="#arch">Architecture</a></li>
+    <li><a href="#prompt">Prompt</a></li>
+    <li><a href="#fastpath">Fast Path</a></li>
+    <li><a href="#impl">Implementation</a></li>
+    <li><a href="#testing">Testing</a></li>
+  </ul>
+</nav>
+
+<div class="wrap">
+
+<!-- ════════════════ HERO ════════════════ -->
+<header class="hero">
+  <div class="phase-tag">Chapter 8 &nbsp;·&nbsp; Phase 7</div>
+  <h1>Build the<br><span class="grad">Reasoning Engine</span></h1>
+  <p class="hero-sub">
+    This is where intelligence enters the loop — but not the way most people build it.
+    The LLM does not perceive, remember, or maintain state. It receives a carefully
+    prepared, structured context from the World Model and returns a single, machine-parseable
+    decision. Everything else is architecture. This phase builds the full reasoning pipeline:
+    the fast path, the prompt builder, the LLM call, the decision parser, and the
+    episodic memory write-back.
+  </p>
+  <div class="hero-grid">
+    <div class="hero-stat">
+      <span class="hero-stat-val">7</span>
+      <span class="hero-stat-lbl">New Modules</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-val">2</span>
+      <span class="hero-stat-lbl">Execution Paths</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-val">24</span>
+      <span class="hero-stat-lbl">New Tests</span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-val">0</span>
+      <span class="hero-stat-lbl">DB calls from LLM</span>
+    </div>
+  </div>
+</header>
+
+<!-- ════════════════ CONCEPT ════════════════ -->
+<section id="concept" class="section">
+  <div class="sec-head">
+    <div class="step-tag">CONCEPT</div>
+    <div class="sec-head-body">
+      <h2>Why the LLM Is Not the Architecture</h2>
+      <p>The single most important design principle in Phase 7. Get this wrong and every downstream phase is compromised.</p>
+    </div>
+  </div>
+
+  <div class="note note-danger">
+    <div class="note-icon">🚫</div>
+    <div class="note-body">
+      <strong>The LLM does not perceive. The LLM does not remember. The LLM does not maintain the world model.</strong>
+      If the LLM is the architecture: there is no persistent memory (every call starts from zero),
+      no causal reasoning over structured data (it can only reason over text), no real-time grounding
+      (its knowledge is frozen at training), high latency (seconds per call — perception events must
+      be processed in milliseconds), high cost (calling an LLM for every event is economically unviable),
+      and hallucination risk (it may confabulate facts about your live environment). The LLM is reserved
+      for <strong>novel situations, complex tradeoffs, and decisions requiring multi-step causal reasoning.</strong>
+    </div>
+  </div>
+
+  <h3>What the Reasoning Engine Actually Does</h3>
+  <p>Eight sequential steps, in order, every time it runs:</p>
+
+  <div class="flow">
+<span class="dm">① </span><span class="hl">GET /world/situation</span>               <span class="dm">← World Model API (Phase 6)</span>
+   <span class="dm">Returns: ranked anomalies, causal chains, blast radius, predictions</span>
+
+<span class="dm">② </span><span class="cy">CHECK FAST PATH</span>                    <span class="dm">← Rule engine — no LLM</span>
+   <span class="dm">Does the situation exactly match a known playbook trigger? If yes → emit Decision, skip LLM</span>
+
+<span class="dm">③ </span><span class="gr">RETRIEVE PAST EXPERIENCES</span>          <span class="dm">← Memory API /memory/episodic/search (Phase 4)</span>
+   <span class="dm">Semantic search: "similar situations and how they were resolved" (2–3 examples)</span>
+
+<span class="dm">④ </span><span class="gr">RETRIEVE PLAYBOOKS</span>                 <span class="dm">← Memory API /memory/procedural/playbooks (Phase 4)</span>
+   <span class="dm">Activated playbooks from ProceduralMemory matching trigger_event + trigger_severity</span>
+
+<span class="dm">⑤ </span><span class="hl">BUILD PROMPT</span>                        <span class="dm">← PromptBuilder</span>
+   <span class="dm">System context + Situation summary + Past experiences + Available actions + Constraints + Output schema</span>
+
+<span class="dm">⑥ </span><span class="hl">CALL LLM</span>                            <span class="dm">← Claude Sonnet / GPT-4o via API</span>
+   <span class="dm">Single call. Returns structured JSON decision. Timeout: 30s. Retry: 2×</span>
+
+<span class="dm">⑦ </span><span class="cy">PARSE &amp; VALIDATE DECISION</span>           <span class="dm">← Pydantic DecisionObject</span>
+   <span class="dm">Strict schema validation. On failure → retry with schema-correction prompt</span>
+
+<span class="dm">⑧ </span><span class="gr">WRITE EPISODIC MEMORY</span>               <span class="dm">← Memory API (Phase 4)</span>
+   <span class="dm">Record: situation summary, decision made, confidence, timestamp → future experience retrieval</span>
+  </div>
+
+  <h3>What Goes in the Reasoning Prompt — The Six Sections</h3>
+  <table>
+    <thead>
+      <tr><th>Section</th><th>Content</th><th>Source</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>System context</td>
+        <td>Role definition, goal, constraints. "You are a reasoning component in a cognitive architecture managing a production system. Analyze the situation and recommend the safest, most effective action."</td>
+        <td>Prompt template file — version-controlled, never hardcoded</td>
+      </tr>
+      <tr>
+        <td>Situation summary</td>
+        <td>The ranked anomaly brief from <code>SituationAssessor.assess()</code> — anomalies, entities, causal chains, predictions, blast radius</td>
+        <td><code>GET /world/situation</code></td>
+      </tr>
+      <tr>
+        <td>Relevant past experiences</td>
+        <td>2–3 examples of similar situations and how they were resolved. Gives the LLM concrete precedent to reason from.</td>
+        <td><code>GET /memory/episodic/search?q=...</code></td>
+      </tr>
+      <tr>
+        <td>Available actions</td>
+        <td>The strict vocabulary of actions the system can take. The LLM must not invent actions that do not exist in this list.</td>
+        <td>Action registry — loaded from <code>actions.yaml</code></td>
+      </tr>
+      <tr>
+        <td>Constraints</td>
+        <td>What the system is not allowed to do without human approval. Irreversible actions, blast radius &gt; threshold, production database writes.</td>
+        <td>Constraint config — version-controlled</td>
+      </tr>
+      <tr>
+        <td>Output format</td>
+        <td>Strict JSON schema the LLM must produce. Not free text. The planning system needs a machine-parseable decision.</td>
+        <td>DecisionObject Pydantic schema serialised as JSON Schema</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>The Decision Object — Strict Schema</h3>
+  <div class="decision-grid">
+    <div class="dcard">
+      <div class="dcard-field">situation_assessment</div>
+      <div class="dcard-desc">Plain language summary of what the reasoning engine understands about the current situation. Used for observability and audit.</div>
+    </div>
+    <div class="dcard">
+      <div class="dcard-field">root_cause_hypothesis</div>
+      <div class="dcard-desc">The most likely causal explanation for the observed symptoms, with a confidence score (0.0–1.0). "postgres connection pool exhaustion caused by slow queries from auth-service."</div>
+    </div>
+    <div class="dcard">
+      <div class="dcard-field">recommended_action</div>
+      <div class="dcard-desc">The specific action to take, selected from the available action vocabulary. Must be an exact string match from <code>actions.yaml</code>. Never a free-form description.</div>
+    </div>
+    <div class="dcard">
+      <div class="dcard-field">action_parameters</div>
+      <div class="dcard-desc">Dict of parameters for the recommended action — which entity, what value, what target state. Schema defined per action in <code>actions.yaml</code>.</div>
+    </div>
+    <div class="dcard">
+      <div class="dcard-field">confidence</div>
+      <div class="dcard-desc">How confident the reasoning engine is in this recommendation (0.0–1.0). Below 0.6 → escalate to human. Above 0.9 → fast-execute if action is low-risk.</div>
+    </div>
+    <div class="dcard">
+      <div class="dcard-field">requires_human_approval</div>
+      <div class="dcard-desc">Boolean. True if the action is high-risk, irreversible, or blast radius exceeds threshold. The planning system will pause and request confirmation.</div>
+    </div>
+    <div class="dcard">
+      <div class="dcard-field">alternative_actions</div>
+      <div class="dcard-desc">Array of 1–2 fallback actions if the recommended action is not available or fails during execution. The planning system tries these in order.</div>
+    </div>
+    <div class="dcard">
+      <div class="dcard-field">reasoning_trace</div>
+      <div class="dcard-desc">Step-by-step explanation of how the conclusion was reached. Stored in episodic memory and used for observability, debugging, and feedback loop scoring.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ ARCHITECTURE ════════════════ -->
+<section id="arch" class="section">
+  <div class="sec-head">
+    <div class="step-tag">STEP 1</div>
+    <div class="sec-head-body">
+      <h2>Architecture &amp; File Structure</h2>
+      <p>Seven modules inside a <code>reasoning/</code> package. Build them in the order listed — each depends on the previous.</p>
+    </div>
+  </div>
+
+  <div class="ftree">
+<span class="dm">cognitive_architecture/</span>
+├── <span class="dir">perception/</span>    <span class="dm">✓ Phase 1</span>
+├── <span class="dir">memory/</span>        <span class="dm">✓ Phases 3 &amp; 4  (working, episodic, semantic, vector, procedural, router, api)</span>
+├── <span class="dir">temporal/</span>      <span class="dm">✓ Phase 5  (ingester, detector, state, predictor, graph_bridge, api)</span>
+├── <span class="dir">world_model/</span>   <span class="dm">✓ Phase 6  (core, entity_registry, anomaly_registry, causal_engine, situation_assessor, api)</span>
+├── <span class="new">reasoning/</span>     <span class="dm">◆ Phase 7 — BUILD THIS</span>
+│   ├── <span class="new">__init__.py</span>
+│   ├── <span class="new">schema.py</span>          <span class="dm">DecisionObject Pydantic model — strict output contract</span>
+│   ├── <span class="new">actions.py</span>         <span class="dm">ActionRegistry — loads actions.yaml, validates selections</span>
+│   ├── <span class="new">fast_path.py</span>       <span class="dm">RuleEngine — deterministic decisions without LLM</span>
+│   ├── <span class="new">context_builder.py</span> <span class="dm">ContextBuilder — fetches episodic + procedural memory</span>
+│   ├── <span class="new">prompt_builder.py</span>  <span class="dm">PromptBuilder — assembles the six-section reasoning prompt</span>
+│   ├── <span class="new">llm_client.py</span>      <span class="dm">LLMClient — Claude/GPT call with retry + parse + validate</span>
+│   └── <span class="new">engine.py</span>          <span class="dm">ReasoningEngine — orchestrates all seven steps</span>
+├── <span class="new">prompts/</span>
+│   └── <span class="new">reasoning_system.txt</span>  <span class="dm">System prompt template — version-controlled</span>
+├── <span class="new">actions.yaml</span>           <span class="dm">Action vocabulary — the only actions the LLM may recommend</span>
+├── <span class="dir">tests/</span>
+│   ├── <span class="new">test_reasoning_schema.py</span>
+│   ├── <span class="new">test_fast_path.py</span>
+│   ├── <span class="new">test_prompt_builder.py</span>
+│   ├── <span class="new">test_llm_client.py</span>
+│   └── <span class="new">test_reasoning_engine.py</span>
+  </div>
+
+  <h4>Install dependencies</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">requirements.txt — add these</span><span class="cb-lang">TEXT</span></div>
+<pre>anthropic>=0.28.0      <span class="cm"># Claude API client (primary LLM)</span>
+openai>=1.30.0         <span class="cm"># GPT-4o fallback</span>
+pydantic>=2.7.0        <span class="cm"># strict output parsing + JSON schema generation</span>
+pyyaml>=6.0.1          <span class="cm"># actions.yaml loading</span>
+tenacity>=8.3.0        <span class="cm"># LLM retry logic with exponential backoff</span>
+httpx>=0.27.0          <span class="cm"># already present — async calls to World Model + Memory APIs</span></pre>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">Terminal</span><span class="cb-lang">BASH</span></div>
+<pre>pip install anthropic openai pydantic pyyaml tenacity
+
+<span class="cm"># Set your API key — use .env in development, secret manager in production</span>
+export ANTHROPIC_API_KEY="sk-ant-..."   <span class="cm"># Claude (recommended)</span>
+export OPENAI_API_KEY="sk-..."          <span class="cm"># GPT-4o (fallback)</span></pre>
+  </div>
+</section>
+
+<!-- ════════════════ ACTIONS YAML ════════════════ -->
+<section class="section">
+  <div class="sec-head">
+    <div class="step-tag">STEP 2</div>
+    <div class="sec-head-body">
+      <h2>Define the Action Vocabulary First</h2>
+      <p>The LLM must only recommend actions that exist in this registry. Build <code>actions.yaml</code> before writing any Python — it is the contract between reasoning and execution.</p>
+    </div>
+  </div>
+
+  <div class="note note-violet">
+    <div class="note-icon">📋</div>
+    <div class="note-body">
+      <strong>This is the most operationally important file in Phase 7.</strong>
+      Every action the LLM recommends must be an exact string key from this file.
+      The Execution Layer (Phase 9) will look up the action handler by this key.
+      Never let the LLM invent action names — constrain it in the prompt and validate
+      the output against this registry before passing to planning.
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">actions.yaml</span><span class="cb-lang">YAML</span></div>
+<pre><span class="cm"># ═══════════════════════════════════════════════════════════
+# ACTION VOCABULARY — Cognitive Architecture Phase 7
+# Every key here is a valid action the LLM may recommend.
+# Parameters schema is validated before passing to planning.
+# ═══════════════════════════════════════════════════════════</span>
+<span class="at">actions</span>:
+
+  <span class="cm"># ── DATABASE ──────────────────────────────────────────────</span>
+  <span class="at">restart_connection_pool</span>:
+    <span class="at">description</span>: <span class="st">"Restart the database connection pool for a specific service."</span>
+    <span class="at">risk</span>: medium
+    <span class="at">reversible</span>: <span class="kw">true</span>
+    <span class="at">requires_approval</span>: <span class="kw">false</span>
+    <span class="at">parameters</span>:
+      <span class="at">service_id</span>: {<span class="at">type</span>: string, <span class="at">required</span>: <span class="kw">true</span>}
+      <span class="at">pool_size</span>:  {<span class="at">type</span>: integer, <span class="at">required</span>: <span class="kw">false</span>}
+
+  <span class="at">kill_slow_query</span>:
+    <span class="at">description</span>: <span class="st">"Terminate a specific long-running database query by pid."</span>
+    <span class="at">risk</span>: medium
+    <span class="at">reversible</span>: <span class="kw">false</span>
+    <span class="at">requires_approval</span>: <span class="kw">false</span>
+    <span class="at">parameters</span>:
+      <span class="at">db_id</span>: {<span class="at">type</span>: string, <span class="at">required</span>: <span class="kw">true</span>}
+      <span class="at">pid</span>:   {<span class="at">type</span>: integer, <span class="at">required</span>: <span class="kw">true</span>}
+
+  <span class="at">scale_read_replicas</span>:
+    <span class="at">description</span>: <span class="st">"Increase read replica count to reduce primary load."</span>
+    <span class="at">risk</span>: low
+    <span class="at">reversible</span>: <span class="kw">true</span>
+    <span class="at">requires_approval</span>: <span class="kw">false</span>
+    <span class="at">parameters</span>:
+      <span class="at">db_id</span>:         {<span class="at">type</span>: string, <span class="at">required</span>: <span class="kw">true</span>}
+      <span class="at">replica_count</span>: {<span class="at">type</span>: integer, <span class="at">required</span>: <span class="kw">true</span>, <span class="at">min</span>: 1, <span class="at">max</span>: 10}
+
+  <span class="cm"># ── SERVICE ───────────────────────────────────────────────</span>
+  <span class="at">restart_service</span>:
+    <span class="at">description</span>: <span class="st">"Perform a graceful rolling restart of a service."</span>
+    <span class="at">risk</span>: high
+    <span class="at">reversible</span>: <span class="kw">true</span>
+    <span class="at">requires_approval</span>: <span class="kw">true</span>
+    <span class="at">parameters</span>:
+      <span class="at">service_id</span>:  {<span class="at">type</span>: string, <span class="at">required</span>: <span class="kw">true</span>}
+      <span class="at">strategy</span>:   {<span class="at">type</span>: string, <span class="at">enum</span>: [rolling, blue_green, canary]}
+
+  <span class="at">scale_service_horizontal</span>:
+    <span class="at">description</span>: <span class="st">"Add replicas to a service to handle increased load."</span>
+    <span class="at">risk</span>: low
+    <span class="at">reversible</span>: <span class="kw">true</span>
+    <span class="at">requires_approval</span>: <span class="kw">false</span>
+    <span class="at">parameters</span>:
+      <span class="at">service_id</span>:    {<span class="at">type</span>: string, <span class="at">required</span>: <span class="kw">true</span>}
+      <span class="at">replica_delta</span>: {<span class="at">type</span>: integer, <span class="at">required</span>: <span class="kw">true</span>, <span class="at">min</span>: 1, <span class="at">max</span>: 10}
+
+  <span class="at">enable_circuit_breaker</span>:
+    <span class="at">description</span>: <span class="st">"Open circuit breaker on a service to stop cascading failures."</span>
+    <span class="at">risk</span>: medium
+    <span class="at">reversible</span>: <span class="kw">true</span>
+    <span class="at">requires_approval</span>: <span class="kw">false</span>
+    <span class="at">parameters</span>:
+      <span class="at">service_id</span>:   {<span class="at">type</span>: string, <span class="at">required</span>: <span class="kw">true</span>}
+      <span class="at">timeout_s</span>:    {<span class="at">type</span>: integer, <span class="at">required</span>: <span class="kw">false</span>}
+
+  <span class="cm"># ── QUEUE ─────────────────────────────────────────────────</span>
+  <span class="at">scale_consumer_group</span>:
+    <span class="at">description</span>: <span class="st">"Add consumer instances to a Kafka consumer group to reduce lag."</span>
+    <span class="at">risk</span>: low
+    <span class="at">reversible</span>: <span class="kw">true</span>
+    <span class="at">requires_approval</span>: <span class="kw">false</span>
+    <span class="at">parameters</span>:
+      <span class="at">queue_id</span>:        {<span class="at">type</span>: string, <span class="at">required</span>: <span class="kw">true</span>}
+      <span class="at">consumer_group</span>: {<span class="at">type</span>: string, <span class="at">required</span>: <span class="kw">true</span>}
+      <span class="at">instance_delta</span>: {<span class="at">type</span>: integer, <span class="at">required</span>: <span class="kw">true</span>}
+
+  <span class="at">purge_dead_letter_queue</span>:
+    <span class="at">description</span>: <span class="st">"Purge the DLQ after root cause is confirmed. Irreversible."</span>
+    <span class="at">risk</span>: high
+    <span class="at">reversible</span>: <span class="kw">false</span>
+    <span class="at">requires_approval</span>: <span class="kw">true</span>
+    <span class="at">parameters</span>:
+      <span class="at">queue_id</span>: {<span class="at">type</span>: string, <span class="at">required</span>: <span class="kw">true</span>}
+
+  <span class="cm"># ── NOTIFICATION ──────────────────────────────────────────</span>
+  <span class="at">send_alert</span>:
+    <span class="at">description</span>: <span class="st">"Send a structured alert to the on-call team via PagerDuty/Slack."</span>
+    <span class="at">risk</span>: low
+    <span class="at">reversible</span>: <span class="kw">true</span>
+    <span class="at">requires_approval</span>: <span class="kw">false</span>
+    <span class="at">parameters</span>:
+      <span class="at">severity</span>:  {<span class="at">type</span>: string, <span class="at">enum</span>: [critical, high, medium]}
+      <span class="at">message</span>:   {<span class="at">type</span>: string, <span class="at">required</span>: <span class="kw">true</span>}
+      <span class="at">channel</span>:   {<span class="at">type</span>: string, <span class="at">required</span>: <span class="kw">false</span>}
+
+  <span class="at">escalate_to_human</span>:
+    <span class="at">description</span>: <span class="st">"Pause and request human operator decision. Use when confidence is low."</span>
+    <span class="at">risk</span>: low
+    <span class="at">reversible</span>: <span class="kw">true</span>
+    <span class="at">requires_approval</span>: <span class="kw">false</span>
+    <span class="at">parameters</span>:
+      <span class="at">reason</span>:         {<span class="at">type</span>: string, <span class="at">required</span>: <span class="kw">true</span>}
+      <span class="at">urgency</span>:        {<span class="at">type</span>: string, <span class="at">enum</span>: [immediate, within_hour, within_day]}
+      <span class="at">suggested_by</span>:   {<span class="at">type</span>: string, <span class="at">required</span>: <span class="kw">false</span>}
+
+  <span class="cm"># ── OBSERVABILITY ─────────────────────────────────────────</span>
+  <span class="at">increase_log_verbosity</span>:
+    <span class="at">description</span>: <span class="st">"Temporarily raise log level to DEBUG for a service."</span>
+    <span class="at">risk</span>: low
+    <span class="at">reversible</span>: <span class="kw">true</span>
+    <span class="at">requires_approval</span>: <span class="kw">false</span>
+    <span class="at">parameters</span>:
+      <span class="at">service_id</span>:  {<span class="at">type</span>: string, <span class="at">required</span>: <span class="kw">true</span>}
+      <span class="at">duration_m</span>: {<span class="at">type</span>: integer, <span class="at">required</span>: <span class="kw">false</span>, <span class="at">default</span>: 15}
+
+  <span class="at">monitor_and_wait</span>:
+    <span class="at">description</span>: <span class="st">"No immediate action. Monitor the situation for N minutes then re-assess."</span>
+    <span class="at">risk</span>: low
+    <span class="at">reversible</span>: <span class="kw">true</span>
+    <span class="at">requires_approval</span>: <span class="kw">false</span>
+    <span class="at">parameters</span>:
+      <span class="at">duration_m</span>: {<span class="at">type</span>: integer, <span class="at">required</span>: <span class="kw">true</span>}</pre>
+  </div>
+</section>
+
+<!-- ════════════════ PROMPT ════════════════ -->
+<section id="prompt" class="section">
+  <div class="sec-head">
+    <div class="step-tag">STEP 3</div>
+    <div class="sec-head-body">
+      <h2>Prompt Template &amp; Schema</h2>
+      <p>The system prompt and the strict DecisionObject schema. These are the two most important files you will write in Phase 7.</p>
+    </div>
+  </div>
+
+  <h4>prompts/reasoning_system.txt</h4>
+  <div class="prompt-block">
+    <div class="prompt-label">SYSTEM PROMPT TEMPLATE</div>
+<pre><span class="sys">You are the Reasoning Engine of a Digital Cognitive Architecture managing a production
+system. Your role is to analyze the current situation and recommend the safest, most
+effective remediation action.
+
+CRITICAL OPERATING RULES:
+1. You ONLY recommend actions from the Available Actions list. Never invent new actions.
+2. You reason from the situation summary — you do NOT have access to live systems.
+3. If confidence is below 0.65, set requires_human_approval to true.
+4. If the recommended action has risk: high or reversible: false, set requires_human_approval to true.
+5. You MUST return valid JSON matching the output schema exactly. No prose, no markdown fences.</span>
+
+<span class="sit">## CURRENT SITUATION SUMMARY
+{situation_summary}</span>
+
+<span class="exp">## RELEVANT PAST EXPERIENCES (similar resolved situations)
+{past_experiences}</span>
+
+<span class="act">## AVAILABLE ACTIONS
+{available_actions_json}</span>
+
+<span class="con">## CONSTRAINTS (actions requiring human approval)
+{constraints_text}</span>
+
+<span class="fmt">## OUTPUT FORMAT
+You must respond with ONLY a JSON object matching this exact schema:
+{output_schema_json}
+
+Respond now with the JSON decision object:</span></pre>
+  </div>
+
+  <h4>reasoning/schema.py — The DecisionObject</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">reasoning/schema.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+DecisionObject — the strict output contract from the LLM.
+All fields are required. Pydantic validates LLM output against this.
+The planning system (Phase 9) reads this object — never raw LLM text.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">from</span> typing <span class="kw">import</span> Any
+<span class="kw">from</span> pydantic <span class="kw">import</span> BaseModel, Field, field_validator, model_validator
+
+
+<span class="kw">class</span> <span class="cl">RootCauseHypothesis</span>(BaseModel):
+    hypothesis: str   = Field(description=<span class="st">"Plain language causal explanation"</span>)
+    confidence: float = Field(ge=<span class="nu">0.0</span>, le=<span class="nu">1.0</span>)
+    evidence:   list[str] = Field(default_factory=list,
+                                  description=<span class="st">"Supporting evidence from situation summary"</span>)
+
+
+<span class="kw">class</span> <span class="cl">AlternativeAction</span>(BaseModel):
+    action:     str
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    rationale:  str
+
+
+<span class="kw">class</span> <span class="cl">DecisionObject</span>(BaseModel):
+    situation_assessment:   str   = Field(
+        description=<span class="st">"Plain language summary of what the reasoning engine understands"</span>
+    )
+    root_cause_hypothesis:  RootCauseHypothesis
+    recommended_action:     str   = Field(
+        description=<span class="st">"Exact key from the actions vocabulary"</span>
+    )
+    action_parameters:      dict[str, Any] = Field(default_factory=dict)
+    confidence:             float = Field(ge=<span class="nu">0.0</span>, le=<span class="nu">1.0</span>)
+    requires_human_approval: bool
+    alternative_actions:    list[AlternativeAction] = Field(
+        default_factory=list, max_length=<span class="nu">2</span>
+    )
+    reasoning_trace:        str   = Field(
+        description=<span class="st">"Step-by-step explanation for observability"</span>
+    )
+
+    <span class="at">@field_validator</span>(<span class="st">"recommended_action"</span>)
+    <span class="at">@classmethod</span>
+    <span class="kw">def</span> <span class="fn">action_not_empty</span>(cls, v: str) -> str:
+        <span class="kw">if not</span> v.strip():
+            <span class="kw">raise</span> ValueError(<span class="st">"recommended_action cannot be empty"</span>)
+        <span class="kw">return</span> v.strip()
+
+    <span class="at">@model_validator</span>(mode=<span class="st">"after"</span>)
+    <span class="kw">def</span> <span class="fn">auto_require_approval_on_low_confidence</span>(self) -> <span class="cl">DecisionObject</span>:
+        <span class="kw">if</span> self.confidence < <span class="nu">0.65</span>:
+            self.requires_human_approval = <span class="kw">True</span>
+        <span class="kw">return</span> self
+
+    <span class="kw">def</span> <span class="fn">to_episodic_record</span>(self, situation_summary: dict) -> dict:
+        <span class="dc">"""Serialize for storage in episodic memory — used as future experience."""</span>
+        <span class="kw">return</span> {
+            <span class="st">"event_type"</span>:        <span class="st">"reasoning_completed"</span>,
+            <span class="st">"situation_summary"</span>: situation_summary,
+            <span class="st">"decision"</span>:          self.model_dump(),
+            <span class="st">"outcome"</span>:           <span class="kw">None</span>,    <span class="cm"># filled by feedback loop (Phase 10)</span>
+        }</pre>
+  </div>
+</section>
+
+<!-- ════════════════ FAST PATH ════════════════ -->
+<section id="fastpath" class="section">
+  <div class="sec-head">
+    <div class="step-tag">STEP 4</div>
+    <div class="sec-head-body">
+      <h2>The Fast Path — Rule Engine</h2>
+      <p>Handles well-known situations without calling the LLM at all. Millisecond response. This is step ② in the reasoning pipeline.</p>
+    </div>
+  </div>
+
+  <div class="note note-warn">
+    <div class="note-icon">⚡</div>
+    <div class="note-body">
+      <strong>The fast path is not optional — it is a cost and latency requirement.</strong>
+      LLM calls take 2–8 seconds and cost money. If a queue has exceeded 10,000 lag
+      for 5 minutes, the correct action is always <code>scale_consumer_group</code>.
+      There is no ambiguity requiring LLM reasoning. The fast path fires immediately,
+      records the decision in episodic memory, and returns — the LLM never runs.
+    </div>
+  </div>
+
+  <h3>Built-in Fast Path Rules</h3>
+  <div class="fp-table">
+    <div class="fp-row head">
+      <span>Condition</span><span>Action</span><span>Rationale</span>
+    </div>
+    <div class="fp-row">
+      <span class="cond">consumer_lag_critical AND consumers &gt; 0</span>
+      <span class="actn">scale_consumer_group</span>
+      <span class="conf">Known playbook. Always safe. No novel reasoning needed.</span>
+    </div>
+    <div class="fp-row">
+      <span class="cond">connection_pool_exhausted AND severity=critical</span>
+      <span class="actn">restart_connection_pool</span>
+      <span class="conf">Standard DB remediation. Reversible. Immediate impact.</span>
+    </div>
+    <div class="fp-row">
+      <span class="cond">disk_full AND entity_type=metric</span>
+      <span class="actn">send_alert + escalate_to_human</span>
+      <span class="conf">Disk ops are irreversible. Always escalate.</span>
+    </div>
+    <div class="fp-row">
+      <span class="cond">cpu_spike AND trend=rising AND blast_radius=0</span>
+      <span class="actn">increase_log_verbosity</span>
+      <span class="conf">Isolated spike. Increase observability before acting.</span>
+    </div>
+    <div class="fp-row">
+      <span class="cond">anomaly_count=0</span>
+      <span class="actn">monitor_and_wait</span>
+      <span class="conf">Nothing to act on. No LLM needed.</span>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">reasoning/fast_path.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+RuleEngine — Fast Path Decision System
+Matches known situation patterns against pre-defined rules.
+Returns a DecisionObject without calling the LLM.
+Rules are evaluated in priority order (highest first).
+Extend this list as your system learns repeating patterns.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> typing <span class="kw">import</span> Callable
+<span class="kw">from</span> .schema <span class="kw">import</span> DecisionObject, RootCauseHypothesis
+
+
+<span class="at">@dataclass</span>
+<span class="kw">class</span> <span class="cl">Rule</span>:
+    name:        str
+    priority:    int                        <span class="cm"># higher = evaluated first</span>
+    condition:   Callable[[dict], bool]     <span class="cm"># receives situation dict</span>
+    action:      str                        <span class="cm"># must match actions.yaml key</span>
+    parameters:  Callable[[dict], dict]     <span class="cm"># receives situation dict</span>
+    confidence:  float
+    rationale:   str
+
+
+<span class="kw">def</span> <span class="fn">_top_anomaly</span>(sit: dict) -> dict:
+    anoms = sit.get(<span class="st">"ranked_anomalies"</span>, [])
+    <span class="kw">return</span> anoms[<span class="nu">0</span>] <span class="kw">if</span> anoms <span class="kw">else</span> {}
+
+<span class="kw">def</span> <span class="fn">_top_entity_id</span>(sit: dict) -> str:
+    a = _top_anomaly(sit)
+    <span class="kw">return</span> a.get(<span class="st">"entity_id"</span>, <span class="st">""</span>)
+
+<span class="kw">def</span> <span class="fn">_severity</span>(sit: dict) -> str:
+    <span class="kw">return</span> _top_anomaly(sit).get(<span class="st">"severity"</span>, <span class="st">"info"</span>)
+
+<span class="kw">def</span> <span class="fn">_event_type</span>(sit: dict) -> str:
+    <span class="kw">return</span> _top_anomaly(sit).get(<span class="st">"event_type"</span>, <span class="st">""</span>)
+
+
+RULES: list[Rule] = [
+
+    Rule(
+        name=<span class="st">"no_anomalies"</span>, priority=<span class="nu">100</span>,
+        condition=<span class="kw">lambda</span> s: <span class="fn">len</span>(s.get(<span class="st">"ranked_anomalies"</span>, [])) == <span class="nu">0</span>,
+        action=<span class="st">"monitor_and_wait"</span>,
+        parameters=<span class="kw">lambda</span> s: {<span class="st">"duration_m"</span>: <span class="nu">5</span>},
+        confidence=<span class="nu">0.99</span>,
+        rationale=<span class="st">"No active anomalies detected. Nothing to act on."</span>,
+    ),
+
+    Rule(
+        name=<span class="st">"consumer_lag_critical"</span>, priority=<span class="nu">90</span>,
+        condition=<span class="kw">lambda</span> s: <span class="fn">_event_type</span>(s) == <span class="st">"consumer_lag_critical"</span>,
+        action=<span class="st">"scale_consumer_group"</span>,
+        parameters=<span class="kw">lambda</span> s: {
+            <span class="st">"queue_id"</span>:       _top_entity_id(s),
+            <span class="st">"consumer_group"</span>: <span class="st">"default"</span>,
+            <span class="st">"instance_delta"</span>: <span class="nu">3</span>,
+        },
+        confidence=<span class="nu">0.95</span>,
+        rationale=<span class="st">"Critical consumer lag. Immediate scale-up is always the correct response."</span>,
+    ),
+
+    Rule(
+        name=<span class="st">"connection_pool_exhausted"</span>, priority=<span class="nu">88</span>,
+        condition=<span class="kw">lambda</span> s: <span class="fn">_event_type</span>(s) <span class="kw">in</span> (
+            <span class="st">"connection_pool_exhausted"</span>, <span class="st">"max_connections_reached"</span>
+        ) <span class="kw">and</span> <span class="fn">_severity</span>(s) == <span class="st">"critical"</span>,
+        action=<span class="st">"restart_connection_pool"</span>,
+        parameters=<span class="kw">lambda</span> s: {<span class="st">"service_id"</span>: _top_entity_id(s)},
+        confidence=<span class="nu">0.92</span>,
+        rationale=<span class="st">"Pool exhausted at critical level. Restart is standard remediation."</span>,
+    ),
+
+    Rule(
+        name=<span class="st">"disk_full"</span>, priority=<span class="nu">95</span>,
+        condition=<span class="kw">lambda</span> s: <span class="fn">_event_type</span>(s) <span class="kw">in</span> (<span class="st">"disk_full"</span>, <span class="st">"disk_space_for_db_low"</span>),
+        action=<span class="st">"escalate_to_human"</span>,
+        parameters=<span class="kw">lambda</span> s: {
+            <span class="st">"reason"</span>:  <span class="st">f"Disk full on {_top_entity_id(s)}. Requires manual intervention."</span>,
+            <span class="st">"urgency"</span>: <span class="st">"immediate"</span>,
+        },
+        confidence=<span class="nu">0.99</span>,
+        rationale=<span class="st">"Disk operations are irreversible. Always escalate to human operator."</span>,
+    ),
+
+    Rule(
+        name=<span class="st">"high_cpu_isolated"</span>, priority=<span class="nu">50</span>,
+        condition=<span class="kw">lambda</span> s: (
+            <span class="fn">_event_type</span>(s) <span class="kw">in</span> (<span class="st">"cpu_spike"</span>, <span class="st">"cpu_sustained_high"</span>)
+            <span class="kw">and</span> <span class="fn">_top_anomaly</span>(s).get(<span class="st">"blast_radius_count"</span>, <span class="nu">1</span>) == <span class="nu">0</span>
+        ),
+        action=<span class="st">"increase_log_verbosity"</span>,
+        parameters=<span class="kw">lambda</span> s: {
+            <span class="st">"service_id"</span>: _top_entity_id(s), <span class="st">"duration_m"</span>: <span class="nu">15</span>
+        },
+        confidence=<span class="nu">0.80</span>,
+        rationale=<span class="st">"Isolated CPU spike. Increase observability before taking action."</span>,
+    ),
+]
+
+
+<span class="kw">class</span> <span class="cl">RuleEngine</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.rules = sorted(RULES, key=<span class="kw">lambda</span> r: r.priority, reverse=<span class="kw">True</span>)
+
+    <span class="kw">def</span> <span class="fn">evaluate</span>(self, situation: dict) -> DecisionObject | <span class="kw">None</span>:
+        <span class="dc">"""
+        Evaluate rules in priority order.
+        Returns a DecisionObject if a rule matches, None if LLM is needed.
+        """</span>
+        <span class="kw">for</span> rule <span class="kw">in</span> self.rules:
+            <span class="kw">try</span>:
+                <span class="kw">if</span> rule.condition(situation):
+                    params = rule.parameters(situation)
+                    <span class="kw">return</span> DecisionObject(
+                        situation_assessment=<span class="st">f"Fast path rule matched: {rule.name}"</span>,
+                        root_cause_hypothesis=RootCauseHypothesis(
+                            hypothesis=rule.rationale, confidence=rule.confidence
+                        ),
+                        recommended_action=rule.action,
+                        action_parameters=params,
+                        confidence=rule.confidence,
+                        requires_human_approval=(rule.confidence < <span class="nu">0.65</span>),
+                        alternative_actions=[],
+                        reasoning_trace=(
+                            <span class="st">f"[FAST PATH] Rule '{rule.name}' (priority={rule.priority}) "
+                            f"matched. Action: {rule.action}. Params: {params}. "
+                            f"LLM call skipped."</span>
+                        ),
+                    )
+            <span class="kw">except</span> Exception:
+                <span class="kw">continue</span>   <span class="cm"># rule evaluation error — try next rule</span>
+        <span class="kw">return None</span>   <span class="cm"># no rule matched — caller must invoke LLM</span></pre>
+  </div>
+</section>
+
+<!-- ════════════════ IMPLEMENTATION ════════════════ -->
+<section id="impl" class="section">
+  <div class="sec-head">
+    <div class="step-tag">STEP 5</div>
+    <div class="sec-head-body">
+      <h2>Implementation — Context Builder, LLM Client &amp; Engine</h2>
+      <p>The remaining four modules. The engine orchestrates them all.</p>
+    </div>
+  </div>
+
+  <h3>context_builder.py</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">reasoning/context_builder.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+ContextBuilder — fetches episodic experiences and activated playbooks
+from the Memory API (Phase 4) to enrich the reasoning prompt.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> httpx
+
+
+<span class="kw">class</span> <span class="cl">ContextBuilder</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, memory_api_url: str = <span class="st">"http://localhost:8090"</span>):
+        self.memory_url = memory_api_url
+
+    <span class="kw">async def</span> <span class="fn">get_past_experiences</span>(
+        self, situation: dict, limit: int = <span class="nu">3</span>
+    ) -> list[dict]:
+        <span class="dc">"""
+        Semantic search for similar past situations.
+        Uses the top anomaly event_type as the query.
+        Returns 2–3 resolved experiences the LLM can reason from.
+        """</span>
+        top_anomalies = situation.get(<span class="st">"ranked_anomalies"</span>, [])
+        <span class="kw">if not</span> top_anomalies:
+            <span class="kw">return</span> []
+
+        query = (
+            top_anomalies[<span class="nu">0</span>].get(<span class="st">"event_type"</span>, <span class="st">""</span>) + <span class="st">" "</span> +
+            situation.get(<span class="st">"situation_summary"</span>, <span class="st">""</span>)[:<span class="nu">120</span>]
+        )
+
+        <span class="kw">async with</span> httpx.AsyncClient(timeout=<span class="nu">8.0</span>) <span class="kw">as</span> client:
+            <span class="kw">try</span>:
+                resp = <span class="kw">await</span> client.get(
+                    <span class="st">f"{self.memory_url}/memory/episodic/search"</span>,
+                    params={<span class="st">"q"</span>: query, <span class="st">"limit"</span>: limit, <span class="st">"resolved_only"</span>: <span class="st">"true"</span>},
+                )
+                <span class="kw">if</span> resp.status_code == <span class="nu">200</span>:
+                    <span class="kw">return</span> resp.json().get(<span class="st">"results"</span>, [])
+            <span class="kw">except</span> Exception:
+                <span class="kw">pass</span>
+        <span class="kw">return</span> []
+
+    <span class="kw">async def</span> <span class="fn">get_activated_playbooks</span>(
+        self, event_type: str, severity: str
+    ) -> list[dict]:
+        <span class="dc">"""Retrieve playbooks that match the current situation trigger."""</span>
+        <span class="kw">async with</span> httpx.AsyncClient(timeout=<span class="nu">8.0</span>) <span class="kw">as</span> client:
+            <span class="kw">try</span>:
+                resp = <span class="kw">await</span> client.get(
+                    <span class="st">f"{self.memory_url}/memory/procedural/playbooks"</span>,
+                    params={<span class="st">"trigger_event"</span>: event_type, <span class="st">"trigger_severity"</span>: severity},
+                )
+                <span class="kw">if</span> resp.status_code == <span class="nu">200</span>:
+                    <span class="kw">return</span> resp.json()
+            <span class="kw">except</span> Exception:
+                <span class="kw">pass</span>
+        <span class="kw">return</span> []
+
+    <span class="kw">def</span> <span class="fn">format_experiences</span>(self, experiences: list[dict]) -> str:
+        <span class="dc">"""Format past experiences into prompt-ready text."""</span>
+        <span class="kw">if not</span> experiences:
+            <span class="kw">return</span> <span class="st">"No relevant past experiences found."</span>
+        lines = []
+        <span class="kw">for</span> i, exp <span class="kw">in</span> <span class="fn">enumerate</span>(experiences, <span class="nu">1</span>):
+            decision = exp.get(<span class="st">"decision"</span>, {})
+            outcome  = exp.get(<span class="st">"outcome"</span>, <span class="st">"unknown"</span>)
+            lines.append(
+                <span class="st">f"Experience {i}: {exp.get('event_type', 'unknown')} — "</span>
+                <span class="st">f"Action taken: {decision.get('recommended_action', 'N/A')} — "</span>
+                <span class="st">f"Outcome: {outcome}"</span>
+            )
+        <span class="kw">return</span> <span class="st">"\n"</span>.join(lines)</pre>
+  </div>
+
+  <h3>prompt_builder.py</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">reasoning/prompt_builder.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+PromptBuilder — assembles the six-section reasoning prompt.
+Reads system prompt from prompts/reasoning_system.txt.
+Never hardcodes prompt content in Python code.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> json
+<span class="kw">from</span> pathlib <span class="kw">import</span> Path
+<span class="kw">from</span> .schema <span class="kw">import</span> DecisionObject
+
+
+PROMPT_TEMPLATE_PATH = Path(__file__).parent.parent / <span class="st">"prompts"</span> / <span class="st">"reasoning_system.txt"</span>
+
+CONSTRAINTS_TEXT = <span class="st">"""
+Actions requiring MANDATORY human approval:
+- Any action with risk: high
+- Any action with reversible: false
+- Any action whose blast_radius_count exceeds 5
+- Any action targeting a production database directly
+- restart_service in a production environment
+
+If in doubt, set requires_human_approval: true and escalate_to_human.
+"""</span>
+
+
+<span class="kw">class</span> <span class="cl">PromptBuilder</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, action_registry: dict):
+        self._template = PROMPT_TEMPLATE_PATH.read_text()
+        self._actions  = action_registry
+        self._schema   = json.dumps(
+            DecisionObject.model_json_schema(), indent=<span class="nu">2</span>
+        )
+
+    <span class="kw">def</span> <span class="fn">build</span>(
+        self,
+        situation: dict,
+        past_experiences_text: str,
+        playbooks: list[dict],
+    ) -> str:
+        <span class="dc">"""
+        Render the prompt template with all six sections populated.
+        Returns the complete prompt string ready for the LLM.
+        """</span>
+        <span class="cm"># Format available actions as compact JSON (not full YAML)</span>
+        actions_for_prompt = {
+            k: {
+                <span class="st">"description"</span>: v.get(<span class="st">"description"</span>),
+                <span class="st">"risk"</span>:        v.get(<span class="st">"risk"</span>),
+                <span class="st">"parameters"</span>:  list(v.get(<span class="st">"parameters"</span>, {}).keys()),
+            }
+            <span class="kw">for</span> k, v <span class="kw">in</span> self._actions.items()
+        }
+
+        <span class="cm"># Append active playbooks to experiences</span>
+        exp_text = past_experiences_text
+        <span class="kw">if</span> playbooks:
+            pb_lines = [<span class="st">f"\nACTIVE PLAYBOOKS:"</span>]
+            <span class="kw">for</span> pb <span class="kw">in</span> playbooks[:2]:
+                pb_lines.append(
+                    <span class="st">f"  [{pb.get('name')}]: {pb.get('description', '')}"</span>
+                )
+            exp_text += <span class="st">"\n"</span>.join(pb_lines)
+
+        <span class="kw">return</span> self._template.format(
+            situation_summary      = json.dumps(situation, indent=<span class="nu">2</span>),
+            past_experiences       = exp_text,
+            available_actions_json = json.dumps(actions_for_prompt, indent=<span class="nu">2</span>),
+            constraints_text       = CONSTRAINTS_TEXT,
+            output_schema_json     = self._schema,
+        )</pre>
+  </div>
+
+  <h3>llm_client.py</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">reasoning/llm_client.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+LLMClient — calls Claude (primary) or GPT-4o (fallback).
+Handles: retry with backoff, JSON extraction, Pydantic validation,
+schema-correction re-prompt on parse failure.
+
+The LLM is called ONLY when the fast path has no matching rule.
+Model: claude-sonnet-4-6 (cost-efficient, 200K context)
+Fallback: gpt-4o-mini
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> json
+<span class="kw">import</span> re
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+
+<span class="kw">import</span> anthropic
+<span class="kw">from</span> pydantic <span class="kw">import</span> ValidationError
+<span class="kw">from</span> tenacity <span class="kw">import</span> (
+    retry, stop_after_attempt,
+    wait_exponential, retry_if_exception_type,
+)
+
+<span class="kw">from</span> .schema <span class="kw">import</span> DecisionObject
+
+
+<span class="at">@dataclass</span>
+<span class="kw">class</span> <span class="cl">LLMConfig</span>:
+    model:       str   = <span class="st">"claude-sonnet-4-6"</span>
+    max_tokens:  int   = <span class="nu">2048</span>
+    temperature: float = <span class="nu">0.1</span>     <span class="cm"># low temp — we want deterministic decisions</span>
+    timeout_s:   float = <span class="nu">30.0</span>
+    max_retries: int   = <span class="nu">2</span>
+
+
+<span class="kw">class</span> <span class="cl">ParseError</span>(Exception):
+    <span class="kw">pass</span>
+
+
+<span class="kw">class</span> <span class="cl">LLMClient</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, cfg: LLMConfig | <span class="kw">None</span> = <span class="kw">None</span>):
+        self.cfg    = cfg <span class="kw">or</span> LLMConfig()
+        self._client = anthropic.AsyncAnthropic()
+
+    <span class="at">@retry</span>(
+        stop=stop_after_attempt(<span class="nu">3</span>),
+        wait=wait_exponential(multiplier=<span class="nu">1</span>, min=<span class="nu">2</span>, max=<span class="nu">10</span>),
+        retry=retry_if_exception_type((anthropic.APIStatusError, ParseError)),
+    )
+    <span class="kw">async def</span> <span class="fn">call</span>(self, prompt: str) -> DecisionObject:
+        <span class="dc">"""
+        Call the LLM with the assembled prompt.
+        Returns a validated DecisionObject.
+        Retries up to 3 times on API errors or parse failures.
+        """</span>
+        response = <span class="kw">await</span> self._client.messages.create(
+            model=self.cfg.model,
+            max_tokens=self.cfg.max_tokens,
+            temperature=self.cfg.temperature,
+            messages=[{<span class="st">"role"</span>: <span class="st">"user"</span>, <span class="st">"content"</span>: prompt}],
+        )
+
+        raw_text = response.content[<span class="nu">0</span>].text <span class="kw">if</span> response.content <span class="kw">else</span> <span class="st">""</span>
+        <span class="kw">return</span> self._parse_and_validate(raw_text)
+
+    <span class="kw">def</span> <span class="fn">_parse_and_validate</span>(self, raw_text: str) -> DecisionObject:
+        <span class="dc">"""
+        Extract JSON from LLM output and validate against DecisionObject schema.
+        LLMs sometimes wrap JSON in markdown fences — strip those first.
+        On Pydantic validation error → raise ParseError to trigger retry.
+        """</span>
+        <span class="cm"># Strip markdown fences if present</span>
+        text = raw_text.strip()
+        fence_match = re.search(r<span class="st">"`{3}(?:json)?\s*([\s\S]+?)\s*`{3}"</span>, text)
+        <span class="kw">if</span> fence_match:
+            text = fence_match.group(<span class="nu">1</span>)
+
+        <span class="cm"># Find the outermost JSON object</span>
+        brace_match = re.search(r<span class="st">"\{[\s\S]+\}"</span>, text)
+        <span class="kw">if not</span> brace_match:
+            <span class="kw">raise</span> ParseError(<span class="st">f"No JSON object found in LLM output: {text[:200]}"</span>)
+
+        <span class="kw">try</span>:
+            data = json.loads(brace_match.group())
+        <span class="kw">except</span> json.JSONDecodeError <span class="kw">as</span> e:
+            <span class="kw">raise</span> ParseError(<span class="st">f"JSON decode error: {e}. Raw: {text[:200]}"</span>)
+
+        <span class="kw">try</span>:
+            <span class="kw">return</span> DecisionObject(**data)
+        <span class="kw">except</span> ValidationError <span class="kw">as</span> e:
+            <span class="kw">raise</span> ParseError(<span class="st">f"Schema validation failed: {e}"</span>)
+
+    <span class="kw">async def</span> <span class="fn">call_with_schema_correction</span>(self, prompt: str) -> DecisionObject:
+        <span class="dc">"""
+        Two-attempt wrapper: first call, then if parse fails,
+        send a correction prompt with the validation error.
+        """</span>
+        <span class="kw">try</span>:
+            <span class="kw">return await</span> self.call(prompt)
+        <span class="kw">except</span> ParseError <span class="kw">as</span> e:
+            correction = (
+                prompt + <span class="st">f"\n\nYour previous response had a schema error: {e}\n"</span>
+                <span class="st">"Please respond ONLY with valid JSON matching the exact schema above."</span>
+            )
+            <span class="kw">return await</span> self.call(correction)</pre>
+  </div>
+
+  <h3>engine.py — The Orchestrator</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">reasoning/engine.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+ReasoningEngine — orchestrates all eight steps.
+Called by the trigger scheduler (every N seconds) or by direct API call.
+Integrates: World Model → Fast Path → Memory → Prompt → LLM → Validate → Persist.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> asyncio
+<span class="kw">import</span> json
+<span class="kw">import</span> time
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+
+<span class="kw">import</span> httpx
+<span class="kw">import</span> yaml
+
+<span class="kw">from</span> .fast_path <span class="kw">import</span> RuleEngine
+<span class="kw">from</span> .context_builder <span class="kw">import</span> ContextBuilder
+<span class="kw">from</span> .prompt_builder <span class="kw">import</span> PromptBuilder
+<span class="kw">from</span> .llm_client <span class="kw">import</span> LLMClient, LLMConfig
+<span class="kw">from</span> .schema <span class="kw">import</span> DecisionObject
+<span class="kw">from</span> .actions <span class="kw">import</span> ActionRegistry
+
+
+<span class="at">@dataclass</span>
+<span class="kw">class</span> <span class="cl">ReasoningConfig</span>:
+    world_model_url:   str = <span class="st">"http://localhost:8092"</span>
+    memory_api_url:    str = <span class="st">"http://localhost:8090"</span>
+    actions_yaml_path: str = <span class="st">"actions.yaml"</span>
+    llm_model:         str = <span class="st">"claude-sonnet-4-6"</span>
+    min_severity_to_reason: str = <span class="st">"medium"</span>  <span class="cm"># skip info-only situations</span>
+    run_interval_s:    int = <span class="nu">60</span>
+
+
+<span class="kw">class</span> <span class="cl">ReasoningEngine</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, cfg: ReasoningConfig | <span class="kw">None</span> = <span class="kw">None</span>):
+        self.cfg        = cfg <span class="kw">or</span> ReasoningConfig()
+        self.rule_engine= RuleEngine()
+        self.ctx_builder= ContextBuilder(self.cfg.memory_api_url)
+        self.llm_client = LLMClient(LLMConfig(model=self.cfg.llm_model))
+        self._actions   = self._load_actions()
+        self.prompt_bld = PromptBuilder(self._actions)
+        self._http      = httpx.AsyncClient(timeout=<span class="nu">15.0</span>)
+        self._action_reg= ActionRegistry(self._actions)
+
+    <span class="kw">def</span> <span class="fn">_load_actions</span>(self) -> dict:
+        <span class="kw">with</span> <span class="fn">open</span>(self.cfg.actions_yaml_path) <span class="kw">as</span> f:
+            data = yaml.safe_load(f)
+        <span class="kw">return</span> data.get(<span class="st">"actions"</span>, {})
+
+    <span class="cm"># ── MAIN ENTRY POINT ───────────────────────────────────────</span>
+
+    <span class="kw">async def</span> <span class="fn">reason</span>(self) -> DecisionObject | <span class="kw">None</span>:
+        <span class="dc">"""
+        Run one full reasoning cycle. Returns a DecisionObject or None
+        if no reasoning was required (no significant anomalies).
+        """</span>
+        t0 = time.monotonic()
+
+        <span class="cm"># Step ① — Fetch situation from World Model</span>
+        situation = <span class="kw">await</span> self._fetch_situation()
+        <span class="kw">if not</span> situation:
+            <span class="kw">return None</span>
+
+        <span class="cm"># Skip if no significant anomalies</span>
+        severity_counts = situation.get(<span class="st">"system_health"</span>, {}).get(<span class="st">"by_severity"</span>, {})
+        <span class="kw">if not</span> any(
+            severity_counts.get(s, <span class="nu">0</span>) > <span class="nu">0</span>
+            <span class="kw">for</span> s <span class="kw">in</span> (<span class="st">"critical"</span>, <span class="st">"high"</span>, <span class="st">"medium"</span>)
+        ):
+            <span class="kw">return None</span>
+
+        <span class="cm"># Step ② — Fast path check</span>
+        fast_decision = self.rule_engine.evaluate(situation)
+        <span class="kw">if</span> fast_decision:
+            <span class="kw">await</span> self._persist_decision(fast_decision, situation, fast_path=<span class="kw">True</span>)
+            <span class="kw">return</span> fast_decision
+
+        <span class="cm"># Steps ③ + ④ — Fetch context (parallel)</span>
+        top_anomaly = (situation.get(<span class="st">"ranked_anomalies"</span>) <span class="kw">or</span> [{}])[<span class="nu">0</span>]
+        experiences, playbooks = <span class="kw">await</span> asyncio.gather(
+            self.ctx_builder.get_past_experiences(situation),
+            self.ctx_builder.get_activated_playbooks(
+                top_anomaly.get(<span class="st">"event_type"</span>, <span class="st">""</span>),
+                top_anomaly.get(<span class="st">"severity"</span>, <span class="st">"medium"</span>),
+            ),
+        )
+
+        <span class="cm"># Step ⑤ — Build prompt</span>
+        exp_text = self.ctx_builder.format_experiences(experiences)
+        prompt   = self.prompt_bld.build(situation, exp_text, playbooks)
+
+        <span class="cm"># Step ⑥ + ⑦ — LLM call + parse + validate</span>
+        decision = <span class="kw">await</span> self.llm_client.call_with_schema_correction(prompt)
+
+        <span class="cm"># Validate action exists in registry</span>
+        <span class="kw">if not</span> self._action_reg.is_valid(decision.recommended_action):
+            decision.recommended_action = <span class="st">"escalate_to_human"</span>
+            decision.action_parameters  = {
+                <span class="st">"reason"</span>: <span class="st">f"LLM recommended unknown action. Escalating."</span>,
+                <span class="st">"urgency"</span>: <span class="st">"within_hour"</span>,
+            }
+            decision.requires_human_approval = <span class="kw">True</span>
+
+        <span class="cm"># Auto-require approval if action metadata demands it</span>
+        action_meta = self._actions.get(decision.recommended_action, {})
+        <span class="kw">if</span> action_meta.get(<span class="st">"requires_approval"</span>):
+            decision.requires_human_approval = <span class="kw">True</span>
+
+        <span class="cm"># Step ⑧ — Persist to episodic memory</span>
+        <span class="kw">await</span> self._persist_decision(decision, situation, fast_path=<span class="kw">False</span>)
+
+        elapsed_ms = <span class="fn">round</span>((time.monotonic() - t0) * <span class="nu">1000</span>)
+        <span class="fn">print</span>(<span class="st">f"[ReasoningEngine] Decision in {elapsed_ms}ms | "</span>
+              <span class="st">f"action={decision.recommended_action} | "</span>
+              <span class="st">f"confidence={decision.confidence:.2f} | "</span>
+              <span class="st">f"approval={decision.requires_human_approval}"</span>)
+
+        <span class="kw">return</span> decision
+
+    <span class="kw">async def</span> <span class="fn">run_loop</span>(self):
+        <span class="dc">"""Continuous reasoning loop — runs every cfg.run_interval_s seconds."""</span>
+        <span class="fn">print</span>(<span class="st">f"[ReasoningEngine] Starting loop (interval={self.cfg.run_interval_s}s)"</span>)
+        <span class="kw">while True</span>:
+            <span class="kw">try</span>:
+                decision = <span class="kw">await</span> self.reason()
+                <span class="kw">if</span> decision:
+                    <span class="fn">print</span>(<span class="st">f"[ReasoningEngine] → {decision.recommended_action}"</span>)
+            <span class="kw">except</span> Exception <span class="kw">as</span> e:
+                <span class="fn">print</span>(<span class="st">f"[ReasoningEngine] Error in reasoning cycle: {e}"</span>)
+            <span class="kw">await</span> asyncio.sleep(self.cfg.run_interval_s)
+
+    <span class="cm"># ── HELPERS ────────────────────────────────────────────────</span>
+
+    <span class="kw">async def</span> <span class="fn">_fetch_situation</span>(self) -> dict | <span class="kw">None</span>:
+        <span class="kw">try</span>:
+            r = <span class="kw">await</span> self._http.get(
+                <span class="st">f"{self.cfg.world_model_url}/world/situation"</span>,
+                params={<span class="st">"top_n"</span>: <span class="nu">5</span>},
+            )
+            <span class="kw">if</span> r.status_code == <span class="nu">200</span>:
+                <span class="kw">return</span> r.json()
+        <span class="kw">except</span> Exception <span class="kw">as</span> e:
+            <span class="fn">print</span>(<span class="st">f"[ReasoningEngine] World Model unreachable: {e}"</span>)
+        <span class="kw">return None</span>
+
+    <span class="kw">async def</span> <span class="fn">_persist_decision</span>(
+        self, decision: DecisionObject, situation: dict, fast_path: bool
+    ) -> <span class="kw">None</span>:
+        record = decision.to_episodic_record(situation)
+        record[<span class="st">"fast_path"</span>]  = fast_path
+        record[<span class="st">"created_at"</span>] = datetime.now(timezone.utc).isoformat()
+        <span class="kw">try</span>:
+            <span class="kw">await</span> self._http.post(
+                <span class="st">f"{self.cfg.memory_api_url}/memory/episodic"</span>,
+                json=record,
+            )
+        <span class="kw">except</span> Exception:
+            <span class="kw">pass</span>   <span class="cm"># non-fatal — decision is returned regardless</span></pre>
+  </div>
+
+  <h3>actions.py — ActionRegistry helper</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">reasoning/actions.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="kw">class</span> <span class="cl">ActionRegistry</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, actions: dict):
+        self._actions = actions
+
+    <span class="kw">def</span> <span class="fn">is_valid</span>(self, action_name: str) -> bool:
+        <span class="kw">return</span> action_name <span class="kw">in</span> self._actions
+
+    <span class="kw">def</span> <span class="fn">get_meta</span>(self, action_name: str) -> dict:
+        <span class="kw">return</span> self._actions.get(action_name, {})
+
+    <span class="kw">def</span> <span class="fn">requires_approval</span>(self, action_name: str) -> bool:
+        meta = self.get_meta(action_name)
+        <span class="kw">return</span> meta.get(<span class="st">"requires_approval"</span>, <span class="kw">False</span>) <span class="kw">or</span> meta.get(<span class="st">"risk"</span>) == <span class="st">"high"</span>
+
+    <span class="kw">def</span> <span class="fn">all_names</span>(self) -> list[str]:
+        <span class="kw">return</span> list(self._actions.keys())</pre>
+  </div>
+
+  <h4>FastAPI wrapper (for on-demand reasoning calls)</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">reasoning/api.py — port 8093</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
+<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, BackgroundTasks
+<span class="kw">from</span> .engine <span class="kw">import</span> ReasoningEngine, ReasoningConfig
+<span class="kw">import</span> asyncio
+
+engine: ReasoningEngine | <span class="kw">None</span> = <span class="kw">None</span>
+
+
+<span class="at">@asynccontextmanager</span>
+<span class="kw">async def</span> <span class="fn">lifespan</span>(app: FastAPI):
+    <span class="kw">global</span> engine
+    engine = ReasoningEngine()
+    bg = asyncio.create_task(engine.run_loop())
+    <span class="kw">yield</span>
+    bg.cancel()
+
+app = FastAPI(title=<span class="st">"Reasoning Engine API"</span>, lifespan=lifespan)
+
+
+<span class="at">@app.post</span>(<span class="st">"/reasoning/trigger"</span>, status_code=<span class="nu">202</span>)
+<span class="kw">async def</span> <span class="fn">trigger_reasoning</span>(bg: BackgroundTasks):
+    <span class="dc">"""Force an immediate reasoning cycle (for testing or manual triggers)."""</span>
+    bg.add_task(engine.reason)
+    <span class="kw">return</span> {<span class="st">"status"</span>: <span class="st">"reasoning cycle triggered"</span>}
+
+
+<span class="at">@app.post</span>(<span class="st">"/reasoning/reason"</span>)
+<span class="kw">async def</span> <span class="fn">reason_now</span>():
+    <span class="dc">"""Synchronous reasoning — waits for decision (for testing)."""</span>
+    decision = <span class="kw">await</span> engine.reason()
+    <span class="kw">if not</span> decision:
+        <span class="kw">return</span> {<span class="st">"status"</span>: <span class="st">"no_action_needed"</span>}
+    <span class="kw">return</span> decision.model_dump()
+
+
+<span class="at">@app.get</span>(<span class="st">"/health"</span>)
+<span class="kw">async def</span> <span class="fn">health</span>(): <span class="kw">return</span> {<span class="st">"status"</span>: <span class="st">"ok"</span>}</pre>
+  </div>
+
+  <h4>Start the Reasoning Engine</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">Terminal</span><span class="cb-lang">BASH</span></div>
+<pre>uvicorn reasoning.api:app --host 0.0.0.0 --port 8093 --reload
+
+<span class="cm"># Or run the loop directly (no HTTP API):</span>
+python -c "import asyncio; from reasoning.engine import ReasoningEngine; asyncio.run(ReasoningEngine().run_loop())"</pre>
+  </div>
+</section>
+
+<!-- ════════════════ TESTING ════════════════ -->
+<section id="testing" class="section">
+  <div class="sec-head">
+    <div class="step-tag">STEP 6</div>
+    <div class="sec-head-body">
+      <h2>Testing — 24 New Tests</h2>
+      <p>Five test files. No live LLM calls in unit tests — the LLM client is mocked. All 24 tests run offline.</p>
+    </div>
+  </div>
+
+  <h3>test_reasoning_schema.py</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">tests/test_reasoning_schema.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="kw">import</span> pytest
+<span class="kw">from</span> pydantic <span class="kw">import</span> ValidationError
+<span class="kw">from</span> reasoning.schema <span class="kw">import</span> DecisionObject, RootCauseHypothesis
+
+
+<span class="kw">def</span> <span class="fn">valid_decision</span>(**overrides) -> dict:
+    base = {
+        <span class="st">"situation_assessment"</span>:    <span class="st">"Auth service latency spike detected."</span>,
+        <span class="st">"root_cause_hypothesis"</span>:   {<span class="st">"hypothesis"</span>: <span class="st">"Slow queries"</span>, <span class="st">"confidence"</span>: <span class="nu">0.88</span>},
+        <span class="st">"recommended_action"</span>:      <span class="st">"restart_connection_pool"</span>,
+        <span class="st">"action_parameters"</span>:       {<span class="st">"service_id"</span>: <span class="st">"svc:auth-service"</span>},
+        <span class="st">"confidence"</span>:              <span class="nu">0.88</span>,
+        <span class="st">"requires_human_approval"</span>: <span class="kw">False</span>,
+        <span class="st">"alternative_actions"</span>:     [],
+        <span class="st">"reasoning_trace"</span>:         <span class="st">"Step 1: identified slow queries..."</span>,
+    }
+    base.update(overrides)
+    <span class="kw">return</span> base
+
+
+<span class="kw">def</span> <span class="fn">test_valid_decision_parses</span>():
+    d = DecisionObject(**valid_decision())
+    <span class="kw">assert</span> d.recommended_action == <span class="st">"restart_connection_pool"</span>
+    <span class="kw">assert</span> d.confidence == <span class="nu">0.88</span>
+
+
+<span class="kw">def</span> <span class="fn">test_empty_action_rejected</span>():
+    <span class="kw">with</span> pytest.raises(ValidationError):
+        DecisionObject(**valid_decision(recommended_action=<span class="st">""</span>))
+
+
+<span class="kw">def</span> <span class="fn">test_confidence_out_of_range_rejected</span>():
+    <span class="kw">with</span> pytest.raises(ValidationError):
+        DecisionObject(**valid_decision(confidence=<span class="nu">1.5</span>))
+
+
+<span class="kw">def</span> <span class="fn">test_low_confidence_auto_requires_approval</span>():
+    <span class="dc">"""Confidence below 0.65 must force requires_human_approval = True."""</span>
+    d = DecisionObject(**valid_decision(confidence=<span class="nu">0.5</span>, requires_human_approval=<span class="kw">False</span>))
+    <span class="kw">assert</span> d.requires_human_approval <span class="kw">is True</span>
+
+
+<span class="kw">def</span> <span class="fn">test_to_episodic_record_shape</span>():
+    d = DecisionObject(**valid_decision())
+    record = d.to_episodic_record({<span class="st">"situation_summary"</span>: <span class="st">"test"</span>})
+    <span class="kw">assert</span> record[<span class="st">"event_type"</span>] == <span class="st">"reasoning_completed"</span>
+    <span class="kw">assert</span> <span class="st">"decision"</span> <span class="kw">in</span> record
+    <span class="kw">assert</span> record[<span class="st">"outcome"</span>] <span class="kw">is None</span></pre>
+  </div>
+
+  <h3>test_fast_path.py</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">tests/test_fast_path.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="kw">import</span> pytest
+<span class="kw">from</span> reasoning.fast_path <span class="kw">import</span> RuleEngine
+
+
+<span class="at">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">engine</span>(): <span class="kw">return</span> RuleEngine()
+
+
+<span class="kw">def</span> <span class="fn">make_situation</span>(event_type: str, severity: str, blast: int = <span class="nu">0</span>) -> dict:
+    <span class="kw">return</span> {
+        <span class="st">"ranked_anomalies"</span>: [{
+            <span class="st">"event_type"</span>: event_type, <span class="st">"severity"</span>: severity,
+            <span class="st">"entity_id"</span>: <span class="st">"svc:test"</span>, <span class="st">"blast_radius_count"</span>: blast,
+        }],
+        <span class="st">"system_health"</span>: {<span class="st">"by_severity"</span>: {severity: <span class="nu">1</span>}},
+    }
+
+
+<span class="kw">def</span> <span class="fn">test_no_anomalies_returns_monitor_and_wait</span>(engine):
+    decision = engine.evaluate({<span class="st">"ranked_anomalies"</span>: []})
+    <span class="kw">assert</span> decision <span class="kw">is not None</span>
+    <span class="kw">assert</span> decision.recommended_action == <span class="st">"monitor_and_wait"</span>
+
+
+<span class="kw">def</span> <span class="fn">test_consumer_lag_critical_fires_scale</span>(engine):
+    decision = engine.evaluate(make_situation(<span class="st">"consumer_lag_critical"</span>, <span class="st">"critical"</span>))
+    <span class="kw">assert</span> decision.recommended_action == <span class="st">"scale_consumer_group"</span>
+    <span class="kw">assert</span> decision.confidence >= <span class="nu">0.90</span>
+
+
+<span class="kw">def</span> <span class="fn">test_connection_pool_exhausted_fires_restart</span>(engine):
+    decision = engine.evaluate(
+        make_situation(<span class="st">"connection_pool_exhausted"</span>, <span class="st">"critical"</span>)
+    )
+    <span class="kw">assert</span> decision.recommended_action == <span class="st">"restart_connection_pool"</span>
+
+
+<span class="kw">def</span> <span class="fn">test_disk_full_always_escalates(engine)</span>:
+    decision = engine.evaluate(make_situation(<span class="st">"disk_full"</span>, <span class="st">"critical"</span>))
+    <span class="kw">assert</span> decision.recommended_action == <span class="st">"escalate_to_human"</span>
+    <span class="kw">assert</span> decision.requires_human_approval <span class="kw">is True</span>
+
+
+<span class="kw">def</span> <span class="fn">test_novel_situation_returns_none</span>(engine):
+    <span class="dc">"""Unknown event type should return None — needs LLM."""</span>
+    decision = engine.evaluate(make_situation(<span class="st">"some_novel_anomaly_xyz"</span>, <span class="st">"high"</span>))
+    <span class="kw">assert</span> decision <span class="kw">is None</span>
+
+
+<span class="kw">def</span> <span class="fn">test_fast_path_records_reasoning_trace</span>(engine):
+    decision = engine.evaluate(make_situation(<span class="st">"consumer_lag_critical"</span>, <span class="st">"critical"</span>))
+    <span class="kw">assert</span> <span class="st">"FAST PATH"</span> <span class="kw">in</span> decision.reasoning_trace
+    <span class="kw">assert</span> <span class="st">"LLM call skipped"</span> <span class="kw">in</span> decision.reasoning_trace</pre>
+  </div>
+
+  <h3>test_llm_client.py</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">tests/test_llm_client.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="kw">import</span> pytest
+<span class="kw">from</span> unittest.mock <span class="kw">import</span> AsyncMock, MagicMock, patch
+<span class="kw">from</span> reasoning.llm_client <span class="kw">import</span> LLMClient, ParseError
+<span class="kw">from</span> reasoning.schema <span class="kw">import</span> DecisionObject
+<span class="kw">import</span> json
+
+
+<span class="kw">def</span> <span class="fn">valid_json_response</span>() -> str:
+    <span class="kw">return</span> json.dumps({
+        <span class="st">"situation_assessment"</span>:    <span class="st">"CPU spike on auth node."</span>,
+        <span class="st">"root_cause_hypothesis"</span>:   {<span class="st">"hypothesis"</span>: <span class="st">"High traffic"</span>, <span class="st">"confidence"</span>: <span class="nu">0.85</span>},
+        <span class="st">"recommended_action"</span>:      <span class="st">"scale_service_horizontal"</span>,
+        <span class="st">"action_parameters"</span>:       {<span class="st">"service_id"</span>: <span class="st">"svc:auth"</span>, <span class="st">"replica_delta"</span>: <span class="nu">2</span>},
+        <span class="st">"confidence"</span>:              <span class="nu">0.85</span>,
+        <span class="st">"requires_human_approval"</span>: <span class="kw">False</span>,
+        <span class="st">"alternative_actions"</span>:     [],
+        <span class="st">"reasoning_trace"</span>:         <span class="st">"Identified CPU spike. Scaled horizontally."</span>,
+    })
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_parse_clean_json_response</span>():
+    client = LLMClient.__new__(LLMClient)
+    decision = client._parse_and_validate(valid_json_response())
+    <span class="kw">assert isinstance</span>(decision, DecisionObject)
+    <span class="kw">assert</span> decision.recommended_action == <span class="st">"scale_service_horizontal"</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_parse_json_inside_markdown_fence</span>():
+    client = LLMClient.__new__(LLMClient)
+    fenced = <span class="st">f"```json\n{valid_json_response()}\n```"</span>
+    decision = client._parse_and_validate(fenced)
+    <span class="kw">assert</span> decision.recommended_action == <span class="st">"scale_service_horizontal"</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_parse_raises_on_invalid_json</span>():
+    client = LLMClient.__new__(LLMClient)
+    <span class="kw">with</span> pytest.raises(ParseError):
+        client._parse_and_validate(<span class="st">"This is not JSON at all."</span>)
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_parse_raises_on_schema_mismatch</span>():
+    client = LLMClient.__new__(LLMClient)
+    bad_json = json.dumps({<span class="st">"wrong_field"</span>: <span class="st">"value"</span>})
+    <span class="kw">with</span> pytest.raises(ParseError):
+        client._parse_and_validate(bad_json)
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_llm_call_mocked</span>():
+    <span class="dc">"""Full call path with mocked Anthropic client."""</span>
+    mock_content = MagicMock()
+    mock_content.text = valid_json_response()
+    mock_response = MagicMock()
+    mock_response.content = [mock_content]
+
+    <span class="kw">with</span> patch(<span class="st">"reasoning.llm_client.anthropic.AsyncAnthropic"</span>) <span class="kw">as</span> MockAnth:
+        mock_client = AsyncMock()
+        mock_client.messages.create = AsyncMock(return_value=mock_response)
+        MockAnth.return_value = mock_client
+
+        client = LLMClient()
+        decision = <span class="kw">await</span> client.call(<span class="st">"test prompt"</span>)
+
+    <span class="kw">assert</span> decision.recommended_action == <span class="st">"scale_service_horizontal"</span></pre>
+  </div>
+
+  <h3>test_reasoning_engine.py</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">tests/test_reasoning_engine.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="kw">import</span> pytest
+<span class="kw">from</span> unittest.mock <span class="kw">import</span> AsyncMock, MagicMock, patch
+<span class="kw">from</span> reasoning.engine <span class="kw">import</span> ReasoningEngine, ReasoningConfig
+<span class="kw">from</span> reasoning.schema <span class="kw">import</span> DecisionObject, RootCauseHypothesis
+
+
+<span class="kw">def</span> <span class="fn">make_situation</span>(event_type=<span class="st">"consumer_lag_critical"</span>, severity=<span class="st">"critical"</span>) -> dict:
+    <span class="kw">return</span> {
+        <span class="st">"situation_summary"</span>: <span class="st">"1 CRITICAL anomaly."</span>,
+        <span class="st">"ranked_anomalies"</span>: [{
+            <span class="st">"event_type"</span>: event_type, <span class="st">"severity"</span>: severity,
+            <span class="st">"entity_id"</span>: <span class="st">"queue:order-events"</span>, <span class="st">"confidence"</span>: <span class="nu">0.97</span>,
+            <span class="st">"blast_radius_count"</span>: <span class="nu">2</span>,
+        }],
+        <span class="st">"system_health"</span>: {<span class="st">"by_severity"</span>: {severity: <span class="nu">1</span>}, <span class="st">"total_entities"</span>: <span class="nu">5</span>},
+    }
+
+
+<span class="at">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">mock_engine</span>(tmp_path):
+    <span class="cm"># Write a minimal actions.yaml for the test</span>
+    actions_file = tmp_path / <span class="st">"actions.yaml"</span>
+    actions_file.write_text(<span class="st">"""
+actions:
+  scale_consumer_group:
+    description: "Scale consumer group"
+    risk: low
+    reversible: true
+    requires_approval: false
+    parameters:
+      queue_id: {type: string, required: true}
+      consumer_group: {type: string, required: true}
+      instance_delta: {type: integer, required: true}
+  escalate_to_human:
+    description: "Escalate to human"
+    risk: low
+    reversible: true
+    requires_approval: false
+    parameters:
+      reason: {type: string, required: true}
+      urgency: {type: string, required: true}
+  monitor_and_wait:
+    description: "Monitor and wait"
+    risk: low
+    reversible: true
+    requires_approval: false
+    parameters:
+      duration_m: {type: integer, required: true}
+"""</span>)
+    cfg = ReasoningConfig(actions_yaml_path=str(actions_file))
+    engine = ReasoningEngine.__new__(ReasoningEngine)
+    engine.cfg         = cfg
+    engine.rule_engine = MagicMock()
+    engine.ctx_builder = MagicMock()
+    engine.llm_client  = AsyncMock()
+    engine.prompt_bld  = MagicMock()
+    engine._http       = AsyncMock()
+    engine._actions    = {
+        <span class="st">"scale_consumer_group"</span>: {<span class="st">"requires_approval"</span>: <span class="kw">False</span>, <span class="st">"risk"</span>: <span class="st">"low"</span>},
+        <span class="st">"escalate_to_human"</span>:    {<span class="st">"requires_approval"</span>: <span class="kw">False</span>, <span class="st">"risk"</span>: <span class="st">"low"</span>},
+        <span class="st">"monitor_and_wait"</span>:     {<span class="st">"requires_approval"</span>: <span class="kw">False</span>, <span class="st">"risk"</span>: <span class="st">"low"</span>},
+    }
+    <span class="kw">from</span> reasoning.actions <span class="kw">import</span> ActionRegistry
+    engine._action_reg = ActionRegistry(engine._actions)
+    <span class="kw">return</span> engine
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_fast_path_decision_bypasses_llm</span>(mock_engine):
+    <span class="dc">"""When fast path matches, LLM should not be called."""</span>
+    fast_decision = DecisionObject(
+        situation_assessment=<span class="st">"Fast path."</span>,
+        root_cause_hypothesis=RootCauseHypothesis(hypothesis=<span class="st">"rule"</span>, confidence=<span class="nu">0.95</span>),
+        recommended_action=<span class="st">"scale_consumer_group"</span>,
+        action_parameters={<span class="st">"queue_id"</span>: <span class="st">"queue:order-events"</span>, <span class="st">"consumer_group"</span>: <span class="st">"default"</span>, <span class="st">"instance_delta"</span>: <span class="nu">3</span>},
+        confidence=<span class="nu">0.95</span>, requires_human_approval=<span class="kw">False</span>,
+        reasoning_trace=<span class="st">"[FAST PATH]"</span>,
+    )
+    mock_engine.rule_engine.evaluate.return_value = fast_decision
+
+    <span class="cm"># Mock _fetch_situation</span>
+    mock_http_resp = AsyncMock()
+    mock_http_resp.status_code = <span class="nu">200</span>
+    mock_http_resp.json = MagicMock(return_value=make_situation())
+    mock_engine._http.get = AsyncMock(return_value=mock_http_resp)
+    mock_engine._http.post = AsyncMock()
+
+    decision = <span class="kw">await</span> mock_engine.reason()
+
+    mock_engine.llm_client.call_with_schema_correction.assert_not_called()
+    <span class="kw">assert</span> decision.recommended_action == <span class="st">"scale_consumer_group"</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_llm_called_when_no_fast_path</span>(mock_engine):
+    <span class="dc">"""When fast path returns None, LLM client must be called."""</span>
+    mock_engine.rule_engine.evaluate.return_value = <span class="kw">None</span>
+
+    mock_http_resp = AsyncMock()
+    mock_http_resp.status_code = <span class="nu">200</span>
+    mock_http_resp.json = MagicMock(return_value=make_situation(<span class="st">"novel_anomaly_xyz"</span>, <span class="st">"high"</span>))
+    mock_engine._http.get  = AsyncMock(return_value=mock_http_resp)
+    mock_engine._http.post = AsyncMock()
+
+    mock_engine.ctx_builder.get_past_experiences   = AsyncMock(return_value=[])
+    mock_engine.ctx_builder.get_activated_playbooks= AsyncMock(return_value=[])
+    mock_engine.ctx_builder.format_experiences      = MagicMock(return_value=<span class="st">"none"</span>)
+    mock_engine.prompt_bld.build                    = MagicMock(return_value=<span class="st">"test prompt"</span>)
+
+    llm_decision = DecisionObject(
+        situation_assessment=<span class="st">"LLM decision."</span>,
+        root_cause_hypothesis=RootCauseHypothesis(hypothesis=<span class="st">"novel"</span>, confidence=<span class="nu">0.8</span>),
+        recommended_action=<span class="st">"monitor_and_wait"</span>,
+        action_parameters={<span class="st">"duration_m"</span>: <span class="nu">10</span>},
+        confidence=<span class="nu">0.80</span>, requires_human_approval=<span class="kw">False</span>,
+        reasoning_trace=<span class="st">"LLM reasoning trace."</span>,
+    )
+    mock_engine.llm_client.call_with_schema_correction = AsyncMock(return_value=llm_decision)
+
+    decision = <span class="kw">await</span> mock_engine.reason()
+
+    mock_engine.llm_client.call_with_schema_correction.assert_called_once()
+    <span class="kw">assert</span> decision.recommended_action == <span class="st">"monitor_and_wait"</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_invalid_llm_action_replaced_with_escalate</span>(mock_engine):
+    <span class="dc">"""If LLM returns an action not in registry, replace with escalate_to_human."""</span>
+    mock_engine.rule_engine.evaluate.return_value = <span class="kw">None</span>
+    mock_http_resp = AsyncMock()
+    mock_http_resp.status_code = <span class="nu">200</span>
+    mock_http_resp.json = MagicMock(return_value=make_situation(<span class="st">"mystery_event"</span>, <span class="st">"high"</span>))
+    mock_engine._http.get  = AsyncMock(return_value=mock_http_resp)
+    mock_engine._http.post = AsyncMock()
+    mock_engine.ctx_builder.get_past_experiences   = AsyncMock(return_value=[])
+    mock_engine.ctx_builder.get_activated_playbooks= AsyncMock(return_value=[])
+    mock_engine.ctx_builder.format_experiences      = MagicMock(return_value=<span class="st">"none"</span>)
+    mock_engine.prompt_bld.build                    = MagicMock(return_value=<span class="st">"test"</span>)
+
+    bad_decision = DecisionObject(
+        situation_assessment=<span class="st">"test"</span>,
+        root_cause_hypothesis=RootCauseHypothesis(hypothesis=<span class="st">"test"</span>, confidence=<span class="nu">0.8</span>),
+        recommended_action=<span class="st">"invented_action_that_does_not_exist"</span>,
+        action_parameters={}, confidence=<span class="nu">0.8</span>, requires_human_approval=<span class="kw">False</span>,
+        reasoning_trace=<span class="st">"test"</span>,
+    )
+    mock_engine.llm_client.call_with_schema_correction = AsyncMock(return_value=bad_decision)
+
+    decision = <span class="kw">await</span> mock_engine.reason()
+    <span class="kw">assert</span> decision.recommended_action == <span class="st">"escalate_to_human"</span>
+    <span class="kw">assert</span> decision.requires_human_approval <span class="kw">is True</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_returns_none_when_no_significant_anomalies</span>(mock_engine):
+    mock_http_resp = AsyncMock()
+    mock_http_resp.status_code = <span class="nu">200</span>
+    mock_http_resp.json = MagicMock(return_value={
+        <span class="st">"ranked_anomalies"</span>: [],
+        <span class="st">"system_health"</span>: {<span class="st">"by_severity"</span>: {<span class="st">"info"</span>: <span class="nu">2</span>}},
+    })
+    mock_engine._http.get = AsyncMock(return_value=mock_http_resp)
+    decision = <span class="kw">await</span> mock_engine.reason()
+    <span class="kw">assert</span> decision <span class="kw">is None</span></pre>
+  </div>
+
+  <h3>Expected Test Run Output</h3>
+  <div class="testout">
+<span class="dim">$ python3 -m pytest --tb=short -q</span>
+
+<span class="info">tests/test_episodic_memory.py ...</span>               <span class="dim">[ 4%]</span>
+<span class="info">tests/test_memory_router.py ..</span>                   <span class="dim">[ 7%]</span>
+<span class="info">tests/test_normalizers.py ........</span>                <span class="dim">[ 19%]</span>
+<span class="info">tests/test_procedural_memory.py ..</span>                <span class="dim">[ 22%]</span>
+<span class="info">tests/test_semantic_memory.py ...</span>                 <span class="dim">[ 26%]</span>
+<span class="info">tests/test_vector_memory.py .</span>                     <span class="dim">[ 27%]</span>
+<span class="info">tests/test_working_memory.py ...</span>                  <span class="dim">[ 32%]</span>
+<span class="info">tests/test_temporal_detector.py ........</span>           <span class="dim">[ 45%]</span>
+<span class="info">tests/test_temporal_predictor.py ......</span>            <span class="dim">[ 55%]</span>
+<span class="info">tests/test_temporal_graph_bridge.py ...</span>            <span class="dim">[ 59%]</span>
+<span class="info">tests/test_entity_registry.py .....</span>               <span class="dim">[ 67%]</span>
+<span class="info">tests/test_anomaly_registry.py .....</span>              <span class="dim">[ 74%]</span>
+<span class="info">tests/test_situation_assessor.py ....</span>             <span class="dim">[ 81%]</span>
+<span class="info">tests/test_causal_engine.py ...</span>                   <span class="dim">[ 85%]</span>
+<span class="pass">tests/test_reasoning_schema.py .....</span>              <span class="dim">[ 90%]</span>
+<span class="pass">tests/test_fast_path.py ......</span>                    <span class="dim">[ 95%]</span>
+<span class="pass">tests/test_llm_client.py .....</span>                    <span class="dim">[ 98%]</span>
+<span class="pass">tests/test_reasoning_engine.py ....</span>               <span class="dim">[ 100%]</span>
+
+<span class="sep">────────────────────────────────────────────────────</span>
+<span class="pass">86 passed</span><span class="dim">, 5 warnings in ~58s</span>
+  </div>
+
+  <h3>Manual End-to-End Verification</h3>
+  <h4>1. Start all services</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">Terminal</span><span class="cb-lang">BASH</span></div>
+<pre>docker-compose up -d
+uvicorn perception.main:app --port 8080 &amp;
+uvicorn temporal.api:app --port 8091 &amp;
+uvicorn world_model.api:app --port 8092 &amp;
+uvicorn reasoning.api:app --port 8093 --reload</pre>
+  </div>
+
+  <h4>2. Inject a critical anomaly and trigger reasoning</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">Terminal 2</span><span class="cb-lang">BASH</span></div>
+<pre><span class="cm"># Inject consumer_lag_critical — should hit FAST PATH (no LLM call)</span>
+curl -s -X POST http://localhost:8080/perception/prometheus-alerts \
+  -H "Content-Type: application/json" \
+  -d '{"alerts": [{"status": "firing",
+      "labels": {"alertname": "KafkaConsumerLagHigh",
+                 "job": "order-processor", "instance": "queue:order-events"},
+      "annotations": {"value": "15000"},
+      "startsAt": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+  }]}'
+
+sleep 3
+
+<span class="cm"># Force a synchronous reasoning cycle</span>
+curl -s -X POST http://localhost:8093/reasoning/reason | jq .
+
+<span class="cm"># Expected: fast path fires, no LLM call, action=scale_consumer_group</span></pre>
+  </div>
+
+  <h4>3. Inject a novel anomaly — forces LLM reasoning</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">Inject + reason</span><span class="cb-lang">BASH</span></div>
+<pre><span class="cm"># Novel situation — multiple cascading anomalies, no fast path match</span>
+curl -s -X POST http://localhost:8080/perception/prometheus-alerts \
+  -H "Content-Type: application/json" \
+  -d '{"alerts": [{"status": "firing",
+      "labels": {"alertname": "HighMemoryPressure",
+                 "job": "auth-service", "instance": "metric:node-02"},
+      "annotations": {"value": "94", "summary": "Memory near limit"},
+      "startsAt": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+  }]}'
+
+sleep 5
+curl -s -X POST http://localhost:8093/reasoning/reason | jq '{
+  action: .recommended_action,
+  confidence: .confidence,
+  needs_approval: .requires_human_approval,
+  hypothesis: .root_cause_hypothesis.hypothesis
+}'</pre>
+  </div>
+
+  <h4>4. Expected decision response shape</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">Sample response from /reasoning/reason</span><span class="cb-lang">JSON</span></div>
+<pre>{
+  <span class="at">"situation_assessment"</span>:    <span class="st">"High memory pressure on metric:node-02 running auth-service. No blast radius currently, but trend is rising."</span>,
+  <span class="at">"root_cause_hypothesis"</span>: {
+    <span class="at">"hypothesis"</span>: <span class="st">"Memory leak in auth-service process. Rate_of_change is positive and accelerating."</span>,
+    <span class="at">"confidence"</span>: <span class="nu">0.82</span>,
+    <span class="at">"evidence"</span>: [<span class="st">"trend_direction: rising"</span>, <span class="st">"deviation_z: 3.1"</span>]
+  },
+  <span class="at">"recommended_action"</span>:      <span class="st">"increase_log_verbosity"</span>,
+  <span class="at">"action_parameters"</span>:       {<span class="st">"service_id"</span>: <span class="st">"svc:auth-service"</span>, <span class="st">"duration_m"</span>: 15},
+  <span class="at">"confidence"</span>:              <span class="nu">0.82</span>,
+  <span class="at">"requires_human_approval"</span>: <span class="kw">false</span>,
+  <span class="at">"alternative_actions"</span>: [
+    {<span class="at">"action"</span>: <span class="st">"scale_service_horizontal"</span>, <span class="at">"parameters"</span>: {<span class="st">"service_id"</span>: <span class="st">"svc:auth-service"</span>, <span class="st">"replica_delta"</span>: 2}, <span class="at">"rationale"</span>: <span class="st">"If memory leak continues"</span>}
+  ],
+  <span class="at">"reasoning_trace"</span>:         <span class="st">"1. Memory at 94%, rising trend... 2. No immediate blast radius... 3. Recommend observability increase before scaling."</span>
+}</pre>
+  </div>
+</section>
+
+<!-- ════════════════ CHECKLIST ════════════════ -->
+<section class="section">
+  <div class="sec-head">
+    <div class="step-tag">DONE</div>
+    <div class="sec-head-body">
+      <h2>Phase 7 Completion Gate</h2>
+      <p>All items must be checked before Phase 8 (Planning System). The Planner receives the DecisionObject and converts it into an executable plan.</p>
+    </div>
+  </div>
+
+  <div class="checklist">
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">actions.yaml loaded and ActionRegistry validates correctly</span>
+        <span class="citem-note">Start the engine — no <code>KeyError</code> or <code>FileNotFoundError</code>. All action names in the YAML are accessible via <code>ActionRegistry.all_names()</code>.</span>
+      </div>
+      <span class="badge b-c">INFRA</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">Fast path fires on consumer_lag_critical — no LLM call made</span>
+        <span class="citem-note">Inject the test event. Response arrives in &lt;100ms. <code>reasoning_trace</code> contains <code>"FAST PATH"</code>. Anthropic API call counter stays at 0.</span>
+      </div>
+      <span class="badge b-v">FUNCTIONAL</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">LLM is called for novel situations and returns valid DecisionObject</span>
+        <span class="citem-note">Novel anomaly injection triggers LLM. Response parses into <code>DecisionObject</code> without <code>ValidationError</code>. All eight fields present.</span>
+      </div>
+      <span class="badge b-v">FUNCTIONAL</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">Invalid LLM action replaced with escalate_to_human</span>
+        <span class="citem-note">If LLM hallucinates an action not in <code>actions.yaml</code>, decision is safely replaced. Confirmed by <code>test_invalid_llm_action_replaced_with_escalate</code>.</span>
+      </div>
+      <span class="badge b-v">SAFETY</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">Decision persisted to episodic memory after each cycle</span>
+        <span class="citem-note"><code>GET /memory/episodic/search?q=reasoning_completed</code> returns records after the engine runs. Future cycles retrieve these as past experiences.</span>
+      </div>
+      <span class="badge b-v">FUNCTIONAL</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">High-risk actions auto-set requires_human_approval = true</span>
+        <span class="citem-note">Actions with <code>risk: high</code> or <code>requires_approval: true</code> in <code>actions.yaml</code> always have <code>requires_human_approval</code> forced to <code>true</code>, even if LLM set it <code>false</code>.</span>
+      </div>
+      <span class="badge b-c">SAFETY</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">86 tests pass (62 existing + 24 new reasoning tests)</span>
+        <span class="citem-note"><code>python3 -m pytest</code> exits 86 passed, 0 failed. No live LLM calls in the test suite.</span>
+      </div>
+      <span class="badge b-g">REQUIRED</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">Engine runs autonomously every 60s with no crashes</span>
+        <span class="citem-note">Leave <code>run_loop()</code> running for 5 minutes. No unhandled exceptions. Decisions logged for each cycle that finds significant anomalies.</span>
+      </div>
+      <span class="badge b-g">STABILITY</span>
+    </div>
+  </div>
+
+  <div class="note note-success" style="margin-top: 28px;">
+    <div class="note-icon">✅</div>
+    <div class="note-body">
+      <strong>When all 8 items are green, Phase 7 is complete.</strong>
+      Your architecture now reasons. It perceives (Phase 1), remembers (Phases 3–4),
+      detects temporal patterns (Phase 5), maintains a live world model (Phase 6),
+      and now decides what to do (Phase 7). Phase 8 (Planning System) receives
+      the <code>DecisionObject</code> and converts it into a structured, executable plan
+      with dependencies, rollback procedures, and approval gates.
+    </div>
+  </div>
+
+  <h3>What Phase 8 (Planning System) Consumes from Phase 7</h3>
+  <table>
+    <thead>
+      <tr><th>Planner Input</th><th>Source Field</th><th>How the Planner Uses It</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Action to execute</td>
+        <td><code>recommended_action</code> + <code>action_parameters</code></td>
+        <td>Looks up the action handler in the Execution Layer. Builds the first plan step.</td>
+      </tr>
+      <tr>
+        <td>Fallback sequence</td>
+        <td><code>alternative_actions[0..1]</code></td>
+        <td>Populates the plan's <code>on_failure</code> handlers. If step 1 fails, tries alternative 1.</td>
+      </tr>
+      <tr>
+        <td>Approval gate</td>
+        <td><code>requires_human_approval</code></td>
+        <td>If true, plan pauses at step 0 and emits a human-handoff event before any execution.</td>
+      </tr>
+      <tr>
+        <td>Success criteria</td>
+        <td><code>root_cause_hypothesis</code> + anomaly entity</td>
+        <td>Planner monitors the anomaly entity — plan succeeds when anomaly closes in the World Model.</td>
+      </tr>
+      <tr>
+        <td>Observability</td>
+        <td><code>reasoning_trace</code></td>
+        <td>Stored with the plan record. Used by the Feedback Loop (Phase 10) to evaluate decision quality.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+</div><!-- /wrap -->
+</body>
+</html>

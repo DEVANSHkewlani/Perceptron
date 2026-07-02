@@ -1,0 +1,187 @@
+# ============================================================
+# Cognitive Perception — ShopCore Source Manifest
+# ============================================================
+# One entry per signal source. The perception layer reads this
+# on startup and instantiates one adapter per enabled source.
+
+sources:
+
+  # ──────────────────────────────────────────────────────────
+  # 1. APPLICATION LOGS  (source_type: log)
+  # ──────────────────────────────────────────────────────────
+  - id: svc:api-gateway
+    type: log
+    tags: [shopcore, gateway, critical]
+    fluent_bit_tag: api-gateway
+    log_format: json
+
+  - id: svc:product-service
+    type: log
+    tags: [shopcore, products]
+    fluent_bit_tag: product-service
+    log_format: json
+
+  - id: svc:order-service
+    type: log
+    tags: [shopcore, orders]
+    fluent_bit_tag: order-service
+    log_format: json
+
+  - id: svc:user-service
+    type: log
+    tags: [shopcore, auth]
+    fluent_bit_tag: user-service
+    log_format: json
+
+  - id: svc:cart-service
+    type: log
+    tags: [shopcore, cart]
+    fluent_bit_tag: cart-service
+    log_format: json
+
+  # ──────────────────────────────────────────────────────────
+  # 2. APIs & SERVICES  (source_type: api)
+  # ──────────────────────────────────────────────────────────
+  - id: svc:api-gateway
+    type: api
+    tags: [shopcore, gateway, critical]
+    url: http://localhost:8010/health
+    poll_interval_s: 5
+    timeout_s: 8.0
+    latency_warn_ms: 200
+    latency_high_ms: 1000
+
+  - id: svc:api-gateway-traffic
+    type: api
+    tags: [shopcore, gateway, traffic]
+    url: http://localhost:8010/products?limit=1
+    poll_interval_s: 5
+    timeout_s: 10.0
+    latency_warn_ms: 300
+    latency_high_ms: 1200
+
+  - id: svc:product-service
+    type: api
+    tags: [shopcore, products, critical]
+    url: http://localhost:8011/health
+    poll_interval_s: 5
+    timeout_s: 5.0
+    latency_warn_ms: 200
+    latency_high_ms: 1000
+
+  - id: svc:product-service-workload
+    type: api
+    tags: [shopcore, products, workload]
+    url: http://localhost:8011/products?limit=1
+    poll_interval_s: 5
+    timeout_s: 8.0
+    latency_warn_ms: 500
+    latency_high_ms: 1500
+
+  - id: svc:order-service
+    type: api
+    tags: [shopcore, orders, critical]
+    url: http://localhost:8012/health
+    poll_interval_s: 5
+    timeout_s: 5.0
+    latency_warn_ms: 200
+    latency_high_ms: 1000
+
+  - id: svc:user-service
+    type: api
+    tags: [shopcore, auth, critical]
+    url: http://localhost:8013/health
+    poll_interval_s: 5
+    timeout_s: 5.0
+    latency_warn_ms: 200
+    latency_high_ms: 1000
+
+  - id: svc:cart-service
+    type: api
+    tags: [shopcore, cart]
+    url: http://localhost:8014/health
+    poll_interval_s: 5
+    timeout_s: 5.0
+    latency_warn_ms: 200
+    latency_high_ms: 1000
+
+  - id: svc:notification-service
+    type: api
+    tags: [shopcore, notifications]
+    url: http://localhost:8015/health
+    poll_interval_s: 5
+    timeout_s: 5.0
+    latency_warn_ms: 200
+    latency_high_ms: 1000
+
+  # ──────────────────────────────────────────────────────────
+  # 3. DATABASES  (source_type: database)
+  # ──────────────────────────────────────────────────────────
+  - id: db:shopcore-postgres
+    type: database
+    tags: [shopcore, production, critical]
+    dsn: postgresql://shopcore:shopcore@localhost:5433/shopcore
+    slow_query_ms: 100.0
+    pool_warn_pct: 0.70
+    pool_critical_pct: 0.90
+    replication_lag_warn_s: 30.0
+    lock_wait_warn_s: 5.0
+    poll_interval_s: 5
+
+  # ──────────────────────────────────────────────────────────
+  # 4. REDIS CACHE (source_type: redis)
+  # ──────────────────────────────────────────────────────────
+  - id: cache:shopcore-redis
+    type: redis
+    tags: [shopcore, cache, sessions]
+    url: redis://localhost:6380
+    poll_interval_s: 5
+    memory_pct_critical: 0.85
+    eviction_warn_delta: 5
+    hit_ratio_warn: 0.70
+
+  # ──────────────────────────────────────────────────────────
+  # 5. QUEUES  (source_type: queue)
+  # ──────────────────────────────────────────────────────────
+  - id: queue:order-events
+    type: queue
+    tags: [shopcore, orders]
+    broker_type: kafka
+    queue_name: order-events
+    consumer_group: notification-group
+    poll_interval_s: 5
+    lag_warn: 50
+    lag_critical: 200
+    kafka_bootstrap: localhost:9094
+
+  # ──────────────────────────────────────────────────────────
+  # 6. FILESYSTEM  (source_type: file)
+  # ──────────────────────────────────────────────────────────
+  - id: file:nginx-config
+    type: file
+    tags: [config, production]
+    watch_path: ./files/nginx/conf.d/
+    events: [create, modify, delete]
+    recursive: false
+
+  - id: file:ssl-certs
+    type: file
+    tags: [security, certificates, critical]
+    watch_path: ./files/ssl/certs/
+    events: [create, modify, delete]
+    cert_expiry_warn_days: 30
+
+  # ──────────────────────────────────────────────────────────
+  # 7. SENSORS (source_type: sensor)
+  # ──────────────────────────────────────────────────────────
+  - id: sensor:server-room-temp
+    type: sensor
+    enabled: false
+    tags: [infrastructure, environment]
+    protocol: HTTP_POLL
+    endpoint: http://localhost:8001/sensors/temp
+    sensor_type: temperature
+    thresholds:
+      critical_high: 28.0
+      warn_high: 24.0
+    poll_interval_s: 10

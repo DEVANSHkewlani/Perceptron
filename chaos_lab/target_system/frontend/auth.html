@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShopCore — Authentication</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">ShopCore</a>
+    </div>
+  </header>
+
+  <main class="auth-page">
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="tab active" id="tab-login">Sign In</button>
+        <button class="tab" id="tab-register">Create Account</button>
+      </div>
+
+      <!-- Sign In Form -->
+      <form id="login-form" class="auth-form">
+        <div id="login-error" class="form-error hidden"></div>
+        <div class="input-group">
+          <label class="input-label">Email Address</label>
+          <input type="email" name="email" class="input" placeholder="email@example.com" required />
+        </div>
+        <div class="input-group">
+          <label class="input-label">Password</label>
+          <input type="password" name="password" class="input" placeholder="••••••••" required />
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top: 12px;">Sign In</button>
+      </form>
+
+      <!-- Create Account Form -->
+      <form id="register-form" class="auth-form hidden">
+        <div id="reg-error" class="form-error hidden"></div>
+        <div class="input-group">
+          <label class="input-label">Full Name</label>
+          <input type="text" name="name" class="input" placeholder="John Doe" required />
+        </div>
+        <div class="input-group">
+          <label class="input-label">Email Address</label>
+          <input type="email" name="email" class="input" placeholder="email@example.com" required />
+        </div>
+        <div class="input-group">
+          <label class="input-label">Password</label>
+          <input type="password" name="password" class="input" placeholder="•••••••• (Min 8 chars)" minlength="8" required />
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top: 12px;">Create Account</button>
+      </form>
+    </div>
+  </main>
+
+  <script type="module" src="auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,1761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 11 — Multi-Agent Coordination | Digital Cognitive Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg:   #07080f;
+    --s1:   #0b0d1a;
+    --s2:   #101322;
+    --s3:   #151829;
+    --s4:   #1a1e30;
+    --b1:   #1e2440;
+    --b2:   #252c4a;
+    --b3:   #2e3860;
+    --p:    #8b5cf6;
+    --pl:   #a78bfa;
+    --pll:  #c4b5fd;
+    --pd:   #7c3aed;
+    --pbg:  rgba(139,92,246,.07);
+    --pbr:  rgba(139,92,246,.22);
+    --rose: #f43f5e;
+    --rose2:#fb7185;
+    --amber:#f59e0b;
+    --amber2:#fbbf24;
+    --green:#22c55e;
+    --green2:#4ade80;
+    --sky:  #38bdf8;
+    --teal: #14b8a6;
+    --teal2:#2dd4bf;
+    --orange:#f97316;
+    --tx:  #dce8f8;
+    --tx2: #7888aa;
+    --tx3: #2d3a58;
+    --mono:'JetBrains Mono',monospace;
+    --sans:'Inter',sans-serif;
+  }
+
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:14.5px;line-height:1.75;overflow-x:hidden}
+
+  body::before{content:'';position:fixed;inset:0;
+    background:radial-gradient(ellipse at 5% 5%,rgba(139,92,246,.06) 0%,transparent 40%),
+               radial-gradient(ellipse at 95% 95%,rgba(244,63,94,.04) 0%,transparent 40%);
+    pointer-events:none;z-index:0}
+  body::after{content:'';position:fixed;inset:0;
+    background-image:linear-gradient(var(--b1) 1px,transparent 1px),
+                     linear-gradient(90deg,var(--b1) 1px,transparent 1px);
+    background-size:40px 40px;opacity:.25;pointer-events:none;z-index:0}
+
+  /* NAV */
+  .nav{position:sticky;top:0;z-index:100;background:rgba(7,8,15,.92);
+    backdrop-filter:blur(20px);border-bottom:1px solid var(--b1);height:52px;
+    display:flex;align-items:center;padding:0 40px;justify-content:space-between}
+  .nav-brand{font-family:var(--mono);font-size:11px;color:var(--tx3);letter-spacing:.07em}
+  .nav-brand strong{color:var(--pl);font-weight:600}
+  .nav-links{display:flex;gap:3px;list-style:none}
+  .nav-links a{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--tx3);text-decoration:none;padding:4px 9px;border-radius:4px;transition:all .15s}
+  .nav-links a:hover{background:var(--s3);color:var(--pl)}
+
+  /* LAYOUT */
+  .wrap{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:0 36px 130px}
+
+  /* HERO */
+  .hero{padding:84px 0 68px;border-bottom:1px solid var(--b1);margin-bottom:76px}
+  .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--tx3);margin-bottom:22px;display:flex;align-items:center;gap:12px}
+  .eyebrow::before{content:'';display:block;width:30px;height:1px;
+    background:linear-gradient(90deg,var(--p),transparent)}
+  .hero h1{font-size:clamp(36px,5.5vw,58px);font-weight:800;line-height:1.06;
+    letter-spacing:-.025em;color:#fff;margin-bottom:22px}
+  .hero h1 em{font-style:normal;
+    background:linear-gradient(135deg,var(--p) 0%,var(--rose) 50%,var(--amber) 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .hero-sub{font-size:16px;font-weight:300;color:var(--tx2);max-width:640px;
+    line-height:1.85;margin-bottom:44px}
+  .hero-stats{display:grid;grid-template-columns:repeat(5,1fr);
+    border:1px solid var(--b1);border-radius:12px;overflow:hidden;
+    width:fit-content;background:var(--b1);gap:1px}
+  .hstat{background:var(--s1);padding:18px 22px;display:flex;flex-direction:column;gap:4px}
+  .hstat-v{font-family:var(--mono);font-size:22px;font-weight:600;color:var(--pl);line-height:1}
+  .hstat-l{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3)}
+
+  /* NEXT STEPS BOX */
+  .next-box{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:14px 0 28px}
+  @media(max-width:680px){.next-box{grid-template-columns:1fr}}
+  .next-card{border-radius:10px;padding:18px 20px;border:1px solid;transition:all .2s}
+  .next-card.current{background:var(--pbg);border-color:var(--pbr)}
+  .next-card.after1{background:rgba(245,158,11,.05);border-color:rgba(245,158,11,.2)}
+  .next-card.after2{background:rgba(34,197,94,.04);border-color:rgba(34,197,94,.18)}
+  .next-card-num{font-family:var(--mono);font-size:9px;font-weight:700;
+    letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px}
+  .current .next-card-num{color:var(--pl)}
+  .after1 .next-card-num{color:var(--amber2)}
+  .after2 .next-card-num{color:var(--green2)}
+  .next-card-title{font-size:15px;font-weight:700;color:#fff;margin-bottom:6px}
+  .next-card-body{font-size:12.5px;color:var(--tx2);line-height:1.65}
+
+  /* SECTION */
+  .section{margin-bottom:80px}
+  .sec-head{display:flex;align-items:flex-start;gap:16px;
+    margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid var(--b1)}
+  .step-pill{font-family:var(--mono);font-size:9px;font-weight:700;
+    letter-spacing:.15em;text-transform:uppercase;
+    padding:5px 12px;border-radius:5px;white-space:nowrap;
+    margin-top:5px;flex-shrink:0;background:var(--p);color:var(--bg)}
+  .sec-text h2{font-size:25px;font-weight:700;color:#fff;letter-spacing:-.015em;margin-bottom:6px}
+  .sec-text p{font-size:13.5px;color:var(--tx2);max-width:600px;margin:0}
+
+  h3{font-size:15px;font-weight:600;color:var(--tx);margin:30px 0 12px;
+    display:flex;align-items:center;gap:10px}
+  h3::before{content:'';display:block;width:3px;height:16px;border-radius:2px;flex-shrink:0;
+    background:linear-gradient(180deg,var(--p) 0%,var(--rose) 100%)}
+  h4{font-family:var(--mono);font-size:10.5px;font-weight:500;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--pl);margin:24px 0 10px}
+  p{color:var(--tx2);margin-bottom:14px;line-height:1.8}
+  p strong{color:var(--tx)}
+
+  /* NOTES */
+  .note{display:flex;gap:13px;padding:15px 18px;border-radius:8px;margin:16px 0 22px;font-size:13.5px;line-height:1.7}
+  .note-icon{font-size:17px;flex-shrink:0;padding-top:1px}
+  .note-body{color:var(--tx2)}.note-body strong{color:var(--tx)}
+  .np{background:var(--pbg);border:1px solid var(--pbr)}
+  .nwarn{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2)}
+  .ndanger{background:rgba(244,63,94,.06);border:1px solid rgba(244,63,94,.22)}
+  .nok{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.2)}
+  .ninfo{background:rgba(56,189,248,.05);border:1px solid rgba(56,189,248,.2)}
+
+  /* CODE */
+  .cb{margin:12px 0 24px;border-radius:10px;overflow:hidden;border:1px solid var(--b2)}
+  .cb-head{display:flex;align-items:center;justify-content:space-between;
+    padding:8px 16px;background:var(--s2);border-bottom:1px solid var(--b1)}
+  .cb-file{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--tx2);
+    display:flex;align-items:center;gap:8px}
+  .cb-file::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--pl);opacity:.7}
+  .cb-lang{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx3)}
+  pre{margin:0;padding:19px 20px;background:#050710;overflow-x:auto;
+    font-family:var(--mono);font-size:12.5px;line-height:1.65;color:#c8d5f0}
+  .kw{color:#f87171}.fn{color:#c4b5fd}.st{color:#86efac}.nu{color:#93c5fd}
+  .cm{color:#2a3550;font-style:italic}.dc{color:#2a3550;font-style:italic}
+  .at{color:#fb923c}.pl2{color:var(--pll)}.gr{color:var(--green2)}
+  .am{color:var(--amber2)}.ro{color:var(--rose2)}.sk{color:var(--sky)}
+
+  /* TABLES */
+  table{width:100%;border-collapse:collapse;margin:12px 0 22px;font-size:13px}
+  thead th{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--tx3);padding:9px 14px;border-bottom:1px solid var(--b2);
+    text-align:left;background:var(--s1)}
+  tbody td{padding:11px 14px;border-bottom:1px solid var(--b1);vertical-align:top;
+    color:var(--tx2);line-height:1.65}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover td{background:rgba(139,92,246,.03)}
+  td:first-child{font-family:var(--mono);font-size:11.5px;color:var(--pl);white-space:nowrap}
+  code{font-family:var(--mono);font-size:.84em;color:var(--pll);
+    background:rgba(139,92,246,.1);padding:2px 6px;border-radius:4px}
+
+  /* FLOW */
+  .flow{background:var(--s2);border:1px solid var(--b2);border-radius:11px;
+    padding:26px 30px;margin:12px 0 24px;font-family:var(--mono);
+    font-size:12px;line-height:2;overflow-x:auto}
+  .flow .hl{color:var(--pll);font-weight:600}
+  .flow .gr{color:var(--green2)}.flow .am{color:var(--amber2)}
+  .flow .ro{color:var(--rose2)}.flow .sk{color:var(--sky)}.flow .dm{color:var(--tx3)}
+
+  /* FILE TREE */
+  .ftree{background:var(--s2);border:1px solid var(--b2);border-radius:10px;
+    padding:18px 22px;margin:12px 0 22px;font-family:var(--mono);
+    font-size:12px;line-height:2.1}
+  .ftree .dir{color:var(--sky)}.ftree .file{color:var(--tx2)}
+  .ftree .new{color:var(--pll);font-weight:600}
+  .ftree .mod{color:var(--amber2);font-weight:600}.ftree .dm{color:var(--tx3)}
+
+  /* AGENT CARDS */
+  .agent-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 24px}
+  @media(max-width:700px){.agent-grid{grid-template-columns:1fr}}
+  .agent-card{background:var(--s2);border:1px solid var(--b1);
+    border-top:3px solid var(--p);border-radius:10px;padding:18px 20px;transition:all .2s}
+  .agent-card:hover{border-color:var(--b2)}
+  .agent-type{font-family:var(--mono);font-size:9.5px;font-weight:700;
+    color:var(--pl);letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px}
+  .agent-title{font-size:15px;font-weight:700;color:#fff;margin-bottom:7px}
+  .agent-body{font-size:12.5px;color:var(--tx2);line-height:1.65}
+  .agent-body code{font-size:10.5px}
+
+  /* CHANGE CARDS */
+  .change-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 24px}
+  @media(max-width:620px){.change-grid{grid-template-columns:1fr}}
+  .change-card{background:var(--s2);border:1px solid var(--b1);
+    border-radius:10px;padding:16px 18px}
+  .change-file{font-family:var(--mono);font-size:11px;font-weight:600;
+    color:var(--amber2);margin-bottom:6px;display:flex;align-items:center;gap:7px}
+  .change-file::before{content:'✏️';font-size:12px}
+  .change-what{font-size:12.5px;color:var(--tx2);line-height:1.6}
+  .change-what code{font-size:10.5px;background:rgba(245,158,11,.08);color:var(--amber2);
+    padding:1px 5px;border-radius:3px}
+
+  /* BADGE */
+  .badge{display:inline-block;font-family:var(--mono);font-size:9.5px;font-weight:600;
+    letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:4px}
+  .bp{background:rgba(139,92,246,.12);color:var(--pl);border:1px solid rgba(139,92,246,.28)}
+  .bgr{background:rgba(34,197,94,.1);color:var(--green2);border:1px solid rgba(34,197,94,.25)}
+  .bwarn{background:rgba(245,158,11,.1);color:var(--amber2);border:1px solid rgba(245,158,11,.25)}
+  .bdanger{background:rgba(244,63,94,.1);color:var(--rose2);border:1px solid rgba(244,63,94,.25)}
+  .binfo{background:rgba(56,189,248,.1);color:var(--sky);border:1px solid rgba(56,189,248,.25)}
+
+  /* TEST OUTPUT */
+  .testout{background:#040610;border:1px solid var(--b2);border-radius:10px;
+    padding:18px 20px;font-family:var(--mono);font-size:12px;line-height:1.8;margin:12px 0 24px}
+  .testout .pass{color:var(--green2)}.testout .fail{color:var(--rose2)}
+  .testout .info{color:var(--pl)}.testout .warn{color:var(--amber2)}
+  .testout .dim{color:var(--tx3)}.testout .sep{color:var(--b2)}
+
+  /* CHECKLIST */
+  .checklist{background:var(--s1);border:1px solid var(--b2);border-radius:12px;padding:26px}
+  .citem{display:grid;grid-template-columns:20px 1fr auto;gap:12px;
+    align-items:start;padding:13px 14px;background:var(--s2);
+    border:1px solid transparent;border-radius:8px;margin-bottom:7px;transition:all .2s}
+  .citem:last-child{margin-bottom:0}.citem:hover{border-color:var(--b1)}
+  .citem-ico{font-size:13px;padding-top:2px}
+  .citem-body{display:flex;flex-direction:column;gap:3px}
+  .citem-title{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--tx)}
+  .citem-note{font-size:12px;color:var(--tx2);line-height:1.55}
+  .citem-note code{font-size:10.5px}
+
+  /* DASHBOARD ADVISORY */
+  .advisory{background:linear-gradient(135deg,rgba(139,92,246,.08) 0%,rgba(244,63,94,.05) 100%);
+    border:1px solid rgba(139,92,246,.22);border-radius:14px;
+    padding:32px 36px;margin:28px 0}
+  .advisory-title{font-size:20px;font-weight:700;color:#fff;margin-bottom:10px;
+    display:flex;align-items:center;gap:12px}
+  .advisory-body{font-size:14px;color:var(--tx2);line-height:1.85;max-width:720px}
+  .advisory-body strong{color:var(--tx)}
+  .advisory-seq{display:flex;gap:0;margin-top:20px;border:1px solid var(--b1);
+    border-radius:10px;overflow:hidden}
+  @media(max-width:620px){.advisory-seq{flex-direction:column}}
+  .aseq-item{flex:1;padding:16px 18px;background:var(--s2);border-right:1px solid var(--b1)}
+  .aseq-item:last-child{border-right:none}
+  .aseq-num{font-family:var(--mono);font-size:9px;font-weight:700;
+    letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px}
+  .aseq-item:nth-child(1) .aseq-num{color:var(--pl)}
+  .aseq-item:nth-child(2) .aseq-num{color:var(--amber2)}
+  .aseq-item:nth-child(3) .aseq-num{color:var(--green2)}
+  .aseq-item:nth-child(4) .aseq-num{color:var(--teal2)}
+  .aseq-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:3px}
+  .aseq-body{font-size:12px;color:var(--tx2)}
+
+  ::-webkit-scrollbar{width:5px;height:5px}
+  ::-webkit-scrollbar-track{background:var(--bg)}
+  ::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px}
+  @media(max-width:640px){
+    .wrap{padding:0 16px 80px}.nav{padding:0 16px}
+    .nav-links{display:none}.hero-stats{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">DCA &nbsp;/&nbsp; <strong>Phase 11</strong> — Multi-Agent Coordination</div>
+  <ul class="nav-links">
+    <li><a href="#why">Why</a></li>
+    <li><a href="#contract">Contract</a></li>
+    <li><a href="#arch-changes">Arch Changes</a></li>
+    <li><a href="#agents">Agents</a></li>
+    <li><a href="#coordinator">Coordinator</a></li>
+    <li><a href="#conflict">Conflict</a></li>
+    <li><a href="#impl">Implementation</a></li>
+    <li><a href="#testing">Testing</a></li>
+    <li><a href="#gate">Gate + Next</a></li>
+  </ul>
+</nav>
+
+<div class="wrap">
+
+<!-- HERO -->
+<header class="hero">
+  <div class="eyebrow">Chapter 12 &nbsp;·&nbsp; Phase 11</div>
+  <h1>Build<br><em>Multi-Agent Coordination</em></h1>
+  <p class="hero-sub">
+    Once the single-agent loop — perceive, remember, model, reason, plan, execute, feedback — is
+    proven and stable, you are ready to scale cognition across multiple specialised agents.
+    This phase is architecturally the most complex: it touches every prior phase with surgical
+    modifications, introduces six agent types, and requires conflict detection and resolution
+    across concurrent decision threads. Do not start this phase until Phase 10 tests pass clean.
+  </p>
+  <div class="hero-stats">
+    <div class="hstat"><span class="hstat-v">9</span><span class="hstat-l">New Modules</span></div>
+    <div class="hstat"><span class="hstat-v">11</span><span class="hstat-l">Files Modified</span></div>
+    <div class="hstat"><span class="hstat-v">6</span><span class="hstat-l">Agent Types</span></div>
+    <div class="hstat"><span class="hstat-v">26</span><span class="hstat-l">New Tests</span></div>
+    <div class="hstat"><span class="hstat-v">8097</span><span class="hstat-l">Coord Port</span></div>
+  </div>
+</header>
+
+<!-- ROADMAP ADVISORY -->
+<section class="section">
+  <div class="advisory">
+    <div class="advisory-title">📊 Answering Your Question — Dashboard &amp; Real-World Testing Sequence</div>
+    <div class="advisory-body">
+      <strong>Build the dashboard after Phase 11, before real-world testing.</strong>
+      Here is the exact reasoning: The observability dashboard (Phase 12) needs to visualise
+      ALL phases working together simultaneously — agents reasoning in parallel, conflict
+      resolution firing, the feedback loop updating scores in real-time. Building it before
+      Phase 11 means rebuilding it to add multi-agent views anyway. Building it after Phase 11
+      but before real-world testing means you have full visibility into what's happening during
+      your tests — which is exactly when you need it most. Blind real-world testing produces
+      logs you analyse after the fact. Dashboard-visible testing lets you watch the architecture
+      think in real time and catch architectural issues immediately.
+    </div>
+    <div class="advisory-seq">
+      <div class="aseq-item">
+        <div class="aseq-num">Now — Phase 11</div>
+        <div class="aseq-title">Multi-Agent</div>
+        <div class="aseq-body">Build this guide. All agents. Conflict resolution. 176 total tests.</div>
+      </div>
+      <div class="aseq-item">
+        <div class="aseq-num">Phase 12</div>
+        <div class="aseq-title">Dashboard</div>
+        <div class="aseq-body">React live dashboard. Every phase visible. Event stream, agent states, decision trace.</div>
+      </div>
+      <div class="aseq-item">
+        <div class="aseq-num">Phase 13</div>
+        <div class="aseq-title">Real-World Testing</div>
+        <div class="aseq-body">Full scenario testing with the dashboard running. Watch the DCA think live.</div>
+      </div>
+      <div class="aseq-item">
+        <div class="aseq-num">Phase 14</div>
+        <div class="aseq-title">Production Hardening</div>
+        <div class="aseq-body">Performance, security, cost optimisation, alerting, runbooks.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY -->
+<section id="why" class="section">
+  <div class="sec-head">
+    <div class="step-pill">CONCEPT</div>
+    <div class="sec-text">
+      <h2>Why Multiple Agents?</h2>
+      <p>Three architectural problems that multi-agent coordination solves that a single-agent loop cannot.</p>
+    </div>
+  </div>
+
+  <p>A single agent processes one decision at a time. Real environments generate many simultaneous demands.
+  A production system might simultaneously face a database connection pool exhaustion, a CPU spike on a
+  different node, and a consumer lag event on a third queue — three independent problem streams that have
+  nothing to do with each other and can be reasoned about and acted on in parallel. A single agent
+  serialises all three. Three specialised agents handle all three concurrently.</p>
+
+  <div class="note np">
+    <div class="note-icon">🧠</div>
+    <div class="note-body">
+      <strong>Specialisation improves performance.</strong> A monitoring agent that focuses only on
+      anomaly detection develops a more precise episodic memory and more targeted action vocabulary
+      than a generalist agent that also handles scheduling and planning. Each agent has its own
+      focused system prompt, its own relevant episodic memory namespace, and its own appropriate
+      action subset — even though all agents share the same world model and event bus.
+    </div>
+  </div>
+
+  <h3>The Six Agent Types</h3>
+  <div class="agent-grid">
+    <div class="agent-card">
+      <div class="agent-type">Monitor Agent</div>
+      <div class="agent-title">Continuously Watching</div>
+      <div class="agent-body">Observes the event stream and world model. Detects significant anomalies and publishes <code>situation_detected</code> events to the bus. The always-running sentinel. Triggers planner agents when a threshold is crossed.</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-type">Planner Agent</div>
+      <div class="agent-title">Reasons &amp; Plans</div>
+      <div class="agent-body">Receives situations from monitor agents, queries the world model, calls the LLM reasoning engine, and generates plans. May delegate to specialist agents for domain-specific reasoning before finalising a plan.</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-type">Executor Agent</div>
+      <div class="agent-title">Acts in the Environment</div>
+      <div class="agent-body">Carries out plan steps via the execution layer. May be specialised by action type — one agent handles API calls, another handles database operations, another handles human communication.</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-type">Memory Agent</div>
+      <div class="agent-title">Manages Consolidation</div>
+      <div class="agent-body">Moves events from working memory to episodic. Updates graph relationships. Consolidates and summarises old episodic memories to prevent unbounded growth. Runs on a schedule, not on demand.</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-type">Prediction Agent</div>
+      <div class="agent-title">Projects the Future</div>
+      <div class="agent-body">Runs predictive models over the temporal state and publishes <code>predicted_state</code> events to the bus. The world model incorporates these as predictive_state entries, enabling proactive planning.</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-type">Specialist Agent</div>
+      <div class="agent-title">Domain Expert On-Demand</div>
+      <div class="agent-body">A security specialist, database performance expert, or scheduling optimiser. Spawned by the planner agent when a domain-specific decision is needed. Has a focused prompt and narrow action vocabulary.</div>
+    </div>
+  </div>
+
+  <h3>Agent Communication — Two Channels</h3>
+  <table>
+    <thead><tr><th>Channel</th><th>When Used</th><th>Mechanism</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Event Bus (async)</td>
+        <td>Broadcast communication — any agent that cares will receive it</td>
+        <td>AIOKafkaProducer → <code>cognitive.events</code> topic</td>
+        <td>Monitor agent publishes <code>situation_detected</code>. Planner agent(s) subscribed to that event type each receive it.</td>
+      </tr>
+      <tr>
+        <td>Task Delegation (sync)</td>
+        <td>Targeted communication — a specific agent must handle this task</td>
+        <td>Planner creates a Task node in Neo4j graph assigned to a specific agent_id. Executor polls for assigned tasks.</td>
+        <td>Planner creates Task {action: restart_service, assigned_to: "agent:executor-db"} in graph. Executor-db picks it up.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- SHARED PERCEPTION CONTRACT -->
+<section id="contract" class="section">
+  <div class="sec-head">
+    <div class="step-pill">STEP 1</div>
+    <div class="sec-text">
+      <h2>The Shared Perception Contract — Non-Negotiable</h2>
+      <p>The single constraint that prevents multi-agent systems from diverging into incoherence.</p>
+    </div>
+  </div>
+
+  <div class="note ndanger">
+    <div class="note-icon">⚠️</div>
+    <div class="note-body">
+      <strong>All agents share one event bus and one world model. No exceptions.</strong>
+      If agents had private perception streams, they would develop divergent world models and
+      conflict in their actions — each agent acting on a different understanding of reality.
+      A shared bus ensures every agent sees the same events. The world model is the single
+      source of truth for all agents simultaneously. Agents NEVER write directly to memory or
+      the knowledge graph — they publish events to the bus, which flows through the normaliser,
+      into memory, and into the world model.
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>Rule</th><th>Correct</th><th>Wrong</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Event publishing</td>
+        <td>Agent publishes <code>agent_event</code> type to <code>cognitive.events</code></td>
+        <td>Agent writes directly to episodic PostgreSQL table</td>
+      </tr>
+      <tr>
+        <td>State reading</td>
+        <td>Agent calls <code>GET /world/situation</code> or <code>GET /world/entity/{id}</code></td>
+        <td>Agent queries Neo4j or Redis directly</td>
+      </tr>
+      <tr>
+        <td>Memory writing</td>
+        <td>Agent emits event → perception normaliser → memory router → memory store</td>
+        <td>Agent calls <code>POST /memory/episodic</code> directly</td>
+      </tr>
+      <tr>
+        <td>Knowledge graph</td>
+        <td>Graph updates happen via GraphTemporalBridge (Phase 5) and GraphUpdater (Phase 10)</td>
+        <td>Agent calls Neo4j driver and runs arbitrary Cypher</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ARCHITECTURE CHANGES -->
+<section id="arch-changes" class="section">
+  <div class="sec-head">
+    <div class="step-pill">STEP 2</div>
+    <div class="sec-text">
+      <h2>Required Architecture Changes — All Existing Files</h2>
+      <p>Phase 11 requires surgical modifications to 11 existing files before building any new agent code.</p>
+    </div>
+  </div>
+
+  <div class="note nwarn">
+    <div class="note-icon">✏️</div>
+    <div class="note-body">
+      <strong>Make these changes first — before writing any agent code.</strong>
+      The new AgentCoordinator depends on all of them. Building agents without these
+      modifications will result in agents that can't communicate, can't be tracked in the
+      graph, and can't coordinate on shared tasks.
+    </div>
+  </div>
+
+  <div class="change-grid">
+    <div class="change-card">
+      <div class="change-file">world_model/core.py</div>
+      <div class="change-what">Add <code>get_agent_tasks(agent_id)</code> method. Queries Neo4j for Task nodes assigned to a specific agent. Add <code>create_task(task)</code> for planner→executor delegation. WorldModel is the task registry.</div>
+    </div>
+    <div class="change-card">
+      <div class="change-file">world_model/api.py</div>
+      <div class="change-what">Add <code>GET /world/tasks/{agent_id}</code> endpoint. Add <code>POST /world/tasks</code> for creating delegation tasks. Add <code>PATCH /world/tasks/{task_id}</code> for status updates.</div>
+    </div>
+    <div class="change-card">
+      <div class="change-file">world_model/causal_engine.py</div>
+      <div class="change-what">Add <code>detect_agent_conflicts(entity_id)</code> — queries Neo4j for multiple agents with active tasks targeting the same entity. Returns conflicting agent-task pairs.</div>
+    </div>
+    <div class="change-card">
+      <div class="change-file">reasoning/engine.py</div>
+      <div class="change-what">Add <code>agent_id</code> parameter. Each ReasoningEngine instance represents one planner agent. Add <code>agent_domain</code> to filter situation summary to relevant anomaly types only.</div>
+    </div>
+    <div class="change-card">
+      <div class="change-file">reasoning/prompt_builder.py</div>
+      <div class="change-what">Add agent identity section to prompt: "You are [agent_id], specialising in [domain]. Other agents are handling [other_domains]. Do not recommend actions outside your domain vocabulary."</div>
+    </div>
+    <div class="change-card">
+      <div class="change-file">planning/api.py</div>
+      <div class="change-what">Add <code>agent_id</code> field to plan generation request. Store it on the Plan object. Coordinator uses this for conflict detection and arbitration.</div>
+    </div>
+    <div class="change-card">
+      <div class="change-file">execution/runner.py</div>
+      <div class="change-what">Add <code>agent_id</code> to all emitted feedback events. Coordinator uses this to route task completion events back to the correct planner agent.</div>
+    </div>
+    <div class="change-card">
+      <div class="change-file">feedback/consumer.py</div>
+      <div class="change-what">Subscribe to <code>agent_task_completed</code> events in addition to <code>action_completed</code>. Route feedback based on which agent type executed the action.</div>
+    </div>
+    <div class="change-card">
+      <div class="change-file">schema/event.py</div>
+      <div class="change-what">Add <code>agent_id: str | None</code> field to CognitiveEvent. Enables per-agent event filtering and tracing across the full event stream.</div>
+    </div>
+    <div class="change-card">
+      <div class="change-file">memory/router.py</div>
+      <div class="change-what">Add <code>agent_namespace</code> routing — events tagged with a specific <code>agent_id</code> go to that agent's episodic memory namespace in addition to the global namespace.</div>
+    </div>
+    <div class="change-card">
+      <div class="change-file">migrations/</div>
+      <div class="change-what">Add <code>agent_tasks</code> table (id, agent_id, plan_id, action, status, created_at, completed_at). Add Task node type to Neo4j constraint creation script.</div>
+    </div>
+  </div>
+
+  <h4>migrations/add_agent_tasks.sql</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">migrations/add_agent_tasks.sql</span><span class="cb-lang">SQL</span></div>
+<pre><span class="cm">-- Phase 11: Task delegation table</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> agent_tasks (
+    id             TEXT        <span class="kw">PRIMARY KEY DEFAULT</span> gen_random_uuid()::text,
+    agent_id       TEXT        <span class="kw">NOT NULL</span>,
+    plan_id        TEXT,
+    action         TEXT        <span class="kw">NOT NULL</span>,
+    parameters     JSONB       <span class="kw">DEFAULT</span> <span class="st">'{}'</span>,
+    status         TEXT        <span class="kw">NOT NULL DEFAULT</span> <span class="st">'pending'</span>,
+    priority       INTEGER     <span class="kw">DEFAULT</span> <span class="nu">5</span>,
+    created_at     TIMESTAMPTZ <span class="kw">DEFAULT</span> now(),
+    assigned_at    TIMESTAMPTZ,
+    completed_at   TIMESTAMPTZ,
+    result         JSONB
+);
+
+<span class="kw">CREATE INDEX IF NOT EXISTS</span> idx_agent_tasks_agent_status
+    <span class="kw">ON</span> agent_tasks(agent_id, status);
+
+<span class="kw">CREATE INDEX IF NOT EXISTS</span> idx_agent_tasks_plan
+    <span class="kw">ON</span> agent_tasks(plan_id);
+
+<span class="cm">-- Phase 11: Add agent_id to episodic_events for namespace routing</span>
+<span class="kw">ALTER TABLE</span> episodic_events
+    <span class="kw">ADD COLUMN IF NOT EXISTS</span> agent_id TEXT;
+
+<span class="kw">CREATE INDEX IF NOT EXISTS</span> idx_episodic_agent
+    <span class="kw">ON</span> episodic_events(agent_id);
+
+<span class="cm">-- Neo4j: run these in Neo4j Browser to add Task node constraint</span>
+<span class="cm">-- CREATE CONSTRAINT task_id IF NOT EXISTS FOR (t:Task) REQUIRE t.id IS UNIQUE;</span>
+<span class="cm">-- CREATE CONSTRAINT agent_id IF NOT EXISTS FOR (a:Agent) REQUIRE a.id IS UNIQUE;</span></pre>
+  </div>
+
+  <h4>Key code modifications — world_model/core.py additions</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">world_model/core.py — add these methods to WorldModel class</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="kw">async def</span> <span class="fn">create_task</span>(self, task: dict) -> dict:
+    <span class="dc">"""
+    Create a delegation task for an executor agent.
+    Stored in both PostgreSQL (fast lookup) and Neo4j (conflict detection).
+    Called by: PlannerAgent when it needs an executor to carry out a step.
+    """</span>
+    <span class="kw">import</span> uuid, json
+    task_id = <span class="st">f"task_{uuid.uuid4().hex[:8]}"</span>
+    task[<span class="st">"id"</span>] = task_id
+
+    <span class="cm"># Persist to PostgreSQL</span>
+    <span class="kw">async with</span> self._pg_pool.acquire() <span class="kw">as</span> conn:
+        <span class="kw">await</span> conn.execute(<span class="st">"""
+            INSERT INTO agent_tasks (id, agent_id, plan_id, action, parameters, status)
+            VALUES ($1,$2,$3,$4,$5,'pending')
+        """</span>, task_id, task[<span class="st">"agent_id"</span>], task.get(<span class="st">"plan_id"</span>),
+             task[<span class="st">"action"</span>], json.dumps(task.get(<span class="st">"parameters"</span>, {})))
+
+    <span class="cm"># Mirror to Neo4j as Task node for conflict detection</span>
+    <span class="kw">await</span> self.causal.create_task_node(task)
+    <span class="kw">return</span> task
+
+
+<span class="kw">async def</span> <span class="fn">get_agent_tasks</span>(self, agent_id: str, status: str = <span class="st">"pending"</span>) -> list[dict]:
+    <span class="dc">"""Retrieve tasks assigned to a specific agent. Polled by executor agents."""</span>
+    <span class="kw">async with</span> self._pg_pool.acquire() <span class="kw">as</span> conn:
+        rows = <span class="kw">await</span> conn.fetch(
+            <span class="st">"SELECT * FROM agent_tasks WHERE agent_id=$1 AND status=$2 ORDER BY priority,created_at"</span>,
+            agent_id, status
+        )
+    <span class="kw">return</span> [<span class="fn">dict</span>(r) <span class="kw">for</span> r <span class="kw">in</span> rows]
+
+
+<span class="kw">async def</span> <span class="fn">complete_task</span>(self, task_id: str, result: dict) -> <span class="kw">None</span>:
+    <span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+    <span class="kw">import</span> json
+    <span class="kw">async with</span> self._pg_pool.acquire() <span class="kw">as</span> conn:
+        <span class="kw">await</span> conn.execute(<span class="st">"""
+            UPDATE agent_tasks SET status='completed', completed_at=$1, result=$2 WHERE id=$3
+        """</span>, datetime.now(timezone.utc), json.dumps(result), task_id)
+    <span class="kw">await</span> self.causal.update_task_node(task_id, <span class="st">"completed"</span>)</pre>
+  </div>
+</section>
+
+<!-- AGENTS IMPLEMENTATION -->
+<section id="agents" class="section">
+  <div class="sec-head">
+    <div class="step-pill">STEP 3</div>
+    <div class="sec-text">
+      <h2>File Structure — New Modules</h2>
+      <p>All new agent code lives in <code>agents/</code>. Each agent is a self-contained async class.</p>
+    </div>
+  </div>
+
+  <div class="ftree">
+<span class="dm">cognitive_architecture/</span>
+├── <span class="dm">[all prior phases — unchanged except modifications above]</span>
+├── <span class="new">agents/</span>          <span class="dm">◆ Phase 11 — NEW</span>
+│   ├── <span class="new">__init__.py</span>
+│   ├── <span class="new">base_agent.py</span>       <span class="dm">BaseAgent — shared lifecycle, event publishing, world model client</span>
+│   ├── <span class="new">monitor_agent.py</span>    <span class="dm">MonitorAgent — polls world model, emits situation_detected</span>
+│   ├── <span class="new">planner_agent.py</span>   <span class="dm">PlannerAgent — reasons + generates plans + delegates tasks</span>
+│   ├── <span class="new">executor_agent.py</span>  <span class="dm">ExecutorAgent — polls task queue, runs execution layer</span>
+│   ├── <span class="new">memory_agent.py</span>    <span class="dm">MemoryAgent — scheduled consolidation, graph maintenance</span>
+│   ├── <span class="new">prediction_agent.py</span> <span class="dm">PredictionAgent — runs temporal predictor, emits predicted_state</span>
+│   ├── <span class="new">specialist_agent.py</span> <span class="dm">SpecialistAgent — on-demand domain expert (spawned by planner)</span>
+│   └── <span class="new">registry.py</span>         <span class="dm">AgentRegistry — tracks running agents, their types, health</span>
+├── <span class="new">coordinator/</span>     <span class="dm">◆ Phase 11 — NEW</span>
+│   ├── <span class="new">__init__.py</span>
+│   ├── <span class="new">coordinator.py</span>      <span class="dm">AgentCoordinator — spawns agents, detects + resolves conflicts</span>
+│   ├── <span class="new">conflict_resolver.py</span> <span class="dm">ConflictResolver — merges or prioritises competing plans</span>
+│   └── <span class="new">api.py</span>              <span class="dm">FastAPI — port 8097, agent management + conflict dashboard</span>
+├── <span class="mod">migrations/</span>
+│   └── <span class="mod">add_agent_tasks.sql</span>
+├── <span class="dir">tests/</span>
+│   ├── <span class="new">test_base_agent.py</span>
+│   ├── <span class="new">test_monitor_agent.py</span>
+│   ├── <span class="new">test_planner_agent.py</span>
+│   ├── <span class="new">test_executor_agent.py</span>
+│   ├── <span class="new">test_conflict_resolver.py</span>
+│   └── <span class="new">test_coordinator.py</span>
+  </div>
+
+  <h3>base_agent.py — Shared Foundation</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">agents/base_agent.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+BaseAgent — abstract foundation for all agent types.
+Provides:
+  - Kafka producer for event publishing (shared perception contract)
+  - HTTP client for World Model, Memory API, Planning API, Execution API
+  - Standardised event emission (always through cognitive.events)
+  - Health heartbeat (every 30s — lets coordinator track liveness)
+  - Graceful shutdown
+
+All agents:
+  - MUST call super().__init__() with their agent_id and agent_type
+  - MUST implement run() — their main async loop
+  - MUST NOT query any database directly
+  - MUST publish via emit_event() — never directly to kafka
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> asyncio, json, logging
+<span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, field
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">import</span> httpx
+<span class="kw">from</span> aiokafka <span class="kw">import</span> AIOKafkaProducer
+
+
+<span class="at">@dataclass</span>
+<span class="kw">class</span> <span class="pl2">AgentConfig</span>:
+    agent_id:         str
+    agent_type:       str
+    kafka_bootstrap:  str   = <span class="st">"localhost:9092"</span>
+    world_model_url:  str   = <span class="st">"http://localhost:8092"</span>
+    memory_url:       str   = <span class="st">"http://localhost:8090"</span>
+    planning_url:     str   = <span class="st">"http://localhost:8094"</span>
+    execution_url:    str   = <span class="st">"http://localhost:8095"</span>
+    reasoning_url:    str   = <span class="st">"http://localhost:8093"</span>
+    domain:           str   = <span class="st">"general"</span>       <span class="cm"># e.g. "database", "queue", "security"</span>
+    action_vocab:     list  = field(default_factory=list)  <span class="cm"># subset of actions.yaml</span>
+    heartbeat_s:      int   = <span class="nu">30</span>
+
+
+<span class="kw">class</span> <span class="pl2">BaseAgent</span>(ABC):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, cfg: AgentConfig):
+        self.cfg      = cfg
+        self.agent_id = cfg.agent_id
+        self._log     = logging.getLogger(<span class="st">f"agent.{cfg.agent_id}"</span>)
+        self._producer: AIOKafkaProducer | <span class="kw">None</span> = <span class="kw">None</span>
+        self._http:    httpx.AsyncClient  | <span class="kw">None</span> = <span class="kw">None</span>
+        self._running = <span class="kw">False</span>
+
+    <span class="kw">async def</span> <span class="fn">start</span>(self):
+        self._producer = AIOKafkaProducer(bootstrap_servers=self.cfg.kafka_bootstrap)
+        <span class="kw">await</span> self._producer.start()
+        self._http    = httpx.AsyncClient(timeout=<span class="nu">12.0</span>)
+        self._running = <span class="kw">True</span>
+        self._log.info(<span class="st">f"[{self.agent_id}] Started (type={self.cfg.agent_type})"</span>)
+        <span class="kw">await</span> self.emit_event(<span class="st">"action_started"</span>, <span class="st">"info"</span>, {<span class="st">"status"</span>: <span class="st">"online"</span>})
+
+    <span class="kw">async def</span> <span class="fn">stop</span>(self):
+        self._running = <span class="kw">False</span>
+        <span class="kw">await</span> self.emit_event(<span class="st">"action_completed"</span>, <span class="st">"info"</span>, {<span class="st">"status"</span>: <span class="st">"offline"</span>})
+        <span class="kw">if</span> self._producer: <span class="kw">await</span> self._producer.stop()
+        <span class="kw">if</span> self._http:     <span class="kw">await</span> self._http.aclose()
+
+    <span class="at">@abstractmethod</span>
+    <span class="kw">async def</span> <span class="fn">run</span>(self): ...
+
+    <span class="kw">async def</span> <span class="fn">emit_event</span>(
+        self, event_type: str, severity: str,
+        payload: dict, entity_refs: list[str] | <span class="kw">None</span> = <span class="kw">None</span>,
+    ) -> <span class="kw">None</span>:
+        <span class="dc">"""
+        Publish to cognitive.events. This is the ONLY way agents write state.
+        Shared perception contract enforced here.
+        """</span>
+        event = {
+            <span class="st">"event_type"</span>:  event_type,
+            <span class="st">"source_type"</span>: <span class="st">"agent_event"</span>,
+            <span class="st">"source_id"</span>:   self.agent_id,
+            <span class="st">"agent_id"</span>:    self.agent_id,
+            <span class="st">"severity"</span>:    severity,
+            <span class="st">"confidence"</span>:  <span class="nu">1.0</span>,
+            <span class="st">"entity_refs"</span>: entity_refs <span class="kw">or</span> [self.agent_id],
+            <span class="st">"payload"</span>:     payload,
+            <span class="st">"timestamp"</span>:   datetime.now(timezone.utc).isoformat(),
+        }
+        <span class="kw">await</span> self._producer.send_and_wait(
+            <span class="st">"cognitive.events"</span>, json.dumps(event).encode()
+        )
+
+    <span class="kw">async def</span> <span class="fn">get_situation</span>(self, top_n: int = <span class="nu">3</span>) -> dict:
+        <span class="dc">"""Query World Model for current situation — filtered to agent's domain."""</span>
+        r = <span class="kw">await</span> self._http.get(
+            <span class="st">f"{self.cfg.world_model_url}/world/situation"</span>,
+            params={<span class="st">"top_n"</span>: top_n},
+        )
+        <span class="kw">if</span> r.status_code == <span class="nu">200</span>:
+            situation = r.json()
+            <span class="cm"># Filter anomalies to this agent's domain if specialised</span>
+            <span class="kw">if</span> self.cfg.domain != <span class="st">"general"</span> <span class="kw">and</span> self.cfg.action_vocab:
+                situation[<span class="st">"ranked_anomalies"</span>] = [
+                    a <span class="kw">for</span> a <span class="kw">in</span> situation.get(<span class="st">"ranked_anomalies"</span>, [])
+                    <span class="kw">if</span> self._is_domain_relevant(a)
+                ]
+            <span class="kw">return</span> situation
+        <span class="kw">return</span> {}
+
+    <span class="kw">def</span> <span class="fn">_is_domain_relevant</span>(self, anomaly: dict) -> bool:
+        <span class="kw">if not</span> self.cfg.action_vocab: <span class="kw">return True</span>
+        event_type = anomaly.get(<span class="st">"event_type"</span>, <span class="st">""</span>)
+        <span class="cm"># Domain mapping: "database" → db/connection/replication events</span>
+        domain_keywords = {
+            <span class="st">"database"</span>: [<span class="st">"database"</span>, <span class="st">"connection"</span>, <span class="st">"query"</span>, <span class="st">"replication"</span>, <span class="st">"deadlock"</span>],
+            <span class="st">"queue"</span>:    [<span class="st">"consumer"</span>, <span class="st">"queue"</span>, <span class="st">"lag"</span>, <span class="st">"dead_letter"</span>],
+            <span class="st">"service"</span>:  [<span class="st">"service"</span>, <span class="st">"latency"</span>, <span class="st">"health"</span>, <span class="st">"cpu"</span>, <span class="st">"memory"</span>],
+            <span class="st">"security"</span>: [<span class="st">"brute_force"</span>, <span class="st">"ddos"</span>, <span class="st">"injection"</span>, <span class="st">"waf"</span>],
+        }
+        keywords = domain_keywords.get(self.cfg.domain, [])
+        <span class="kw">return any</span>(kw <span class="kw">in</span> event_type <span class="kw">for</span> kw <span class="kw">in</span> keywords)
+
+    <span class="kw">async def</span> <span class="fn">heartbeat_loop</span>(self):
+        <span class="kw">while</span> self._running:
+            <span class="kw">await</span> asyncio.sleep(self.cfg.heartbeat_s)
+            <span class="kw">await</span> self.emit_event(<span class="st">"action_completed"</span>, <span class="st">"info"</span>,
+                                  {<span class="st">"heartbeat"</span>: <span class="kw">True</span>, <span class="st">"agent_type"</span>: self.cfg.agent_type})</pre>
+  </div>
+
+  <h3>monitor_agent.py — The Always-Running Sentinel</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">agents/monitor_agent.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+MonitorAgent — continuously polls the World Model and triggers planner agents.
+Runs perpetually. When anomaly severity exceeds threshold, publishes
+situation_detected event so PlannerAgents subscribed to that domain react.
+One MonitorAgent per deployment is sufficient for most architectures.
+Multiple monitors can specialise per domain if event volume is high.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> asyncio
+<span class="kw">from</span> .base_agent <span class="kw">import</span> BaseAgent, AgentConfig
+
+SEVERITY_SCORES = {<span class="st">"critical"</span>: <span class="nu">5</span>, <span class="st">"high"</span>: <span class="nu">4</span>, <span class="st">"medium"</span>: <span class="nu">3</span>, <span class="st">"low"</span>: <span class="nu">2</span>, <span class="st">"info"</span>: <span class="nu">1</span>}
+
+
+<span class="kw">class</span> <span class="pl2">MonitorAgent</span>(BaseAgent):
+    <span class="kw">def</span> <span class="fn">__init__</span>(
+        self, cfg: AgentConfig,
+        poll_interval_s: int = <span class="nu">15</span>,
+        trigger_severity: str = <span class="st">"medium"</span>,
+    ):
+        super().__init__(cfg)
+        self._poll_s   = poll_interval_s
+        self._min_sev  = SEVERITY_SCORES.get(trigger_severity, <span class="nu">3</span>)
+        self._last_sig: dict[str, str] = {}  <span class="cm"># entity_id → last anomaly_id emitted</span>
+
+    <span class="kw">async def</span> <span class="fn">run</span>(self):
+        <span class="kw">await</span> self.start()
+        <span class="kw">await</span> asyncio.gather(self._monitor_loop(), self.heartbeat_loop())
+
+    <span class="kw">async def</span> <span class="fn">_monitor_loop</span>(self):
+        <span class="kw">while</span> self._running:
+            <span class="kw">try</span>:
+                situation = <span class="kw">await</span> self.get_situation(top_n=<span class="nu">5</span>)
+                <span class="kw">await</span> self._evaluate_and_signal(situation)
+            <span class="kw">except</span> Exception <span class="kw">as</span> e:
+                self._log.warning(<span class="st">f"Monitor poll error: {e}"</span>)
+            <span class="kw">await</span> asyncio.sleep(self._poll_s)
+
+    <span class="kw">async def</span> <span class="fn">_evaluate_and_signal</span>(self, situation: dict) -> <span class="kw">None</span>:
+        <span class="kw">for</span> anomaly <span class="kw">in</span> situation.get(<span class="st">"ranked_anomalies"</span>, []):
+            sev_score = SEVERITY_SCORES.get(anomaly.get(<span class="st">"severity"</span>, <span class="st">"info"</span>), <span class="nu">1</span>)
+            <span class="kw">if</span> sev_score < self._min_sev:
+                <span class="kw">continue</span>
+
+            anomaly_id = anomaly.get(<span class="st">"anomaly_id"</span>, <span class="st">""</span>)
+            entity_id  = anomaly.get(<span class="st">"entity_id"</span>, <span class="st">""</span>)
+
+            <span class="cm"># Deduplicate: don't re-signal the same anomaly if already emitted</span>
+            <span class="kw">if</span> self._last_sig.get(entity_id) == anomaly_id:
+                <span class="kw">continue</span>
+
+            self._last_sig[entity_id] = anomaly_id
+            <span class="kw">await</span> self.emit_event(
+                event_type=<span class="st">"task_delegated"</span>,
+                severity=anomaly.get(<span class="st">"severity"</span>),
+                payload={
+                    <span class="st">"signal"</span>:       <span class="st">"situation_detected"</span>,
+                    <span class="st">"anomaly_id"</span>:   anomaly_id,
+                    <span class="st">"entity_id"</span>:    entity_id,
+                    <span class="st">"event_type"</span>:   anomaly.get(<span class="st">"event_type"</span>),
+                    <span class="st">"severity"</span>:     anomaly.get(<span class="st">"severity"</span>),
+                    <span class="st">"confidence"</span>:   anomaly.get(<span class="st">"confidence"</span>),
+                    <span class="st">"situation"</span>:    situation,
+                    <span class="st">"from_agent"</span>:   self.agent_id,
+                },
+                entity_refs=[entity_id, self.agent_id],
+            )
+            self._log.info(
+                <span class="st">f"Signalled planner: {anomaly.get('event_type')} on {entity_id}"</span>
+            )</pre>
+  </div>
+
+  <h3>planner_agent.py — Reasons and Delegates</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">agents/planner_agent.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+PlannerAgent — receives situations from MonitorAgent via Kafka subscription,
+reasons using the LLM reasoning engine, generates plans, and creates
+delegation tasks for executor agents. May spawn SpecialistAgents for
+domain-specific sub-problems.
+
+One PlannerAgent per domain (e.g. planner:database, planner:queue).
+Each filters the situation to its domain before reasoning.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> asyncio, json
+<span class="kw">from</span> aiokafka <span class="kw">import</span> AIOKafkaConsumer
+<span class="kw">from</span> .base_agent <span class="kw">import</span> BaseAgent, AgentConfig
+
+
+<span class="kw">class</span> <span class="pl2">PlannerAgent</span>(BaseAgent):
+    <span class="kw">def</span> <span class="fn">__init__</span>(
+        self, cfg: AgentConfig,
+        executor_agent_id: str = <span class="st">"agent:executor-general"</span>,
+    ):
+        super().__init__(cfg)
+        self._executor_id = executor_agent_id
+
+    <span class="kw">async def</span> <span class="fn">run</span>(self):
+        <span class="kw">await</span> self.start()
+        consumer = AIOKafkaConsumer(
+            <span class="st">"cognitive.events"</span>,
+            bootstrap_servers=self.cfg.kafka_bootstrap,
+            group_id=<span class="st">f"planner-{self.cfg.domain}"</span>,
+            auto_offset_reset=<span class="st">"latest"</span>,
+            enable_auto_commit=<span class="kw">True</span>,
+            value_deserializer=<span class="kw">lambda</span> b: json.loads(b.decode()),
+        )
+        <span class="kw">await</span> consumer.start()
+        <span class="kw">try</span>:
+            <span class="kw">await</span> asyncio.gather(
+                self._consume_situations(consumer),
+                self.heartbeat_loop(),
+            )
+        <span class="kw">finally</span>:
+            <span class="kw">await</span> consumer.stop()
+            <span class="kw">await</span> self.stop()
+
+    <span class="kw">async def</span> <span class="fn">_consume_situations</span>(self, consumer) -> <span class="kw">None</span>:
+        <span class="kw">async for</span> msg <span class="kw">in</span> consumer:
+            event = msg.value
+            <span class="kw">if</span> (event.get(<span class="st">"event_type"</span>) == <span class="st">"task_delegated"</span>
+                    <span class="kw">and</span> event.get(<span class="st">"payload"</span>, {}).get(<span class="st">"signal"</span>) == <span class="st">"situation_detected"</span>):
+                asyncio.create_task(self._handle_situation_safe(event[<span class="st">"payload"</span>]))
+
+    <span class="kw">async def</span> <span class="fn">_handle_situation_safe</span>(self, payload: dict) -> <span class="kw">None</span>:
+        <span class="kw">try</span>:
+            <span class="kw">await</span> self._handle_situation(payload)
+        <span class="kw">except</span> Exception <span class="kw">as</span> e:
+            self._log.error(<span class="st">f"Error handling situation: {e}"</span>)
+
+    <span class="kw">async def</span> <span class="fn">_handle_situation</span>(self, payload: dict) -> <span class="kw">None</span>:
+        situation = payload.get(<span class="st">"situation"</span>, {})
+        <span class="kw">if not</span> situation.get(<span class="st">"ranked_anomalies"</span>):
+            <span class="kw">return</span>
+
+        <span class="cm"># Filter to our domain</span>
+        situation[<span class="st">"ranked_anomalies"</span>] = [
+            a <span class="kw">for</span> a <span class="kw">in</span> situation[<span class="st">"ranked_anomalies"</span>]
+            <span class="kw">if</span> self._is_domain_relevant(a)
+        ]
+        <span class="kw">if not</span> situation[<span class="st">"ranked_anomalies"</span>]:
+            <span class="kw">return</span>   <span class="cm"># not our domain — another planner will handle it</span>
+
+        <span class="cm"># 1. Trigger reasoning engine</span>
+        r = <span class="kw">await</span> self._http.post(
+            <span class="st">f"{self.cfg.reasoning_url}/reasoning/reason"</span>
+        )
+        <span class="kw">if</span> r.status_code != <span class="nu">200</span>:
+            <span class="kw">return</span>
+        decision = r.json()
+        <span class="kw">if</span> decision.get(<span class="st">"status"</span>) == <span class="st">"no_action_needed"</span>:
+            <span class="kw">return</span>
+
+        <span class="cm"># 2. Generate plan</span>
+        decision[<span class="st">"agent_id"</span>] = self.agent_id
+        plan_r = <span class="kw">await</span> self._http.post(
+            <span class="st">f"{self.cfg.planning_url}/planning/generate"</span>,
+            json=decision,
+        )
+        <span class="kw">if</span> plan_r.status_code != <span class="nu">201</span>:
+            <span class="kw">return</span>
+        plan = plan_r.json()
+
+        <span class="cm"># 3. Create delegation task for executor agent</span>
+        task_r = <span class="kw">await</span> self._http.post(
+            <span class="st">f"{self.cfg.world_model_url}/world/tasks"</span>,
+            json={
+                <span class="st">"agent_id"</span>:   self._executor_id,
+                <span class="st">"plan_id"</span>:    plan[<span class="st">"plan_id"</span>],
+                <span class="st">"action"</span>:     decision.get(<span class="st">"recommended_action"</span>),
+                <span class="st">"parameters"</span>: decision.get(<span class="st">"action_parameters"</span>, {}),
+                <span class="st">"priority"</span>:   <span class="nu">5</span> <span class="kw">if</span> decision.get(<span class="st">"confidence"</span>, <span class="nu">0</span>) > <span class="nu">0.8</span> <span class="kw">else</span> <span class="nu">3</span>,
+            }
+        )
+        self._log.info(
+            <span class="st">f"[{self.agent_id}] Created task for {self._executor_id}: "</span>
+            <span class="st">f"{decision.get('recommended_action')}"</span>
+        )
+        <span class="kw">await</span> self.emit_event(<span class="st">"task_delegated"</span>, <span class="st">"info"</span>, {
+            <span class="st">"plan_id"</span>:  plan[<span class="st">"plan_id"</span>],
+            <span class="st">"to_agent"</span>: self._executor_id,
+            <span class="st">"action"</span>:   decision.get(<span class="st">"recommended_action"</span>),
+        })</pre>
+  </div>
+
+  <h3>executor_agent.py — Acts on Delegated Tasks</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">agents/executor_agent.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+ExecutorAgent — polls World Model task queue for assigned tasks,
+executes them via the Execution Layer API, reports completion.
+May be specialised by action type:
+  agent:executor-db      → handles database operations only
+  agent:executor-queue   → handles Kafka consumer group operations
+  agent:executor-general → handles all remaining actions
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> asyncio
+<span class="kw">from</span> .base_agent <span class="kw">import</span> BaseAgent, AgentConfig
+
+
+<span class="kw">class</span> <span class="pl2">ExecutorAgent</span>(BaseAgent):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, cfg: AgentConfig, poll_interval_s: int = <span class="nu">5</span>):
+        super().__init__(cfg)
+        self._poll_s = poll_interval_s
+
+    <span class="kw">async def</span> <span class="fn">run</span>(self):
+        <span class="kw">await</span> self.start()
+        <span class="kw">await</span> asyncio.gather(self._task_loop(), self.heartbeat_loop())
+
+    <span class="kw">async def</span> <span class="fn">_task_loop</span>(self):
+        <span class="kw">while</span> self._running:
+            <span class="kw">try</span>:
+                tasks = <span class="kw">await</span> self._poll_tasks()
+                <span class="kw">for</span> task <span class="kw">in</span> tasks:
+                    asyncio.create_task(self._execute_task(task))
+            <span class="kw">except</span> Exception <span class="kw">as</span> e:
+                self._log.warning(<span class="st">f"Task poll error: {e}"</span>)
+            <span class="kw">await</span> asyncio.sleep(self._poll_s)
+
+    <span class="kw">async def</span> <span class="fn">_poll_tasks</span>(self) -> list[dict]:
+        r = <span class="kw">await</span> self._http.get(
+            <span class="st">f"{self.cfg.world_model_url}/world/tasks/{self.agent_id}"</span>
+        )
+        <span class="kw">return</span> r.json() <span class="kw">if</span> r.status_code == <span class="nu">200</span> <span class="kw">else</span> []
+
+    <span class="kw">async def</span> <span class="fn">_execute_task</span>(self, task: dict) -> <span class="kw">None</span>:
+        <span class="kw">try</span>:
+            plan_id = task.get(<span class="st">"plan_id"</span>)
+            <span class="cm"># Fetch full plan and execute it</span>
+            plan_r = <span class="kw">await</span> self._http.get(
+                <span class="st">f"{self.cfg.planning_url}/planning/plans/{plan_id}"</span>
+            )
+            <span class="kw">if</span> plan_r.status_code != <span class="nu">200</span>:
+                <span class="kw">return</span>
+
+            exec_r = <span class="kw">await</span> self._http.post(
+                <span class="st">f"{self.cfg.execution_url}/execution/execute"</span>,
+                json=plan_r.json(),
+            )
+            success = exec_r.status_code <span class="kw">in</span> (<span class="nu">200</span>, <span class="nu">202</span>)
+
+            <span class="cm"># Mark task complete in World Model</span>
+            <span class="kw">await</span> self._http.patch(
+                <span class="st">f"{self.cfg.world_model_url}/world/tasks/{task['id']}"</span>,
+                json={<span class="st">"status"</span>: <span class="st">"completed"</span>, <span class="st">"result"</span>: {<span class="st">"success"</span>: success}},
+            )
+            <span class="kw">await</span> self.emit_event(
+                <span class="st">"task_completed"</span> <span class="kw">if</span> success <span class="kw">else</span> <span class="st">"task_failed"</span>, <span class="st">"info"</span>,
+                {<span class="st">"task_id"</span>: task[<span class="st">"id"</span>], <span class="st">"plan_id"</span>: plan_id, <span class="st">"agent_id"</span>: self.agent_id},
+            )
+        <span class="kw">except</span> Exception <span class="kw">as</span> e:
+            self._log.error(<span class="st">f"Task execution error: {e}"</span>)</pre>
+  </div>
+</section>
+
+<!-- COORDINATOR + CONFLICT -->
+<section id="coordinator" class="section">
+  <div class="sec-head">
+    <div class="step-pill">STEP 4</div>
+    <div class="sec-text">
+      <h2>AgentCoordinator — Spawning &amp; Orchestration</h2>
+      <p>Manages all agent lifecycles, detects conflicts between concurrent plans, and routes tasks.</p>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">coordinator/coordinator.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+AgentCoordinator — the conductor of the multi-agent system.
+Responsibilities:
+  1. Spawn all configured agents as independent async tasks
+  2. Monitor agent liveness (heartbeat watchdog)
+  3. Detect entity conflicts (multiple agents targeting same entity)
+  4. Call ConflictResolver to arbitrate conflicting plans
+  5. Expose agent state via API (port 8097)
+
+Agent Configuration is defined here — one coordinator per deployment.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> asyncio, logging
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">import</span> httpx
+<span class="kw">from</span> agents.base_agent <span class="kw">import</span> AgentConfig
+<span class="kw">from</span> agents.monitor_agent <span class="kw">import</span> MonitorAgent
+<span class="kw">from</span> agents.planner_agent <span class="kw">import</span> PlannerAgent
+<span class="kw">from</span> agents.executor_agent <span class="kw">import</span> ExecutorAgent
+<span class="kw">from</span> agents.memory_agent <span class="kw">import</span> MemoryAgent
+<span class="kw">from</span> agents.prediction_agent <span class="kw">import</span> PredictionAgent
+<span class="kw">from</span> .conflict_resolver <span class="kw">import</span> ConflictResolver
+
+log = logging.getLogger(<span class="st">"coordinator"</span>)
+
+WORLD_MODEL_URL = <span class="st">"http://localhost:8092"</span>
+KAFKA           = <span class="st">"localhost:9092"</span>
+
+
+<span class="kw">def</span> <span class="fn">build_agent_fleet</span>() -> list:
+    <span class="dc">"""
+    Define the complete agent fleet.
+    Adjust domains and action vocabularies for your environment.
+    """</span>
+    base = {<span class="st">"kafka_bootstrap"</span>: KAFKA, <span class="st">"world_model_url"</span>: WORLD_MODEL_URL}
+
+    <span class="kw">return</span> [
+        <span class="cm"># One global monitor — watches everything</span>
+        MonitorAgent(AgentConfig(agent_id=<span class="st">"agent:monitor-global"</span>,
+            agent_type=<span class="st">"monitor"</span>, domain=<span class="st">"general"</span>, **base),
+            poll_interval_s=<span class="nu">15</span>, trigger_severity=<span class="st">"medium"</span>),
+
+        <span class="cm"># Domain-specialised planners</span>
+        PlannerAgent(AgentConfig(agent_id=<span class="st">"agent:planner-db"</span>,
+            agent_type=<span class="st">"planner"</span>, domain=<span class="st">"database"</span>,
+            action_vocab=[<span class="st">"restart_connection_pool"</span>, <span class="st">"kill_slow_query"</span>,
+                          <span class="st">"scale_read_replicas"</span>, <span class="st">"escalate_to_human"</span>], **base),
+            executor_agent_id=<span class="st">"agent:executor-db"</span>),
+
+        PlannerAgent(AgentConfig(agent_id=<span class="st">"agent:planner-queue"</span>,
+            agent_type=<span class="st">"planner"</span>, domain=<span class="st">"queue"</span>,
+            action_vocab=[<span class="st">"scale_consumer_group"</span>, <span class="st">"purge_dead_letter_queue"</span>,
+                          <span class="st">"send_alert"</span>, <span class="st">"escalate_to_human"</span>], **base),
+            executor_agent_id=<span class="st">"agent:executor-queue"</span>),
+
+        PlannerAgent(AgentConfig(agent_id=<span class="st">"agent:planner-service"</span>,
+            agent_type=<span class="st">"planner"</span>, domain=<span class="st">"service"</span>,
+            action_vocab=[<span class="st">"restart_service"</span>, <span class="st">"scale_service_horizontal"</span>,
+                          <span class="st">"enable_circuit_breaker"</span>, <span class="st">"increase_log_verbosity"</span>], **base),
+            executor_agent_id=<span class="st">"agent:executor-general"</span>),
+
+        <span class="cm"># Specialised executors</span>
+        ExecutorAgent(AgentConfig(agent_id=<span class="st">"agent:executor-db"</span>,
+            agent_type=<span class="st">"executor"</span>, domain=<span class="st">"database"</span>, **base)),
+        ExecutorAgent(AgentConfig(agent_id=<span class="st">"agent:executor-queue"</span>,
+            agent_type=<span class="st">"executor"</span>, domain=<span class="st">"queue"</span>, **base)),
+        ExecutorAgent(AgentConfig(agent_id=<span class="st">"agent:executor-general"</span>,
+            agent_type=<span class="st">"executor"</span>, domain=<span class="st">"general"</span>, **base)),
+
+        <span class="cm"># Background agents</span>
+        MemoryAgent(AgentConfig(agent_id=<span class="st">"agent:memory"</span>,
+            agent_type=<span class="st">"memory"</span>, domain=<span class="st">"general"</span>, **base)),
+        PredictionAgent(AgentConfig(agent_id=<span class="st">"agent:prediction"</span>,
+            agent_type=<span class="st">"prediction"</span>, domain=<span class="st">"general"</span>, **base)),
+    ]
+
+
+<span class="kw">class</span> <span class="pl2">AgentCoordinator</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.agents    = build_agent_fleet()
+        self.resolver  = ConflictResolver(WORLD_MODEL_URL)
+        self._tasks:   list[asyncio.Task] = []
+        self._http     = httpx.AsyncClient(timeout=<span class="nu">8.0</span>)
+        self._registry: dict[str, dict]  = {}
+
+    <span class="kw">async def</span> <span class="fn">run</span>(self):
+        <span class="dc">"""Start all agents concurrently and run conflict detection loop."""</span>
+        log.info(<span class="st">f"[Coordinator] Starting {len(self.agents)} agents"</span>)
+        <span class="kw">for</span> agent <span class="kw">in</span> self.agents:
+            t = asyncio.create_task(
+                self._run_agent_safe(agent),
+                name=agent.agent_id
+            )
+            self._tasks.append(t)
+            self._registry[agent.agent_id] = {
+                <span class="st">"type"</span>:       agent.cfg.agent_type,
+                <span class="st">"domain"</span>:     agent.cfg.domain,
+                <span class="st">"status"</span>:     <span class="st">"running"</span>,
+                <span class="st">"started_at"</span>: datetime.now(timezone.utc).isoformat(),
+            }
+
+        <span class="kw">await</span> asyncio.gather(
+            asyncio.gather(*self._tasks, return_exceptions=<span class="kw">True</span>),
+            self._conflict_detection_loop(),
+        )
+
+    <span class="kw">async def</span> <span class="fn">_run_agent_safe</span>(self, agent) -> <span class="kw">None</span>:
+        <span class="kw">try</span>:
+            <span class="kw">await</span> agent.run()
+        <span class="kw">except</span> Exception <span class="kw">as</span> e:
+            log.error(<span class="st">f"[Coordinator] Agent {agent.agent_id} crashed: {e}"</span>)
+            self._registry[agent.agent_id][<span class="st">"status"</span>] = <span class="st">"crashed"</span>
+
+    <span class="kw">async def</span> <span class="fn">_conflict_detection_loop</span>(self):
+        <span class="dc">"""Every 20s, check Neo4j for agents with overlapping task targets."""</span>
+        <span class="kw">while True</span>:
+            <span class="kw">await</span> asyncio.sleep(<span class="nu">20</span>)
+            <span class="kw">try</span>:
+                r = <span class="kw">await</span> self._http.get(
+                    <span class="st">f"{WORLD_MODEL_URL}/world/conflicts"</span>
+                )
+                <span class="kw">if</span> r.status_code == <span class="nu">200</span>:
+                    conflicts = r.json()
+                    <span class="kw">for</span> conflict <span class="kw">in</span> conflicts:
+                        asyncio.create_task(
+                            self.resolver.resolve(conflict)
+                        )
+            <span class="kw">except</span> Exception:
+                <span class="kw">pass</span>
+
+    <span class="kw">def</span> <span class="fn">get_registry</span>(self) -> dict:
+        <span class="kw">return</span> self._registry.copy()</pre>
+  </div>
+</section>
+
+<!-- CONFLICT RESOLUTION -->
+<section id="conflict" class="section">
+  <div class="sec-head">
+    <div class="step-pill">STEP 5</div>
+    <div class="sec-text">
+      <h2>Conflict Detection &amp; Resolution</h2>
+      <p>When two agents target the same entity simultaneously, the coordinator must arbitrate. This must be designed explicitly — do not assume conflicts will not occur.</p>
+    </div>
+  </div>
+
+  <div class="note ndanger">
+    <div class="note-icon">⚡</div>
+    <div class="note-body">
+      <strong>Conflicts are inevitable in parallel systems.</strong> When a database anomaly and
+      a service anomaly both point to the same entity (e.g. <code>svc:auth-service</code> is
+      both a database caller and an HTTP service), the database planner and the service planner
+      may both create plans targeting it simultaneously. Without resolution, two conflicting
+      actions execute concurrently — a restart and a connection pool reset on the same service.
+      The planner agent acts as arbiter: it compares confidence scores, blast radius, and
+      risk levels, then either merges the plans or prioritises one.
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">coordinator/conflict_resolver.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+ConflictResolver — arbitrates when two agents target the same entity.
+
+Detection: Neo4j query finds entities with >1 active Task node.
+Resolution strategies (in order of preference):
+  1. MERGE — if actions are compatible (both low-risk), merge into a sequential plan
+  2. PRIORITY — if actions are incompatible, keep the higher-confidence / lower-risk one
+  3. ESCALATE — if risk is high on both, escalate to human
+
+After resolution: cancel the losing plan via Planning API,
+emit a conflict_resolved event so both agents are notified.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> logging
+<span class="kw">import</span> httpx
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+
+log = logging.getLogger(<span class="st">"conflict_resolver"</span>)
+
+RISK_SCORE = {<span class="st">"low"</span>: <span class="nu">1</span>, <span class="st">"medium"</span>: <span class="nu">2</span>, <span class="st">"high"</span>: <span class="nu">3</span>}
+
+
+<span class="kw">class</span> <span class="pl2">ConflictResolver</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, world_model_url: str, planning_url: str = <span class="st">"http://localhost:8094"</span>):
+        self._wm_url = world_model_url
+        self._pl_url = planning_url
+
+    <span class="kw">async def</span> <span class="fn">resolve</span>(self, conflict: dict) -> <span class="kw">None</span>:
+        <span class="dc">"""
+        conflict = {
+          "entity_id": "svc:auth-service",
+          "tasks": [
+            {"task_id": "t1", "agent_id": "agent:planner-db",
+             "plan_id": "plan_abc", "action": "restart_connection_pool",
+             "risk": "medium", "confidence": 0.88},
+            {"task_id": "t2", "agent_id": "agent:planner-service",
+             "plan_id": "plan_xyz", "action": "restart_service",
+             "risk": "high", "confidence": 0.75}
+          ]
+        }
+        """</span>
+        entity_id = conflict.get(<span class="st">"entity_id"</span>)
+        tasks     = conflict.get(<span class="st">"tasks"</span>, [])
+
+        <span class="kw">if</span> <span class="fn">len</span>(tasks) < <span class="nu">2</span>:
+            <span class="kw">return</span>
+
+        log.warning(<span class="st">f"[Conflict] Entity={entity_id} has {len(tasks)} competing tasks"</span>)
+
+        <span class="cm"># Score each task: confidence × (1/risk_score) → higher = preferred</span>
+        <span class="kw">def</span> <span class="fn">score</span>(t): <span class="kw">return</span> t.get(<span class="st">"confidence"</span>, <span class="nu">0.5</span>) / RISK_SCORE.get(t.get(<span class="st">"risk"</span>, <span class="st">"high"</span>), <span class="nu">3</span>)
+
+        ranked = sorted(tasks, key=score, reverse=<span class="kw">True</span>)
+        winner = ranked[<span class="nu">0</span>]
+        losers = ranked[<span class="nu">1</span>:]
+
+        <span class="cm"># If winner action is reversible and loser is low-risk → MERGE (sequential)</span>
+        can_merge = (
+            winner.get(<span class="st">"risk"</span>) <span class="kw">in</span> (<span class="st">"low"</span>, <span class="st">"medium"</span>) <span class="kw">and</span>
+            <span class="fn">all</span>(l.get(<span class="st">"risk"</span>) == <span class="st">"low"</span> <span class="kw">for</span> l <span class="kw">in</span> losers)
+        )
+
+        <span class="kw">async with</span> httpx.AsyncClient(timeout=<span class="nu">8</span>) <span class="kw">as</span> client:
+            <span class="kw">if</span> can_merge:
+                <span class="cm"># Add loser steps after winner plan steps</span>
+                log.info(<span class="st">f"[Conflict] MERGE: {winner['action']} then {losers[0]['action']}"</span>)
+                <span class="kw">for</span> loser <span class="kw">in</span> losers:
+                    <span class="kw">await</span> client.post(
+                        <span class="st">f"{self._pl_url}/planning/plans/{winner['plan_id']}/append"</span>,
+                        json={<span class="st">"action"</span>: loser[<span class="st">"action"</span>], <span class="st">"from_plan"</span>: loser[<span class="st">"plan_id"</span>]}
+                    )
+                    <span class="kw">await</span> client.delete(<span class="st">f"{self._pl_url}/planning/plans/{loser['plan_id']}"</span>)
+            <span class="kw">else</span>:
+                <span class="cm"># PRIORITY: cancel losing plans, keep winner</span>
+                log.info(<span class="st">f"[Conflict] PRIORITY: keeping {winner['action']} (score={score(winner):.3f})"</span>)
+                <span class="kw">for</span> loser <span class="kw">in</span> losers:
+                    log.info(<span class="st">f"[Conflict] Cancelling plan {loser['plan_id']} for {loser['agent_id']}"</span>)
+                    <span class="kw">await</span> client.delete(<span class="st">f"{self._pl_url}/planning/plans/{loser['plan_id']}"</span>)
+                    <span class="kw">await</span> client.patch(
+                        <span class="st">f"{self._wm_url}/world/tasks/{loser['task_id']}"</span>,
+                        json={<span class="st">"status"</span>: <span class="st">"cancelled"</span>,
+                              <span class="st">"reason"</span>: <span class="st">f"Conflict resolved in favour of {winner['agent_id']}"</span>}
+                    )</pre>
+  </div>
+</section>
+
+<!-- REMAINING AGENTS -->
+<section class="section">
+  <div class="sec-head">
+    <div class="step-pill">STEP 6</div>
+    <div class="sec-text">
+      <h2>Memory Agent, Prediction Agent &amp; Coordinator API</h2>
+      <p>The remaining three modules plus the management API.</p>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">agents/memory_agent.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+MemoryAgent — scheduled background memory consolidation.
+Runs every consolidation_interval_s. Moves events from working memory to
+episodic memory, summarises old episodic records, and updates graph edges.
+This prevents working memory from growing unbounded.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> asyncio
+<span class="kw">from</span> .base_agent <span class="kw">import</span> BaseAgent, AgentConfig
+
+
+<span class="kw">class</span> <span class="pl2">MemoryAgent</span>(BaseAgent):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, cfg: AgentConfig, consolidation_interval_s: int = <span class="nu">300</span>):
+        super().__init__(cfg)
+        self._interval = consolidation_interval_s
+
+    <span class="kw">async def</span> <span class="fn">run</span>(self):
+        <span class="kw">await</span> self.start()
+        <span class="kw">await</span> asyncio.gather(self._consolidation_loop(), self.heartbeat_loop())
+
+    <span class="kw">async def</span> <span class="fn">_consolidation_loop</span>(self):
+        <span class="kw">while</span> self._running:
+            <span class="kw">await</span> asyncio.sleep(self._interval)
+            <span class="kw">try</span>:
+                <span class="cm"># Trigger working memory flush (moves expired events to episodic)</span>
+                r = <span class="kw">await</span> self._http.post(
+                    <span class="st">f"{self.cfg.memory_url}/memory/working/flush"</span>
+                )
+                flushed = r.json().get(<span class="st">"flushed"</span>, <span class="nu">0</span>) <span class="kw">if</span> r.status_code == <span class="nu">200</span> <span class="kw">else</span> <span class="nu">0</span>
+                <span class="kw">await</span> self.emit_event(<span class="st">"action_completed"</span>, <span class="st">"info"</span>,
+                                      {<span class="st">"operation"</span>: <span class="st">"memory_consolidation"</span>,
+                                       <span class="st">"flushed_events"</span>: flushed})
+                self._log.info(<span class="st">f"Memory consolidation: flushed {flushed} events"</span>)
+            <span class="kw">except</span> Exception <span class="kw">as</span> e:
+                self._log.warning(<span class="st">f"Consolidation error: {e}"</span>)</pre>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">agents/prediction_agent.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+PredictionAgent — runs TemporalPredictor across all tracked entities and
+publishes predicted_state events to cognitive.events.
+The World Model incorporates these as predictive_state entries,
+enabling proactive planning before thresholds are crossed.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> asyncio
+<span class="kw">from</span> .base_agent <span class="kw">import</span> BaseAgent, AgentConfig
+
+
+<span class="kw">class</span> <span class="pl2">PredictionAgent</span>(BaseAgent):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, cfg: AgentConfig, prediction_interval_s: int = <span class="nu">60</span>):
+        super().__init__(cfg)
+        self._interval = prediction_interval_s
+
+    <span class="kw">async def</span> <span class="fn">run</span>(self):
+        <span class="kw">await</span> self.start()
+        <span class="kw">await</span> asyncio.gather(self._prediction_loop(), self.heartbeat_loop())
+
+    <span class="kw">async def</span> <span class="fn">_prediction_loop</span>(self):
+        <span class="kw">while</span> self._running:
+            <span class="kw">await</span> asyncio.sleep(self._interval)
+            <span class="kw">try</span>:
+                <span class="cm"># Get all degraded entities from World Model</span>
+                r = <span class="kw">await</span> self._http.get(<span class="st">f"{self.cfg.world_model_url}/world/anomalies"</span>)
+                <span class="kw">if</span> r.status_code != <span class="nu">200</span>: <span class="kw">continue</span>
+                <span class="kw">for</span> anomaly <span class="kw">in</span> r.json()[:5]:   <span class="cm"># top 5 active anomalies</span>
+                    entity_id  = anomaly.get(<span class="st">"entity_id"</span>)
+                    event_type = anomaly.get(<span class="st">"event_type"</span>)
+                    pred_r = <span class="kw">await</span> self._http.get(
+                        <span class="st">f"{self.cfg.world_model_url}/world/predict/{entity_id}"</span>,
+                        params={<span class="st">"event_type"</span>: event_type},
+                    )
+                    <span class="kw">if</span> pred_r.status_code == <span class="nu">200</span>:
+                        predictions = pred_r.json()
+                        <span class="kw">await</span> self.emit_event(
+                            <span class="st">"reasoning_completed"</span>, <span class="st">"info"</span>,
+                            {<span class="st">"signal"</span>: <span class="st">"predicted_state"</span>,
+                             <span class="st">"entity_id"</span>: entity_id,
+                             <span class="st">"event_type"</span>: event_type,
+                             <span class="st">"predictions"</span>: predictions},
+                            entity_refs=[entity_id, self.agent_id],
+                        )
+            <span class="kw">except</span> Exception <span class="kw">as</span> e:
+                self._log.warning(<span class="st">f"Prediction error: {e}"</span>)</pre>
+  </div>
+
+  <h4>coordinator/api.py — port 8097</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">coordinator/api.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
+<span class="kw">import</span> asyncio
+<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI
+<span class="kw">from</span> .coordinator <span class="kw">import</span> AgentCoordinator
+
+coordinator = AgentCoordinator()
+
+
+<span class="at">@asynccontextmanager</span>
+<span class="kw">async def</span> <span class="fn">lifespan</span>(app: FastAPI):
+    bg = asyncio.create_task(coordinator.run())
+    <span class="kw">yield</span>
+    bg.cancel()
+
+app = FastAPI(title=<span class="st">"Agent Coordinator API"</span>, lifespan=lifespan)
+
+
+<span class="at">@app.get</span>(<span class="st">"/coordinator/agents"</span>)
+<span class="kw">async def</span> <span class="fn">list_agents</span>(): <span class="kw">return</span> coordinator.get_registry()
+
+
+<span class="at">@app.get</span>(<span class="st">"/coordinator/agents/{agent_id}/tasks"</span>)
+<span class="kw">async def</span> <span class="fn">get_agent_tasks</span>(agent_id: str):
+    <span class="kw">import</span> httpx
+    <span class="kw">async with</span> httpx.AsyncClient() <span class="kw">as</span> c:
+        r = <span class="kw">await</span> c.get(<span class="st">f"http://localhost:8092/world/tasks/{agent_id}"</span>)
+    <span class="kw">return</span> r.json() <span class="kw">if</span> r.status_code == <span class="nu">200</span> <span class="kw">else</span> []
+
+
+<span class="at">@app.get</span>(<span class="st">"/coordinator/conflicts"</span>)
+<span class="kw">async def</span> <span class="fn">get_active_conflicts</span>():
+    <span class="kw">import</span> httpx
+    <span class="kw">async with</span> httpx.AsyncClient() <span class="kw">as</span> c:
+        r = <span class="kw">await</span> c.get(<span class="st">"http://localhost:8092/world/conflicts"</span>)
+    <span class="kw">return</span> r.json() <span class="kw">if</span> r.status_code == <span class="nu">200</span> <span class="kw">else</span> []
+
+
+<span class="at">@app.get</span>(<span class="st">"/health"</span>)
+<span class="kw">async def</span> <span class="fn">health</span>():
+    reg = coordinator.get_registry()
+    online = <span class="fn">sum</span>(<span class="nu">1</span> <span class="kw">for</span> v <span class="kw">in</span> reg.values() <span class="kw">if</span> v[<span class="st">"status"</span>] == <span class="st">"running"</span>)
+    <span class="kw">return</span> {<span class="st">"status"</span>: <span class="st">"ok"</span>, <span class="st">"agents_online"</span>: online, <span class="st">"total"</span>: <span class="fn">len</span>(reg)}</pre>
+  </div>
+
+  <h4>Start the coordinator</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">Terminal</span><span class="cb-lang">BASH</span></div>
+<pre>psql -U cognitive -d cognitive_db -f migrations/add_agent_tasks.sql
+
+<span class="cm"># Start coordinator (spawns all agents internally)</span>
+uvicorn coordinator.api:app --host 0.0.0.0 --port 8097 --reload
+
+<span class="cm"># Check all agents are running</span>
+curl -s http://localhost:8097/coordinator/agents | jq .</pre>
+  </div>
+</section>
+
+<!-- TESTING -->
+<section id="testing" class="section">
+  <div class="sec-head">
+    <div class="step-pill">STEP 7</div>
+    <div class="sec-text">
+      <h2>Testing — 26 New Tests</h2>
+      <p>Six test files. All agent behaviour tested with mocked World Model and Kafka. Conflict resolution tested deterministically.</p>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">tests/test_base_agent.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="kw">import</span> pytest
+<span class="kw">from</span> unittest.mock <span class="kw">import</span> AsyncMock, MagicMock
+<span class="kw">from</span> agents.base_agent <span class="kw">import</span> AgentConfig
+<span class="kw">from</span> agents.monitor_agent <span class="kw">import</span> MonitorAgent
+
+
+<span class="at">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">agent</span>():
+    cfg = AgentConfig(agent_id=<span class="st">"agent:test-monitor"</span>, agent_type=<span class="st">"monitor"</span>)
+    a   = MonitorAgent.__new__(MonitorAgent)
+    a.cfg       = cfg
+    a.agent_id  = cfg.agent_id
+    a._running  = <span class="kw">True</span>
+    a._producer = AsyncMock(); a._producer.send_and_wait = AsyncMock()
+    a._http     = AsyncMock()
+    a._log      = MagicMock()
+    a._poll_s   = <span class="nu">999</span>   <span class="cm"># prevent actual polling in tests</span>
+    a._min_sev  = <span class="nu">3</span>
+    a._last_sig = {}
+    <span class="kw">return</span> a
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_emit_event_publishes_to_kafka</span>(agent):
+    <span class="kw">await</span> agent.emit_event(<span class="st">"action_completed"</span>, <span class="st">"info"</span>, {<span class="st">"test"</span>: <span class="kw">True</span>})
+    agent._producer.send_and_wait.assert_called_once()
+    call_args = agent._producer.send_and_wait.call_args[<span class="nu">0</span>]
+    <span class="kw">assert</span> call_args[<span class="nu">0</span>] == <span class="st">"cognitive.events"</span>
+    <span class="kw">import</span> json
+    payload = json.loads(call_args[<span class="nu">1</span>])
+    <span class="kw">assert</span> payload[<span class="st">"agent_id"</span>] == <span class="st">"agent:test-monitor"</span>
+    <span class="kw">assert</span> payload[<span class="st">"source_type"</span>] == <span class="st">"agent_event"</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_domain_filter_applied_when_specialised</span>(agent):
+    <span class="cm"># Set domain to database — should filter out queue events</span>
+    agent.cfg.domain       = <span class="st">"database"</span>
+    agent.cfg.action_vocab = [<span class="st">"restart_connection_pool"</span>]
+
+    anomalies = [
+        {<span class="st">"event_type"</span>: <span class="st">"consumer_lag_critical"</span>,    <span class="st">"severity"</span>: <span class="st">"critical"</span>},
+        {<span class="st">"event_type"</span>: <span class="st">"database_connection_timeout"</span>, <span class="st">"severity"</span>: <span class="st">"critical"</span>},
+    ]
+    relevant = [a <span class="kw">for</span> a <span class="kw">in</span> anomalies <span class="kw">if</span> agent._is_domain_relevant(a)]
+    <span class="kw">assert</span> <span class="fn">len</span>(relevant) == <span class="nu">1</span>
+    <span class="kw">assert</span> relevant[<span class="nu">0</span>][<span class="st">"event_type"</span>] == <span class="st">"database_connection_timeout"</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_monitor_deduplicates_signals</span>(agent):
+    <span class="cm"># Same anomaly emitted twice should only signal once</span>
+    situation = {<span class="st">"ranked_anomalies"</span>: [{
+        <span class="st">"anomaly_id"</span>: <span class="st">"anm_123"</span>, <span class="st">"entity_id"</span>: <span class="st">"svc:auth"</span>,
+        <span class="st">"event_type"</span>: <span class="st">"cpu_spike"</span>, <span class="st">"severity"</span>: <span class="st">"high"</span>, <span class="st">"confidence"</span>: <span class="nu">0.9</span>,
+    }]}
+    <span class="kw">await</span> agent._evaluate_and_signal(situation)
+    <span class="kw">await</span> agent._evaluate_and_signal(situation)   <span class="cm"># second call = same anomaly_id</span>
+    <span class="kw">assert</span> agent._producer.send_and_wait.call_count == <span class="nu">1</span>   <span class="cm"># deduplicated</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_monitor_below_min_severity_not_signalled</span>(agent):
+    situation = {<span class="st">"ranked_anomalies"</span>: [{
+        <span class="st">"anomaly_id"</span>: <span class="st">"anm_456"</span>, <span class="st">"entity_id"</span>: <span class="st">"svc:api"</span>,
+        <span class="st">"event_type"</span>: <span class="st">"cache_miss_spike"</span>, <span class="st">"severity"</span>: <span class="st">"low"</span>, <span class="st">"confidence"</span>: <span class="nu">0.6</span>,
+    }]}
+    <span class="kw">await</span> agent._evaluate_and_signal(situation)
+    agent._producer.send_and_wait.assert_not_called()</pre>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">tests/test_conflict_resolver.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="kw">import</span> pytest
+<span class="kw">from</span> unittest.mock <span class="kw">import</span> AsyncMock, patch
+<span class="kw">from</span> coordinator.conflict_resolver <span class="kw">import</span> ConflictResolver
+
+
+<span class="at">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">resolver</span>():
+    <span class="kw">return</span> ConflictResolver(<span class="st">"http://localhost:8092"</span>, <span class="st">"http://localhost:8094"</span>)
+
+
+<span class="kw">def</span> <span class="fn">make_conflict</span>(a_risk=<span class="st">"low"</span>, a_conf=<span class="nu">0.90</span>, b_risk=<span class="st">"high"</span>, b_conf=<span class="nu">0.75</span>) -> dict:
+    <span class="kw">return</span> {
+        <span class="st">"entity_id"</span>: <span class="st">"svc:auth-service"</span>,
+        <span class="st">"tasks"</span>: [
+            {<span class="st">"task_id"</span>:<span class="st">"t1"</span>,<span class="st">"agent_id"</span>:<span class="st">"agent:planner-db"</span>,
+             <span class="st">"plan_id"</span>:<span class="st">"plan_a"</span>,<span class="st">"action"</span>:<span class="st">"restart_connection_pool"</span>,
+             <span class="st">"risk"</span>:a_risk,<span class="st">"confidence"</span>:a_conf},
+            {<span class="st">"task_id"</span>:<span class="st">"t2"</span>,<span class="st">"agent_id"</span>:<span class="st">"agent:planner-service"</span>,
+             <span class="st">"plan_id"</span>:<span class="st">"plan_b"</span>,<span class="st">"action"</span>:<span class="st">"restart_service"</span>,
+             <span class="st">"risk"</span>:b_risk,<span class="st">"confidence"</span>:b_conf},
+        ]
+    }
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_high_confidence_low_risk_wins</span>(resolver):
+    <span class="dc">"""Higher confidence/lower risk action should win priority resolution."""</span>
+    cancelled = []
+    <span class="kw">with</span> patch(<span class="st">"httpx.AsyncClient"</span>) <span class="kw">as</span> MockClient:
+        mc = AsyncMock()
+        mc.__aenter__ = AsyncMock(return_value=mc)
+        mc.__aexit__  = AsyncMock(return_value=<span class="kw">False</span>)
+        mc.delete = AsyncMock(side_effect=<span class="kw">lambda</span> url: cancelled.append(url) <span class="kw">or</span> AsyncMock(status_code=<span class="nu">200</span>)())
+        mc.patch  = AsyncMock()
+        MockClient.return_value = mc
+        <span class="kw">await</span> resolver.resolve(make_conflict(a_risk=<span class="st">"low"</span>, a_conf=<span class="nu">0.90</span>,
+                                             b_risk=<span class="st">"high"</span>, b_conf=<span class="nu">0.75</span>))
+    <span class="cm"># plan_b (high risk) should be cancelled</span>
+    <span class="kw">assert</span> <span class="fn">any</span>(<span class="st">"plan_b"</span> <span class="kw">in</span> c <span class="kw">for</span> c <span class="kw">in</span> cancelled)
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_both_low_risk_triggers_merge</span>(resolver):
+    <span class="dc">"""Two low-risk actions should be merged, not one cancelled."""</span>
+    appended = []
+    <span class="kw">with</span> patch(<span class="st">"httpx.AsyncClient"</span>) <span class="kw">as</span> MockClient:
+        mc = AsyncMock()
+        mc.__aenter__ = AsyncMock(return_value=mc)
+        mc.__aexit__  = AsyncMock(return_value=<span class="kw">False</span>)
+        mc.post   = AsyncMock(side_effect=<span class="kw">lambda</span> url, **kw: appended.append(url) <span class="kw">or</span> AsyncMock()())
+        mc.delete = AsyncMock()
+        MockClient.return_value = mc
+        <span class="kw">await</span> resolver.resolve(make_conflict(a_risk=<span class="st">"low"</span>, a_conf=<span class="nu">0.88</span>,
+                                             b_risk=<span class="st">"low"</span>, b_conf=<span class="nu">0.80</span>))
+    <span class="kw">assert</span> <span class="fn">any</span>(<span class="st">"append"</span> <span class="kw">in</span> url <span class="kw">for</span> url <span class="kw">in</span> appended)
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_single_task_no_resolution_needed</span>(resolver):
+    <span class="dc">"""No conflict if only one task targeting entity."""</span>
+    conflict = {<span class="st">"entity_id"</span>: <span class="st">"svc:api"</span>, <span class="st">"tasks"</span>: [
+        {<span class="st">"task_id"</span>:<span class="st">"t1"</span>,<span class="st">"agent_id"</span>:<span class="st">"agent:planner-db"</span>,
+         <span class="st">"plan_id"</span>:<span class="st">"plan_a"</span>,<span class="st">"action"</span>:<span class="st">"scale_consumer_group"</span>,
+         <span class="st">"risk"</span>:<span class="st">"low"</span>,<span class="st">"confidence"</span>:<span class="nu">0.95</span>}
+    ]}
+    <span class="kw">await</span> resolver.resolve(conflict)   <span class="cm"># should return without doing anything</span></pre>
+  </div>
+
+  <h3>Expected Test Run — Full Cumulative Suite</h3>
+  <div class="testout">
+<span class="dim">$ python3 -m pytest --tb=short -q</span>
+
+<span class="dim">── Phases 1–10 (150 existing) ──────────────────────────────────────</span>
+<span class="info">  [all 150 existing tests — abbreviated]</span>
+
+<span class="dim">── Phase 11 (26 new) ───────────────────────────────────────────────</span>
+<span class="pass">  tests/test_base_agent.py ....</span>           <span class="dim">[ 4 tests ]</span>
+<span class="pass">  tests/test_monitor_agent.py ....</span>        <span class="dim">[ 4 tests ]</span>
+<span class="pass">  tests/test_planner_agent.py .....</span>       <span class="dim">[ 5 tests ]</span>
+<span class="pass">  tests/test_executor_agent.py ....</span>       <span class="dim">[ 4 tests ]</span>
+<span class="pass">  tests/test_conflict_resolver.py ...</span>     <span class="dim">[ 3 tests ]</span>
+<span class="pass">  tests/test_coordinator.py ......</span>        <span class="dim">[ 6 tests ]</span>
+
+<span class="sep">────────────────────────────────────────────────────────────────────</span>
+<span class="pass">176 passed</span><span class="dim">, 5 warnings in ~90s</span>
+  </div>
+</section>
+
+<!-- GATE -->
+<section id="gate" class="section">
+  <div class="sec-head">
+    <div class="step-pill">DONE</div>
+    <div class="sec-text">
+      <h2>Phase 11 Completion Gate + What Comes Next</h2>
+      <p>All items green before Phase 12 (Dashboard). The dashboard needs all agents running to be meaningful.</p>
+    </div>
+  </div>
+
+  <div class="checklist">
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">Migration applied — agent_tasks table exists</span>
+        <span class="citem-note"><code>\d agent_tasks</code> shows id, agent_id, plan_id, action, status, priority columns.</span>
+      </div>
+      <span class="badge bwarn">INFRA</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">All 9 agents online and heartbeating</span>
+        <span class="citem-note"><code>GET /coordinator/agents</code> returns 9 entries all with <code>status: "running"</code>. Monitor heartbeat events appear in Redpanda Console every 30s.</span>
+      </div>
+      <span class="badge bp">RUNTIME</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">MonitorAgent signals PlannerAgent on critical anomaly injection</span>
+        <span class="citem-note">Inject a <code>consumer_lag_critical</code> event. Within 15s (one poll cycle), <code>task_delegated</code> event appears in Redpanda Console from <code>agent:monitor-global</code>.</span>
+      </div>
+      <span class="badge bp">FUNCTIONAL</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">PlannerAgent creates delegation task for ExecutorAgent</span>
+        <span class="citem-note"><code>GET /world/tasks/agent:executor-queue</code> shows a pending task within 30s of anomaly injection.</span>
+      </div>
+      <span class="badge bp">FUNCTIONAL</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">Domain filtering works — db planner ignores queue events</span>
+        <span class="citem-note">Inject a queue anomaly. Confirm <code>agent:planner-db</code> produces no tasks. Only <code>agent:planner-queue</code> responds. Both planners log their filtered situation.</span>
+      </div>
+      <span class="badge bp">FUNCTIONAL</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">Conflict detection fires when two planners target same entity</span>
+        <span class="citem-note">Inject two anomalies that target the same entity from different domains. <code>GET /coordinator/conflicts</code> returns at least one conflict entry within 20s.</span>
+      </div>
+      <span class="badge bp">FUNCTIONAL</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">Conflict resolver cancels lower-priority plan</span>
+        <span class="citem-note">After conflict detection, one plan is cancelled. Only one executor task remains for the entity. Cancelled plan has status <code>"cancelled"</code> in Redis.</span>
+      </div>
+      <span class="badge bp">SAFETY</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">MemoryAgent consolidation runs every 5 minutes without crash</span>
+        <span class="citem-note">Leave running 10 minutes. Logs show 2 consolidation cycles. Working memory event count decreases after each flush.</span>
+      </div>
+      <span class="badge bp">STABILITY</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">176 tests pass (150 existing + 26 new Phase 11)</span>
+        <span class="citem-note"><code>python3 -m pytest</code> exits 176 passed, 0 failed. All new tests run offline without live services.</span>
+      </div>
+      <span class="badge bgr">REQUIRED</span>
+    </div>
+  </div>
+
+  <div class="note nok" style="margin-top: 28px;">
+    <div class="note-icon">✅</div>
+    <div class="note-body">
+      <strong>When all 9 items are green, Phase 11 is complete.</strong>
+      Your DCA now runs as a true multi-agent cognitive system: six specialised agents sharing
+      one event bus, one world model, one feedback loop, and one continuously-improving knowledge
+      graph. The single-agent loop is now a multi-threaded, multi-domain, parallel reasoning
+      machine. Phase 12 (Dashboard) gives you full visibility into it working in real time —
+      before you run real-world scenario testing in Phase 13.
+    </div>
+  </div>
+
+  <h3>The Complete Architecture — All Phases Running Together</h3>
+  <div class="flow">
+<span class="am">EVENT SOURCES</span>  <span class="dm">→ Perception (Phase 1) → cognitive.events</span>
+<span class="dm">                                     │</span>
+<span class="dm">           ┌─────────────────────────┼──────────────────────────┐</span>
+<span class="dm">           │                         │                          │</span>
+<span class="hl">Memory Router</span>             <span class="hl">World Model</span>                 <span class="hl">Temporal Engine</span>
+<span class="dm">(Phase 3-4)              (Phase 6)                   (Phase 5)</span>
+<span class="dm">           │                         │                          │</span>
+<span class="dm">           └─────────────────────────┴──────────────────────────┘</span>
+                                     <span class="dm">│</span>
+<span class="hl">Monitor Agent</span> <span class="dm">polls world model every 15s → emits situation_detected</span>
+                                     <span class="dm">│</span>
+<span class="hl">Planner Agents</span> <span class="dm">(3 domain specialists) filter + reason → delegate tasks</span>
+                                     <span class="dm">│</span>
+              <span class="hl">AgentCoordinator</span> <span class="dm">runs conflict detection every 20s</span>
+                                     <span class="dm">│</span>
+<span class="hl">Executor Agents</span> <span class="dm">(3 domain specialists) poll tasks → execute plans → emit feedback</span>
+                                     <span class="dm">│</span>
+<span class="hl">FeedbackConsumer</span> <span class="dm">verifies outcomes → updates procedural memory + Neo4j RESOLVES</span>
+                                     <span class="dm">│</span>
+<span class="gr">System gets measurably smarter with every cycle.</span>
+  </div>
+</section>
+
+</div><!-- /wrap -->
+</body>
+</html>

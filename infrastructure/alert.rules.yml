@@ -1,0 +1,73 @@
+groups:
+  - name: shopcore-alerts
+    rules:
+      - alert: ShopCoreGatewayLatencyHigh
+        expr: histogram_quantile(0.95, sum(rate(shopcore_gateway_latency_seconds_bucket[1m])) by (le)) > 1
+        for: 30s
+        labels:
+          severity: high
+          service: api-gateway
+          job: shopcore-api-gateway
+        annotations:
+          summary: "ShopCore gateway latency spike"
+          description: "Gateway p95 latency exceeds 1s for 30s."
+          value: "{{ $value }}"
+
+      - alert: ShopCoreGatewayErrorRate
+        expr: sum(rate(shopcore_gateway_requests_total{status=~"5.."}[1m])) / sum(rate(shopcore_gateway_requests_total[1m])) > 0.1
+        for: 45s
+        labels:
+          severity: high
+          service: api-gateway
+          job: shopcore-api-gateway
+        annotations:
+          summary: "ShopCore gateway error rate elevated"
+          description: "More than 10% of gateway requests are 5xx."
+          value: "{{ $value }}"
+
+      - alert: ShopCoreServiceDown
+        expr: up{job=~"shopcore-(api-gateway|product-service)"} == 0
+        for: 15s
+        labels:
+          severity: critical
+          service: shopcore
+        annotations:
+          summary: "ShopCore service unreachable"
+          description: "{{ $labels.job }} metrics scrape failed."
+          value: "{{ $value }}"
+
+      - alert: ShopCoreProductPoolExhausted
+        expr: product_db_pool_used >= 9
+        for: 20s
+        labels:
+          severity: critical
+          service: product-service
+          job: shopcore-product-service
+        annotations:
+          summary: "Product service DB pool near exhaustion"
+          description: "Connection pool usage is critically high."
+          value: "{{ $value }}"
+
+  - name: cognitive-system-alerts
+    rules:
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total[1m]) > 0.85
+        for: 1m
+        labels:
+          severity: high
+          service: system
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage has exceeded threshold for more than 1 minute."
+          value: "{{ $value }}"
+
+      - alert: MemoryExhaustion
+        expr: go_memstats_alloc_bytes > 1e+09
+        for: 2m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "Memory exhaustion threat on {{ $labels.instance }}"
+          description: "Memory allocations have exceeded 1GB for more than 2 minutes."
+          value: "{{ $value }}"

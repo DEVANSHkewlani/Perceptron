@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory System — Phase 3 Builder's Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+:root{
+  --bg:#080810;--bg1:#0d0d18;--bg2:#12121f;--bg3:#181828;--bg4:#1e1e32;
+  --line:#ffffff0c;--line2:#ffffff14;--line3:#ffffff20;
+  --text:#ddddf5;--text2:#8888aa;--text3:#44445a;
+  --acc:#5b8af7;--acc2:#7aa3ff;--acc-glow:#5b8af730;
+  --green:#3dd68c;--green-bg:#3dd68c10;--green-line:#3dd68c30;
+  --amber:#f5a623;--amber-bg:#f5a62310;--amber-line:#f5a62330;
+  --red:#f56060;--red-bg:#f5606010;--red-line:#f5606030;
+  --purple:#a78bfa;--purple-bg:#a78bfa10;--cyan:#38d9d9;
+  --font-ui:'DM Sans',sans-serif;--font-mono:'Azeret Mono',monospace;
+  --r:6px;--r2:10px;--r3:14px;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font-ui);font-size:13.5px;line-height:1.6;overflow-x:hidden}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg1)}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+
+/* ── LAYOUT ── */
+.shell{display:grid;grid-template-columns:240px 1fr;grid-template-rows:54px 1fr;min-height:100vh}
+
+/* ── TOPBAR ── */
+.topbar{grid-column:1/-1;background:var(--bg1);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 24px;gap:14px;position:sticky;top:0;z-index:200}
+.tb-phase{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--text3);border:1px solid var(--line2);padding:3px 9px;border-radius:4px;text-transform:uppercase}
+.tb-title{font-size:14px;font-weight:700;color:var(--text);letter-spacing:-.01em}
+.tb-sep{flex:1}
+.tb-pill{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10px;color:var(--text3);border:1px solid var(--line2);padding:3px 10px;border-radius:20px}
+.tb-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── SIDEBAR ── */
+.sidebar{background:var(--bg1);border-right:1px solid var(--line);padding:16px 0;position:sticky;top:54px;height:calc(100vh - 54px);overflow-y:auto;display:flex;flex-direction:column}
+.sb-group{font-family:var(--font-mono);font-size:9px;letter-spacing:.14em;color:var(--text3);text-transform:uppercase;padding:16px 16px 5px}
+.sb-item{display:flex;align-items:center;gap:9px;padding:7px 16px;cursor:pointer;font-size:12.5px;color:var(--text2);border-left:2px solid transparent;transition:all .15s;text-decoration:none}
+.sb-item:hover{color:var(--text);background:var(--bg2)}
+.sb-item.on{color:var(--text);background:var(--bg2);border-left-color:var(--acc)}
+.sb-num{font-family:var(--font-mono);font-size:10px;width:20px;height:20px;border-radius:4px;background:var(--bg3);display:flex;align-items:center;justify-content:center;color:var(--text3);flex-shrink:0}
+.sb-item.on .sb-num{background:var(--acc);color:#fff}
+
+/* ── MAIN ── */
+.main{padding:36px 44px;overflow-y:auto;max-width:980px}
+.section{display:none;animation:fi .22s ease}
+.section.on{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+/* ── SECTION HEADER ── */
+.sh{margin-bottom:28px;padding-bottom:22px;border-bottom:1px solid var(--line)}
+.sh-phase{font-family:var(--font-mono);font-size:9px;letter-spacing:.14em;color:var(--acc);text-transform:uppercase;margin-bottom:8px}
+.sh-title{font-size:28px;font-weight:700;color:var(--text);line-height:1.15;margin-bottom:10px;letter-spacing:-.02em}
+.sh-desc{font-size:13.5px;color:var(--text2);line-height:1.75;max-width:640px}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:9.5px;font-weight:600;letter-spacing:.06em;padding:3px 9px;border-radius:4px;text-transform:uppercase}
+.bg{background:var(--green-bg);color:var(--green);border:1px solid var(--green-line)}
+.ba{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-line)}
+.br{background:var(--red-bg);color:var(--red);border:1px solid var(--red-line)}
+.bp{background:var(--purple-bg);color:var(--purple);border:1px solid #a78bfa30}
+.bd{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+/* ── CODE ── */
+.cw{position:relative;margin:10px 0}
+.cl{font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;background:var(--bg2);border:1px solid var(--line2);border-bottom:none;padding:6px 13px;border-radius:var(--r) var(--r) 0 0;display:inline-block;margin-bottom:-1px}
+pre{background:var(--bg2);border:1px solid var(--line2);border-radius:var(--r);padding:14px 16px;font-family:var(--font-mono);font-size:11.5px;line-height:1.85;color:#c4c4e0;overflow-x:auto;position:relative;white-space:pre}
+.cl+pre{border-radius:0 var(--r) var(--r) var(--r)}
+.cpb{position:absolute;top:9px;right:9px;font-family:var(--font-mono);font-size:10px;padding:3px 9px;background:var(--bg3);border:1px solid var(--line2);border-radius:4px;color:var(--text3);cursor:pointer;transition:all .15s;letter-spacing:.04em}
+.cpb:hover{color:var(--text2);background:var(--bg4)}
+.cpb.ok{color:var(--green);border-color:var(--green-line)}
+/* syntax */
+.k{color:#a78bfa}.s{color:#3dd68c}.n{color:#f5a623}.c{color:#44445a;font-style:italic}
+.b{color:#f56060}.t{color:#38d9d9}.f{color:#5b8af7}.d{color:#f5a623}
+
+/* ── CALLOUTS ── */
+.call{border-radius:var(--r2);padding:12px 16px;margin:12px 0;font-size:13px;line-height:1.65;display:flex;gap:10px;align-items:flex-start}
+.call-ok{background:var(--green-bg);border:1px solid var(--green-line);color:#7de8b4}
+.call-warn{background:var(--amber-bg);border:1px solid var(--amber-line);color:#f7c06a}
+.call-info{background:#5b8af710;border:1px solid #5b8af730;color:#93b4ff}
+.call-red{background:var(--red-bg);border:1px solid var(--red-line);color:#f99}
+.ci{flex-shrink:0;font-size:15px;margin-top:1px}
+code{font-family:var(--font-mono);font-size:11px;background:var(--bg3);border:1px solid var(--line2);padding:1px 5px;border-radius:3px;color:var(--acc2)}
+
+/* ── STEPS ── */
+.steps{display:flex;flex-direction:column;gap:0;margin:16px 0}
+.step{display:grid;grid-template-columns:34px 1fr;gap:0 16px;position:relative}
+.step:not(:last-child) .sl{position:absolute;left:16px;top:34px;bottom:-8px;width:1px;background:var(--line2)}
+.sn{width:34px;height:34px;border-radius:50%;background:var(--bg3);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--text2);flex-shrink:0;position:relative;z-index:1}
+.step.hi .sn{background:var(--acc);border-color:var(--acc);color:#fff;box-shadow:0 0 18px var(--acc-glow)}
+.sb2{padding:4px 0 22px}
+.st{font-size:14px;font-weight:700;color:var(--text);margin-bottom:5px}
+.sd{font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:8px}
+
+/* ── ARCH CARDS ── */
+.layer-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.lc{background:var(--bg2);border:1px solid var(--line2);border-radius:var(--r2);padding:16px;position:relative;overflow:hidden;cursor:pointer;transition:all .2s}
+.lc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--acc);opacity:0;transition:opacity .2s}
+.lc:hover::after,.lc.on::after{opacity:1}
+.lc:hover,.lc.on{background:var(--bg3);border-color:var(--line3)}
+.lc-db{font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-bottom:5px;letter-spacing:.06em}
+.lc-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:5px}
+.lc-tech{font-family:var(--font-mono);font-size:11px;color:var(--acc2);margin-bottom:8px}
+.lc-desc{font-size:12px;color:var(--text2);line-height:1.55}
+.lc-detail{display:none;margin-top:20px}
+.lc-detail.on{display:block;animation:fi .2s ease}
+
+/* ── FLOW ── */
+.flow{display:flex;align-items:center;flex-wrap:wrap;gap:0;margin:14px 0}
+.fn{background:var(--bg3);border:1px solid var(--line2);border-radius:var(--r);padding:8px 14px;font-size:12px;text-align:center;min-width:80px}
+.fn .fl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px}
+.fn .fv{font-weight:600;color:var(--text)}
+.fn.hi{border-color:var(--acc);background:#5b8af710}
+.fn.gr{border-color:var(--green);background:var(--green-bg)}
+.farr{color:var(--text3);padding:0 8px;font-size:18px}
+
+/* ── TABLE ── */
+.tbl{width:100%;border-collapse:collapse;margin:12px 0;font-size:12.5px}
+.tbl th{text-align:left;padding:8px 14px;border-bottom:1px solid var(--line2);font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)}
+.tbl td{padding:9px 14px;border-bottom:1px solid var(--line);color:var(--text2);vertical-align:top;line-height:1.5}
+.tbl tr:last-child td{border-bottom:none}
+.tbl td:first-child{font-family:var(--font-mono);font-size:11.5px;color:var(--acc2)}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0}
+.tb{padding:6px 14px;font-size:12px;font-family:var(--font-ui);font-weight:500;border:1px solid var(--line2);border-radius:5px;background:var(--bg2);color:var(--text2);cursor:pointer;transition:all .15s}
+.tb:hover{background:var(--bg3);color:var(--text)}
+.tb.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.tp{display:none}.tp.on{display:block;animation:fi .2s ease}
+
+/* ── CONN DIAGRAM ── */
+.conn-box{background:var(--bg2);border:1px solid var(--line2);border-radius:var(--r2);padding:20px;margin:14px 0}
+.conn-row{display:grid;grid-template-columns:140px 20px 1fr;gap:10px;align-items:center;margin-bottom:12px;font-size:12.5px}
+.conn-row:last-child{margin-bottom:0}
+.cnode{background:var(--bg3);border:1px solid var(--line2);border-radius:var(--r);padding:6px 12px;font-family:var(--font-mono);font-size:11px;color:var(--acc2);text-align:center}
+.cnode.src{border-color:var(--green-line);color:var(--green);background:var(--green-bg)}
+.carr{color:var(--text3);text-align:center;font-size:16px}
+.cdesc{color:var(--text2);font-size:12px;line-height:1.5}
+
+/* ── DIVIDER ── */
+hr{border:none;border-top:1px solid var(--line);margin:22px 0}
+
+/* ── FILE TREE ── */
+.tree{background:var(--bg2);border:1px solid var(--line2);border-radius:var(--r2);padding:16px 20px;font-family:var(--font-mono);font-size:12px;line-height:2;margin:12px 0}
+.tree .dir{color:var(--acc2)}
+.tree .file{color:var(--text2)}
+.tree .new{color:var(--green)}
+.tree .cmt{color:var(--text3)}
+
+/* ── TEST RESULT MOCK ── */
+.test-out{background:#050510;border:1px solid var(--line2);border-radius:var(--r2);padding:14px 16px;font-family:var(--font-mono);font-size:11.5px;line-height:1.9;margin:10px 0;overflow-x:auto}
+.to-pass{color:var(--green)}
+.to-fail{color:var(--red)}
+.to-info{color:var(--text3)}
+.to-val{color:var(--amber)}
+.to-key{color:var(--purple)}
+
+/* ── GRID 2 ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.gc{background:var(--bg2);border:1px solid var(--line2);border-radius:var(--r2);padding:14px 16px}
+.gc-t{font-size:13px;font-weight:700;color:var(--text);margin-bottom:5px;display:flex;align-items:center;gap:7px}
+.gc-d{font-size:12px;color:var(--text2);line-height:1.55}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="tb-phase">Phase 3</div>
+  <div class="tb-title">Memory System</div>
+  <div class="tb-sep"></div>
+  <div class="tb-pill"><div class="tb-dot"></div>cognitive.events → 4 memory layers</div>
+</header>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-group">Overview</div>
+  <div class="sb-item on" onclick="nav('arch')"><div class="sb-num">0</div>Architecture</div>
+  <div class="sb-item" onclick="nav('infra')"><div class="sb-num">1</div>Infrastructure</div>
+
+  <div class="sb-group">Build</div>
+  <div class="sb-item" onclick="nav('schema')"><div class="sb-num">2</div>DB schema</div>
+  <div class="sb-item" onclick="nav('router')"><div class="sb-num">3</div>Memory router</div>
+  <div class="sb-item" onclick="nav('working')"><div class="sb-num">4</div>Working memory</div>
+  <div class="sb-item" onclick="nav('episodic')"><div class="sb-num">5</div>Episodic memory</div>
+  <div class="sb-item" onclick="nav('semantic')"><div class="sb-num">6</div>Semantic memory</div>
+  <div class="sb-item" onclick="nav('api')"><div class="sb-num">7</div>Memory API</div>
+
+  <div class="sb-group">Test</div>
+  <div class="sb-item" onclick="nav('test1')"><div class="sb-num">8</div>Unit tests</div>
+  <div class="sb-item" onclick="nav('test2')"><div class="sb-num">9</div>Integration tests</div>
+  <div class="sb-item" onclick="nav('test3')"><div class="sb-num">10</div>Live pipeline test</div>
+  <div class="sb-item" onclick="nav('verify')"><div class="sb-num">11</div>Verify &amp; console</div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ═══════════════════════════ 0 · ARCHITECTURE ═══════════════════════════ -->
+<section class="section on" id="s-arch">
+<div class="sh">
+  <div class="sh-phase">Phase 3 · Memory System</div>
+  <h1 class="sh-title">Four memory layers,<br>one memory router</h1>
+  <p class="sh-desc">The perception layer produces <code>CognitiveEvent</code> objects and publishes them to <code>cognitive.events</code>. The memory system consumes that same Kafka topic and fans every event out to four specialized databases — each optimised for a different kind of question. Zero changes to your existing perception layer are needed.</p>
+</div>
+
+<h2 style="font-size:15px;font-weight:700;margin-bottom:14px">How data moves</h2>
+<div class="flow">
+  <div class="fn gr"><div class="fl">perception</div><div class="fv">cognitive.events</div></div>
+  <div class="farr">→</div>
+  <div class="fn hi"><div class="fl">router</div><div class="fv">memory_router.py</div></div>
+  <div class="farr">→</div>
+  <div class="fn"><div class="fl">layer 1</div><div class="fv">Redis</div></div>
+  <div class="farr">+</div>
+  <div class="fn"><div class="fl">layer 2</div><div class="fv">TimescaleDB</div></div>
+  <div class="farr">+</div>
+  <div class="fn"><div class="fl">layer 3</div><div class="fv">Neo4j</div></div>
+  <div class="farr">+</div>
+  <div class="fn"><div class="fl">layer 4</div><div class="fv">Qdrant</div></div>
+</div>
+
+<div class="call call-info"><span class="ci">ℹ</span><span>The router is a single async Kafka consumer. It reads one event, writes to all four databases in parallel, then commits the offset. If any write fails, the offset is not committed and the event is retried. Nothing is lost.</span></div>
+
+<h2 style="font-size:15px;font-weight:700;margin:20px 0 12px">The four layers — click to expand</h2>
+<div class="layer-grid">
+  <div class="lc on" id="lc0" onclick="toggleLayer(0)">
+    <div class="lc-db">Layer 1 · Working Memory</div>
+    <div class="lc-name">What is happening right now</div>
+    <div class="lc-tech">Redis 7</div>
+    <div class="lc-desc">Volatile, fast scratchpad. Last 15 minutes of events. Sub-10ms reads. Everything has a TTL and auto-expires. The reasoning engine reads this first.</div>
+    <div class="lc-detail on" id="ld0">
+      <hr>
+      <p style="font-size:12.5px;color:var(--text2);line-height:1.7;margin-bottom:8px"><strong style="color:var(--text)">What gets stored:</strong> Every HIGH or CRITICAL severity event as a Redis hash. All events in a sorted set keyed by timestamp. Active entity states as individual hashes. Recent event window (ZADD with timestamp score, ZRANGE to query).</p>
+      <p style="font-size:12.5px;color:var(--text2);line-height:1.7;margin-bottom:8px"><strong style="color:var(--text)">What does NOT go here:</strong> INFO and LOW severity events. Historical data older than 15 minutes. Anything you'd want to query 6 months from now.</p>
+      <p style="font-size:12.5px;color:var(--text2);line-height:1.7"><strong style="color:var(--text)">TTL strategy:</strong> HIGH events expire in 15 min. CRITICAL events in 30 min. Entity state hashes updated in-place, expire after 60 min of no updates.</p>
+    </div>
+  </div>
+  <div class="lc" id="lc1" onclick="toggleLayer(1)">
+    <div class="lc-db">Layer 2 · Episodic Memory</div>
+    <div class="lc-name">Everything that ever happened</div>
+    <div class="lc-tech">PostgreSQL + TimescaleDB + Qdrant</div>
+    <div class="lc-desc">Append-only historical record. Every event, forever. TimescaleDB for time-range queries. Qdrant for "find past events similar to this one" using vector embeddings.</div>
+    <div class="lc-detail" id="ld1">
+      <hr>
+      <p style="font-size:12.5px;color:var(--text2);line-height:1.7;margin-bottom:8px"><strong style="color:var(--text)">What gets stored:</strong> Every single CognitiveEvent regardless of severity. Full payload as JSONB. entity_refs as a Postgres array with GIN index. TimescaleDB hypertable partitioned by timestamp — fast range queries over millions of rows.</p>
+      <p style="font-size:12.5px;color:var(--text2);line-height:1.7;margin-bottom:8px"><strong style="color:var(--text)">Qdrant vector search:</strong> Each event's <code>event_type + source_id + payload summary</code> is embedded using <code>text-embedding-3-small</code> and stored in Qdrant. The reasoning engine later queries "find the 5 most similar past events to this situation."</p>
+      <p style="font-size:12.5px;color:var(--text2);line-height:1.7"><strong style="color:var(--text)">Key queries enabled:</strong> All events for entity X in last 24h. All HIGH events today. All <code>database_connection_timeout</code> events this week. Similar past events by semantic similarity.</p>
+    </div>
+  </div>
+  <div class="lc" id="lc2" onclick="toggleLayer(2)">
+    <div class="lc-db">Layer 3 · Semantic Memory</div>
+    <div class="lc-name">How everything relates</div>
+    <div class="lc-tech">Neo4j 5</div>
+    <div class="lc-desc">Knowledge graph. Not events — entities and their relationships. Auto-built from entity_refs. Every event that connects two entities strengthens the edge between them.</div>
+    <div class="lc-detail" id="ld2">
+      <hr>
+      <p style="font-size:12.5px;color:var(--text2);line-height:1.7;margin-bottom:8px"><strong style="color:var(--text)">What gets stored:</strong> Entity nodes (<code>svc:auth-service</code>, <code>db:postgres-primary</code> etc) with properties. Relationship edges between entities that appear together in <code>entity_refs</code>. Edge weight increases with each confirming event.</p>
+      <p style="font-size:12.5px;color:var(--text2);line-height:1.7;margin-bottom:8px"><strong style="color:var(--text)">Auto-construction:</strong> You never manually edit the graph. Every event with 2+ entity_refs creates or strengthens a relationship. After 1 week of events, you'll see your entire environment mapped.</p>
+      <p style="font-size:12.5px;color:var(--text2);line-height:1.7"><strong style="color:var(--text)">Key queries enabled:</strong> Blast radius (what depends on this entity). Causal chains (what does this connect to). Service dependency map. Find all entities of type db.</p>
+    </div>
+  </div>
+  <div class="lc" id="lc3" onclick="toggleLayer(3)">
+    <div class="lc-db">Layer 4 · Procedural Memory</div>
+    <div class="lc-name">How to handle known situations</div>
+    <div class="lc-tech">PostgreSQL (JSONB)</div>
+    <div class="lc-desc">Playbook library. Strategies for known problem types. Starts empty. Fills up as the system learns what works. The planning system queries this when it needs to handle a known situation.</div>
+    <div class="lc-detail" id="ld3">
+      <hr>
+      <p style="font-size:12.5px;color:var(--text2);line-height:1.7;margin-bottom:8px"><strong style="color:var(--text)">What gets stored:</strong> Playbook records with trigger conditions, step sequences (JSONB), success rate, last used timestamp, confidence score.</p>
+      <p style="font-size:12.5px;color:var(--text2);line-height:1.7;margin-bottom:8px"><strong style="color:var(--text)">Seeding:</strong> You manually seed a few known playbooks on first deploy (connection pool exhausted → restart service, disk full → alert + clean logs). Over time the feedback loop adds new ones.</p>
+      <p style="font-size:12.5px;color:var(--text2);line-height:1.7"><strong style="color:var(--text)">Build priority:</strong> Build last. Layers 1–3 are needed by the reasoning engine. Layer 4 is needed by the planning system (a later phase).</p>
+    </div>
+  </div>
+</div>
+
+<h2 style="font-size:15px;font-weight:700;margin:22px 0 12px">File structure to create</h2>
+<div class="tree">
+<span class="dir">cognitive_perception/</span>     <span class="cmt">← your existing package</span>
+<span class="dir">memory/</span>                       <span class="new">← create this entire folder</span>
+  <span class="new">├── __init__.py</span>
+  <span class="new">├── router.py</span>             <span class="cmt">← Kafka consumer, fans out to all layers</span>
+  <span class="new">├── working.py</span>           <span class="cmt">← Redis writer + reader</span>
+  <span class="new">├── episodic.py</span>          <span class="cmt">← TimescaleDB writer + query</span>
+  <span class="new">├── semantic.py</span>          <span class="cmt">← Neo4j writer + graph queries</span>
+  <span class="new">├── vector.py</span>            <span class="cmt">← Qdrant embedding + search</span>
+  <span class="new">├── procedural.py</span>        <span class="cmt">← PostgreSQL playbook store</span>
+  <span class="new">└── api.py</span>               <span class="cmt">← FastAPI query interface</span>
+<span class="dir">infrastructure/</span>               <span class="new">← create this</span>
+  <span class="new">├── docker-compose.yml</span>
+  <span class="new">└── init.sql</span>              <span class="cmt">← TimescaleDB schema</span>
+<span class="dir">tests/</span>
+  <span class="new">├── test_working_memory.py</span>
+  <span class="new">├── test_episodic_memory.py</span>
+  <span class="new">├── test_semantic_memory.py</span>
+  <span class="new">└── test_memory_router.py</span>
+</div>
+</section>
+
+<!-- ═══════════════════════════ 1 · INFRASTRUCTURE ═══════════════════════════ -->
+<section class="section" id="s-infra">
+<div class="sh">
+  <div class="sh-phase">Step 1</div>
+  <h1 class="sh-title">Start all infrastructure</h1>
+  <p class="sh-desc">Four new containers needed. Redpanda and Redis are already running from the perception layer. Add TimescaleDB, Neo4j, and Qdrant. One docker-compose.yml manages everything.</p>
+</div>
+
+<span class="badge ba"><span class="bd"></span>Docker required for all 4 layers</span>
+
+<div class="steps" style="margin-top:20px">
+  <div class="step hi">
+    <div class="sn">1</div><div class="sl"></div>
+    <div class="sb2">
+      <div class="st">Create docker-compose.yml</div>
+      <div class="sd">This single file starts the entire memory infrastructure stack. Redpanda and Redis are included so you can bring everything up with one command.</div>
+      <div class="cw"><div class="cl">infrastructure/docker-compose.yml</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button><span class="f">version</span>: <span class="s">"3.8"</span>
+
+<span class="f">services</span>:
+
+  <span class="c"># ── Already running from perception layer ──</span>
+  <span class="f">redpanda</span>:
+    <span class="f">image</span>: redpandadata/redpanda:latest
+    <span class="f">command</span>: redpanda start --overprovisioned --smp 1
+      --kafka-addr PLAINTEXT://0.0.0.0:9092
+      --advertise-kafka-addr PLAINTEXT://localhost:9092
+    <span class="f">ports</span>: [<span class="s">"9092:9092"</span>]
+
+  <span class="f">redis</span>:
+    <span class="f">image</span>: redis:7-alpine
+    <span class="f">ports</span>: [<span class="s">"6379:6379"</span>]
+    <span class="f">command</span>: redis-server --appendonly yes
+    <span class="f">volumes</span>: [<span class="s">"redis_data:/data"</span>]
+
+  <span class="c"># ── NEW: Episodic memory ──</span>
+  <span class="f">timescaledb</span>:
+    <span class="f">image</span>: timescale/timescaledb:latest-pg16
+    <span class="f">ports</span>: [<span class="s">"5432:5432"</span>]
+    <span class="f">environment</span>:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cognitive
+    <span class="f">volumes</span>:
+      - <span class="s">ts_data:/var/lib/postgresql/data</span>
+      - <span class="s">./init.sql:/docker-entrypoint-initdb.d/init.sql</span>
+
+  <span class="c"># ── NEW: Semantic memory (knowledge graph) ──</span>
+  <span class="f">neo4j</span>:
+    <span class="f">image</span>: neo4j:5-community
+    <span class="f">ports</span>: [<span class="s">"7474:7474"</span>, <span class="s">"7687:7687"</span>]
+    <span class="f">environment</span>:
+      NEO4J_AUTH: <span class="s">neo4j/password123</span>
+      NEO4J_PLUGINS: <span class="s">'["apoc"]'</span>
+    <span class="f">volumes</span>: [<span class="s">"neo4j_data:/data"</span>]
+
+  <span class="c"># ── NEW: Vector search for episodic ──</span>
+  <span class="f">qdrant</span>:
+    <span class="f">image</span>: qdrant/qdrant:latest
+    <span class="f">ports</span>: [<span class="s">"6333:6333"</span>, <span class="s">"6334:6334"</span>]
+    <span class="f">volumes</span>: [<span class="s">"qdrant_data:/qdrant/storage"</span>]
+
+  <span class="c"># ── Redpanda Console (already running) ──</span>
+  <span class="f">rpk-console</span>:
+    <span class="f">image</span>: redpandadata/console:latest
+    <span class="f">ports</span>: [<span class="s">"8888:8080"</span>]
+    <span class="f">environment</span>:
+      KAFKA_BROKERS: <span class="s">redpanda:9092</span>
+    <span class="f">depends_on</span>: [redpanda]
+
+<span class="f">volumes</span>:
+  redis_data: {}
+  ts_data: {}
+  neo4j_data: {}
+  qdrant_data: {}</pre></div>
+    </div>
+  </div>
+  <div class="step hi">
+    <div class="sn">2</div><div class="sl"></div>
+    <div class="sb2">
+      <div class="st">Create TimescaleDB init schema</div>
+      <div class="cw"><div class="cl">infrastructure/init.sql</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button><span class="c">-- Episodic memory: stores every CognitiveEvent forever</span>
+<span class="k">CREATE TABLE IF NOT EXISTS</span> cognitive_events (
+  event_id      TEXT         <span class="k">PRIMARY KEY</span>,
+  timestamp     TIMESTAMPTZ  <span class="k">NOT NULL</span>,
+  ingested_at   TIMESTAMPTZ  <span class="k">NOT NULL</span>,
+  source_type   TEXT         <span class="k">NOT NULL</span>,
+  source_id     TEXT         <span class="k">NOT NULL</span>,
+  event_type    TEXT         <span class="k">NOT NULL</span>,
+  severity      TEXT         <span class="k">NOT NULL</span>,
+  payload       JSONB,
+  entity_refs   TEXT[],
+  confidence    FLOAT,
+  tags          TEXT[]
+);
+
+<span class="c">-- Convert to TimescaleDB hypertable (auto-partitions by time)</span>
+<span class="k">SELECT</span> create_hypertable(<span class="s">'cognitive_events'</span>, <span class="s">'timestamp'</span>);
+
+<span class="c">-- Indexes for common query patterns</span>
+<span class="k">CREATE INDEX ON</span> cognitive_events (event_type, timestamp <span class="k">DESC</span>);
+<span class="k">CREATE INDEX ON</span> cognitive_events (source_id,  timestamp <span class="k">DESC</span>);
+<span class="k">CREATE INDEX ON</span> cognitive_events (severity,   timestamp <span class="k">DESC</span>);
+<span class="k">CREATE INDEX ON</span> cognitive_events <span class="k">USING GIN</span> (entity_refs);
+<span class="k">CREATE INDEX ON</span> cognitive_events <span class="k">USING GIN</span> (payload);
+
+<span class="c">-- Procedural memory: playbooks and strategies</span>
+<span class="k">CREATE TABLE IF NOT EXISTS</span> playbooks (
+  id              TEXT         <span class="k">PRIMARY KEY</span>,
+  name            TEXT         <span class="k">NOT NULL</span>,
+  trigger_event   TEXT         <span class="k">NOT NULL</span>,
+  trigger_severity TEXT,
+  steps           JSONB        <span class="k">NOT NULL</span>,
+  success_count   INT          <span class="k">DEFAULT</span> <span class="n">0</span>,
+  failure_count   INT          <span class="k">DEFAULT</span> <span class="n">0</span>,
+  confidence      FLOAT        <span class="k">DEFAULT</span> <span class="n">0.5</span>,
+  created_at      TIMESTAMPTZ  <span class="k">DEFAULT NOW</span>(),
+  last_used_at    TIMESTAMPTZ
+);
+
+<span class="c">-- Seed one example playbook</span>
+<span class="k">INSERT INTO</span> playbooks (id, name, trigger_event, trigger_severity, steps, confidence)
+<span class="k">VALUES</span> (
+  <span class="s">'pb_conn_pool'</span>,
+  <span class="s">'Handle connection pool exhaustion'</span>,
+  <span class="s">'connection_pool_exhausted'</span>,
+  <span class="s">'critical'</span>,
+  <span class="s">'[
+    {"step":1,"action":"alert_team","params":{"channel":"#incidents"}},
+    {"step":2,"action":"check_slow_queries","params":{"threshold_ms":1000}},
+    {"step":3,"action":"restart_connection_pool","params":{"service":"auto"}}
+  ]'</span>,
+  <span class="n">0.85</span>
+);</pre></div>
+    </div>
+  </div>
+  <div class="step hi">
+    <div class="sn">3</div><div class="sl"></div>
+    <div class="sb2">
+      <div class="st">Start everything</div>
+      <div class="cw"><div class="cl">bash</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button><span class="c"># From the infrastructure/ directory</span>
+docker-compose up -d
+
+<span class="c"># Verify all containers are healthy</span>
+docker-compose ps
+
+<span class="c"># Create Kafka topics (if not already done)</span>
+docker exec infrastructure-redpanda-1 rpk topic create \
+  raw.logs cognitive.events cognitive.perception_failures \
+  --if-not-exists</pre></div>
+      <div class="call call-ok"><span class="ci">✓</span><span>Expected: 6 containers running — redpanda, redis, timescaledb, neo4j, qdrant, rpk-console. Check <code>http://localhost:7474</code> for Neo4j Browser and <code>http://localhost:8888</code> for Redpanda Console.</span></div>
+    </div>
+  </div>
+  <div class="step">
+    <div class="sn">4</div>
+    <div class="sb2">
+      <div class="st">Install new Python dependencies</div>
+      <div class="cw"><div class="cl">bash</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button>pip install asyncpg neo4j qdrant-client openai \
+  timescale-vector sentence-transformers --break-system-packages</pre></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════════ 2 · DB SCHEMA ═══════════════════════════ -->
+<section class="section" id="s-schema">
+<div class="sh">
+  <div class="sh-phase">Step 2</div>
+  <h1 class="sh-title">Verify databases are ready</h1>
+  <p class="sh-desc">Before writing any Python, confirm each database is up and the schema was applied correctly. Each database has a simple one-liner to verify.</p>
+</div>
+
+<div class="steps">
+  <div class="step hi">
+    <div class="sn">1</div><div class="sl"></div>
+    <div class="sb2">
+      <div class="st">Verify TimescaleDB</div>
+      <div class="cw"><div class="cl">bash</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button>docker exec -it infrastructure-timescaledb-1 \
+  psql -U postgres -d cognitive \
+  -c "\dt"</pre></div>
+      <div class="call call-ok"><span class="ci">✓</span><span>Should show two tables: <code>cognitive_events</code> and <code>playbooks</code></span></div>
+      <div class="cw"><div class="cl">bash · confirm hypertable</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button>docker exec -it infrastructure-timescaledb-1 \
+  psql -U postgres -d cognitive \
+  -c "SELECT hypertable_name FROM timescaledb_information.hypertables;"</pre></div>
+      <div class="call call-ok"><span class="ci">✓</span><span>Should show <code>cognitive_events</code></span></div>
+    </div>
+  </div>
+  <div class="step hi">
+    <div class="sn">2</div><div class="sl"></div>
+    <div class="sb2">
+      <div class="st">Verify Redis</div>
+      <div class="cw"><div class="cl">bash</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button>docker exec -it infrastructure-redis-1 redis-cli ping</pre></div>
+      <div class="call call-ok"><span class="ci">✓</span><span>Should respond: <code>PONG</code></span></div>
+    </div>
+  </div>
+  <div class="step hi">
+    <div class="sn">3</div><div class="sl"></div>
+    <div class="sb2">
+      <div class="st">Verify Neo4j</div>
+      <div class="cw"><div class="cl">bash</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button>curl http://localhost:7474/db/data/ \
+  -u neo4j:password123 | python -m json.tool | head -5</pre></div>
+      <div class="call call-ok"><span class="ci">✓</span><span>Should return JSON with Neo4j version info. Then open <code>http://localhost:7474</code> in browser, login with neo4j/password123.</span></div>
+    </div>
+  </div>
+  <div class="step">
+    <div class="sn">4</div>
+    <div class="sb2">
+      <div class="st">Verify Qdrant</div>
+      <div class="cw"><div class="cl">bash</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button>curl http://localhost:6333/healthz</pre></div>
+      <div class="call call-ok"><span class="ci">✓</span><span>Should respond: <code>healthz check passed</code></span></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════════ 3 · MEMORY ROUTER ═══════════════════════════ -->
+<section class="section" id="s-router">
+<div class="sh">
+  <div class="sh-phase">Step 3 · Core component</div>
+  <h1 class="sh-title">The memory router</h1>
+  <p class="sh-desc">This is the most important file. It consumes <code>cognitive.events</code> and fans every event out to all four memory layers simultaneously. It's a single async Kafka consumer with manual offset commits — exactly like the LogAdapter, but writing to databases instead of normalizing.</p>
+</div>
+
+<div class="call call-info"><span class="ci">ℹ</span><span>The router uses <code>asyncio.gather</code> to write to Redis, TimescaleDB, and Neo4j in parallel for each event. A failure in one layer logs the error but does not stop the others. The offset is only committed after all writes succeed.</span></div>
+
+<div class="cw"><div class="cl">memory/router.py</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button><span class="k">"""
+Memory Router
+=============
+Consumes cognitive.events from Kafka.
+Fans every event to all four memory layers in parallel.
+Manual offset commits — no event is lost.
+"""</span>
+<span class="k">from</span> __future__ <span class="k">import</span> annotations
+<span class="k">import</span> asyncio, json, logging
+<span class="k">from</span> aiokafka <span class="k">import</span> AIOKafkaConsumer
+<span class="k">from</span> .working   <span class="k">import</span> WorkingMemory
+<span class="k">from</span> .episodic  <span class="k">import</span> EpisodicMemory
+<span class="k">from</span> .semantic  <span class="k">import</span> SemanticMemory
+<span class="k">from</span> .vector    <span class="k">import</span> VectorMemory
+
+log = logging.getLogger(<span class="s">"memory.router"</span>)
+
+<span class="t">SEVERITY_WORKING</span> = {<span class="s">"critical"</span>, <span class="s">"high"</span>}   <span class="c"># only these go to working memory</span>
+
+<span class="k">class</span> <span class="f">MemoryRouter</span>:
+    <span class="k">def</span> <span class="f">__init__</span>(
+        self,
+        kafka_bootstrap: str = <span class="s">"localhost:9092"</span>,
+        kafka_topic:     str = <span class="s">"cognitive.events"</span>,
+        group_id:        str = <span class="s">"memory-router"</span>,
+        postgres_dsn:    str = <span class="s">"postgresql://postgres:postgres@localhost:5432/cognitive"</span>,
+        redis_url:       str = <span class="s">"redis://localhost:6379"</span>,
+        neo4j_uri:       str = <span class="s">"bolt://localhost:7687"</span>,
+        neo4j_user:      str = <span class="s">"neo4j"</span>,
+        neo4j_password:  str = <span class="s">"password123"</span>,
+        qdrant_url:      str = <span class="s">"http://localhost:6333"</span>,
+        embed_events:    bool = <span class="k">False</span>,   <span class="c"># set True when OpenAI key available</span>
+    ):
+        self.kafka_bootstrap = kafka_bootstrap
+        self.topic    = kafka_topic
+        self.group_id = group_id
+        self.working  = WorkingMemory(redis_url)
+        self.episodic = EpisodicMemory(postgres_dsn)
+        self.semantic = SemanticMemory(neo4j_uri, neo4j_user, neo4j_password)
+        self.vector   = VectorMemory(qdrant_url) <span class="k">if</span> embed_events <span class="k">else None</span>
+        self._stats   = {<span class="s">"routed"</span>: <span class="n">0</span>, <span class="s">"errors"</span>: <span class="n">0</span>}
+
+    <span class="k">async def</span> <span class="f">start</span>(self):
+        <span class="k">await</span> self.working.connect()
+        <span class="k">await</span> self.episodic.connect()
+        <span class="k">await</span> self.semantic.connect()
+        <span class="k">if</span> self.vector:
+            <span class="k">await</span> self.vector.connect()
+        log.info(<span class="s">"Memory router connected to all layers"</span>)
+
+    <span class="k">async def</span> <span class="f">stop</span>(self):
+        <span class="k">await</span> self.working.disconnect()
+        <span class="k">await</span> self.episodic.disconnect()
+        <span class="k">await</span> self.semantic.disconnect()
+
+    <span class="k">async def</span> <span class="f">run</span>(self):
+        <span class="k">await</span> self.start()
+        consumer = AIOKafkaConsumer(
+            self.topic,
+            bootstrap_servers=self.kafka_bootstrap,
+            group_id=self.group_id,
+            auto_offset_reset=<span class="s">"earliest"</span>,
+            enable_auto_commit=<span class="k">False</span>,
+            value_deserializer=<span class="k">lambda</span> b: json.loads(b.decode()),
+        )
+        <span class="k">await</span> consumer.start()
+        <span class="k">try</span>:
+            <span class="k">async for</span> msg <span class="k">in</span> consumer:
+                event = msg.value
+                <span class="k">try</span>:
+                    <span class="k">await</span> self._route(event)
+                    <span class="k">await</span> consumer.commit()
+                    self._stats[<span class="s">"routed"</span>] += <span class="n">1</span>
+                    <span class="k">if</span> self._stats[<span class="s">"routed"</span>] % <span class="n">100</span> == <span class="n">0</span>:
+                        log.info(<span class="s">f"Router stats: {self._stats}"</span>)
+                <span class="k">except Exception as</span> e:
+                    log.error(<span class="s">f"Route failed for {event.get('event_id')}: {e}"</span>)
+                    self._stats[<span class="s">"errors"</span>] += <span class="n">1</span>
+        <span class="k">finally</span>:
+            <span class="k">await</span> consumer.stop()
+            <span class="k">await</span> self.stop()
+
+    <span class="k">async def</span> <span class="f">_route</span>(self, event: dict):
+        <span class="c"># All events → episodic (always, no exceptions)</span>
+        tasks = [self.episodic.store(event)]
+
+        <span class="c"># HIGH + CRITICAL → working memory (with TTL)</span>
+        <span class="k">if</span> event.get(<span class="s">"severity"</span>) <span class="k">in</span> SEVERITY_WORKING:
+            tasks.append(self.working.store(event))
+
+        <span class="c"># Events with entity_refs → semantic memory (knowledge graph)</span>
+        <span class="k">if</span> event.get(<span class="s">"entity_refs"</span>):
+            tasks.append(self.semantic.store(event))
+
+        <span class="c"># Optional: embed for vector search</span>
+        <span class="k">if</span> self.vector <span class="k">and</span> event.get(<span class="s">"severity"</span>) <span class="k">not in</span> (<span class="s">"info"</span>, <span class="s">"low"</span>):
+            tasks.append(self.vector.store(event))
+
+        <span class="c"># Run all writes in parallel</span>
+        results = <span class="k">await</span> asyncio.gather(*tasks, return_exceptions=<span class="k">True</span>)
+        <span class="k">for</span> r <span class="k">in</span> results:
+            <span class="k">if isinstance</span>(r, Exception):
+                log.warning(<span class="s">f"Layer write partial failure: {r}"</span>)</pre></div>
+
+<div class="call call-warn"><span class="ci">⚠</span><span>The router uses <code>return_exceptions=True</code> in gather — this means if Neo4j is down, Redis and TimescaleDB still get the event. The failure is logged but the offset is still committed. You can tighten this later by re-raising if episodic write fails (since that's your source of truth).</span></div>
+</section>
+
+<!-- ═══════════════════════════ 4 · WORKING MEMORY ═══════════════════════════ -->
+<section class="section" id="s-working">
+<div class="sh">
+  <div class="sh-phase">Step 4</div>
+  <h1 class="sh-title">Working memory</h1>
+  <p class="sh-desc">Redis. Volatile fast scratchpad. The reasoning engine reads this to get the current situation without hitting the database. Only HIGH and CRITICAL events are stored here, with TTLs.</p>
+</div>
+
+<div class="cw"><div class="cl">memory/working.py</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button><span class="k">"""
+Working Memory — Redis
+======================
+Stores current active context for the reasoning engine.
+Only HIGH/CRITICAL severity events. All with TTL.
+"""</span>
+<span class="k">from</span> __future__ <span class="k">import</span> annotations
+<span class="k">import</span> json, time
+<span class="k">import</span> redis.asyncio <span class="k">as</span> aioredis
+
+TTL_HIGH     = <span class="n">900</span>   <span class="c"># 15 min</span>
+TTL_CRITICAL = <span class="n">1800</span>  <span class="c"># 30 min</span>
+TTL_ENTITY   = <span class="n">3600</span>  <span class="c"># 60 min</span>
+RECENT_WINDOW = <span class="n">900</span>  <span class="c"># keep last 15 min in sorted set</span>
+
+<span class="k">class</span> <span class="f">WorkingMemory</span>:
+    <span class="k">def</span> <span class="f">__init__</span>(self, redis_url: str = <span class="s">"redis://localhost:6379"</span>):
+        self._url = redis_url
+        self._r: aioredis.Redis | <span class="k">None</span> = <span class="k">None</span>
+
+    <span class="k">async def</span> <span class="f">connect</span>(self):
+        self._r = <span class="k">await</span> aioredis.from_url(self._url, decode_responses=<span class="k">True</span>)
+
+    <span class="k">async def</span> <span class="f">disconnect</span>(self):
+        <span class="k">if</span> self._r: <span class="k">await</span> self._r.aclose()
+
+    <span class="k">async def</span> <span class="f">store</span>(self, event: dict):
+        <span class="k">"""Store a HIGH/CRITICAL event in working memory."""</span>
+        eid      = event[<span class="s">"event_id"</span>]
+        severity = event[<span class="s">"severity"</span>]
+        ttl      = TTL_CRITICAL <span class="k">if</span> severity == <span class="s">"critical"</span> <span class="k">else</span> TTL_HIGH
+        ts       = event.get(<span class="s">"timestamp"</span>, <span class="s">""</span>)
+        score    = time.time()
+
+        pipe = self._r.pipeline()
+
+        <span class="c"># 1. Store full event as hash</span>
+        pipe.hset(<span class="s">f"event:{eid}"</span>, mapping={
+            <span class="s">"event_id"</span>:    eid,
+            <span class="s">"event_type"</span>:  event[<span class="s">"event_type"</span>],
+            <span class="s">"severity"</span>:    severity,
+            <span class="s">"source_id"</span>:   event[<span class="s">"source_id"</span>],
+            <span class="s">"source_type"</span>: event[<span class="s">"source_type"</span>],
+            <span class="s">"confidence"</span>:  str(event.get(<span class="s">"confidence"</span>, <span class="n">1.0</span>)),
+            <span class="s">"payload"</span>:     json.dumps(event.get(<span class="s">"payload"</span>, {})),
+            <span class="s">"timestamp"</span>:   ts,
+        })
+        pipe.expire(<span class="s">f"event:{eid}"</span>, ttl)
+
+        <span class="c"># 2. Add to time-ordered sorted set (score = unix timestamp)</span>
+        pipe.zadd(<span class="s">"events:recent"</span>, {eid: score})
+        pipe.expire(<span class="s">"events:recent"</span>, RECENT_WINDOW + <span class="n">60</span>)
+
+        <span class="c"># 3. Update entity state for each entity_ref</span>
+        <span class="k">for</span> ref <span class="k">in</span> event.get(<span class="s">"entity_refs"</span>, []):
+            pipe.hset(<span class="s">f"entity:{ref}"</span>, mapping={
+                <span class="s">"last_seen"</span>:   ts,
+                <span class="s">"last_event"</span>:  event[<span class="s">"event_type"</span>],
+                <span class="s">"severity"</span>:    severity,
+                <span class="s">"source_type"</span>: event[<span class="s">"source_type"</span>],
+            })
+            pipe.expire(<span class="s">f"entity:{ref}"</span>, TTL_ENTITY)
+
+        <span class="k">await</span> pipe.execute()
+
+    <span class="c"># ── READ METHODS ──────────────────────────────────────────────</span>
+
+    <span class="k">async def</span> <span class="f">get_recent_events</span>(self, limit: int = <span class="n">50</span>) -> list[dict]:
+        <span class="k">"""Get the N most recent HIGH/CRITICAL events."""</span>
+        now = time.time()
+        cutoff = now - RECENT_WINDOW
+        ids = <span class="k">await</span> self._r.zrangebyscore(
+            <span class="s">"events:recent"</span>, cutoff, now, start=<span class="n">0</span>, num=limit, withscores=<span class="k">False</span>
+        )
+        <span class="k">if not</span> ids: <span class="k">return</span> []
+        pipe = self._r.pipeline()
+        <span class="k">for</span> eid <span class="k">in</span> reversed(ids):
+            pipe.hgetall(<span class="s">f"event:{eid}"</span>)
+        results = <span class="k">await</span> pipe.execute()
+        <span class="k">return</span> [r <span class="k">for</span> r <span class="k">in</span> results <span class="k">if</span> r]
+
+    <span class="k">async def</span> <span class="f">get_entity_state</span>(self, entity_id: str) -> dict | <span class="k">None</span>:
+        <span class="k">"""Get the current state of an entity."""</span>
+        <span class="k">return await</span> self._r.hgetall(<span class="s">f"entity:{entity_id}"</span>) <span class="k">or None</span>
+
+    <span class="k">async def</span> <span class="f">get_active_critical</span>(self) -> list[dict]:
+        <span class="k">"""Get all currently active CRITICAL events."""</span>
+        events = <span class="k">await</span> self.get_recent_events(<span class="n">100</span>)
+        <span class="k">return</span> [e <span class="k">for</span> e <span class="k">in</span> events <span class="k">if</span> e.get(<span class="s">"severity"</span>) == <span class="s">"critical"</span>]</pre></div>
+</section>
+
+<!-- ═══════════════════════════ 5 · EPISODIC MEMORY ═══════════════════════════ -->
+<section class="section" id="s-episodic">
+<div class="sh">
+  <div class="sh-phase">Step 5</div>
+  <h1 class="sh-title">Episodic memory</h1>
+  <p class="sh-desc">TimescaleDB. Every event, forever. The append-only historical record. TimescaleDB's hypertable partitions by time automatically — fast range queries over millions of rows. Qdrant adds vector search for semantic similarity.</p>
+</div>
+
+<div class="cw"><div class="cl">memory/episodic.py</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button><span class="k">"""
+Episodic Memory — TimescaleDB
+==============================
+Stores every CognitiveEvent. Append-only. Forever.
+"""</span>
+<span class="k">from</span> __future__ <span class="k">import</span> annotations
+<span class="k">import</span> asyncpg, json
+<span class="k">from</span> datetime <span class="k">import</span> datetime, timezone
+
+<span class="k">class</span> <span class="f">EpisodicMemory</span>:
+    <span class="k">def</span> <span class="f">__init__</span>(self, dsn: str):
+        self._dsn  = dsn
+        self._pool = <span class="k">None</span>
+
+    <span class="k">async def</span> <span class="f">connect</span>(self):
+        self._pool = <span class="k">await</span> asyncpg.create_pool(self._dsn, min_size=<span class="n">2</span>, max_size=<span class="n">10</span>)
+
+    <span class="k">async def</span> <span class="f">disconnect</span>(self):
+        <span class="k">if</span> self._pool: <span class="k">await</span> self._pool.close()
+
+    <span class="k">async def</span> <span class="f">store</span>(self, event: dict):
+        <span class="k">"""Insert a CognitiveEvent. Idempotent — ON CONFLICT DO NOTHING."""</span>
+        <span class="k">async with</span> self._pool.acquire() <span class="k">as</span> conn:
+            <span class="k">await</span> conn.execute(<span class="s">"""
+                INSERT INTO cognitive_events
+                  (event_id, timestamp, ingested_at, source_type, source_id,
+                   event_type, severity, payload, entity_refs, confidence, tags)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+                ON CONFLICT (event_id) DO NOTHING
+            """</span>,
+                event[<span class="s">"event_id"</span>],
+                _parse_ts(event.get(<span class="s">"timestamp"</span>)),
+                _parse_ts(event.get(<span class="s">"ingested_at"</span>)),
+                event.get(<span class="s">"source_type"</span>),
+                event.get(<span class="s">"source_id"</span>),
+                event.get(<span class="s">"event_type"</span>),
+                event.get(<span class="s">"severity"</span>),
+                json.dumps(event.get(<span class="s">"payload"</span>, {})),
+                event.get(<span class="s">"entity_refs"</span>, []),
+                event.get(<span class="s">"confidence"</span>),
+                event.get(<span class="s">"tags"</span>, []),
+            )
+
+    <span class="c"># ── READ METHODS ──────────────────────────────────────────────</span>
+
+    <span class="k">async def</span> <span class="f">query_by_entity</span>(
+        self, entity_id: str, hours: int = <span class="n">24</span>, limit: int = <span class="n">100</span>
+    ) -> list[dict]:
+        <span class="k">"""All events mentioning an entity in the last N hours."""</span>
+        <span class="k">async with</span> self._pool.acquire() <span class="k">as</span> conn:
+            rows = <span class="k">await</span> conn.fetch(<span class="s">"""
+                SELECT * FROM cognitive_events
+                WHERE $1 = ANY(entity_refs)
+                  AND timestamp > NOW() - ($2 || ' hours')::interval
+                ORDER BY timestamp DESC LIMIT $3
+            """</span>, entity_id, str(hours), limit)
+            <span class="k">return</span> [dict(r) <span class="k">for</span> r <span class="k">in</span> rows]
+
+    <span class="k">async def</span> <span class="f">query_by_type</span>(
+        self, event_type: str, hours: int = <span class="n">24</span>, limit: int = <span class="n">50</span>
+    ) -> list[dict]:
+        <span class="k">async with</span> self._pool.acquire() <span class="k">as</span> conn:
+            rows = <span class="k">await</span> conn.fetch(<span class="s">"""
+                SELECT * FROM cognitive_events
+                WHERE event_type = $1
+                  AND timestamp > NOW() - ($2 || ' hours')::interval
+                ORDER BY timestamp DESC LIMIT $3
+            """</span>, event_type, str(hours), limit)
+            <span class="k">return</span> [dict(r) <span class="k">for</span> r <span class="k">in</span> rows]
+
+    <span class="k">async def</span> <span class="f">query_by_severity</span>(
+        self, severity: str, hours: int = <span class="n">6</span>, limit: int = <span class="n">50</span>
+    ) -> list[dict]:
+        <span class="k">async with</span> self._pool.acquire() <span class="k">as</span> conn:
+            rows = <span class="k">await</span> conn.fetch(<span class="s">"""
+                SELECT * FROM cognitive_events
+                WHERE severity = $1
+                  AND timestamp > NOW() - ($2 || ' hours')::interval
+                ORDER BY timestamp DESC LIMIT $3
+            """</span>, severity, str(hours), limit)
+            <span class="k">return</span> [dict(r) <span class="k">for</span> r <span class="k">in</span> rows]
+
+    <span class="k">async def</span> <span class="f">count_by_type_today</span>(self) -> list[dict]:
+        <span class="k">"""Event frequency breakdown for today."""</span>
+        <span class="k">async with</span> self._pool.acquire() <span class="k">as</span> conn:
+            rows = <span class="k">await</span> conn.fetch(<span class="s">"""
+                SELECT event_type, severity, COUNT(*) as cnt
+                FROM cognitive_events
+                WHERE timestamp > NOW() - INTERVAL '24 hours'
+                GROUP BY event_type, severity
+                ORDER BY cnt DESC
+            """</span>)
+            <span class="k">return</span> [dict(r) <span class="k">for</span> r <span class="k">in</span> rows]
+
+<span class="k">def</span> <span class="f">_parse_ts</span>(ts_str) -> datetime:
+    <span class="k">if not</span> ts_str: <span class="k">return</span> datetime.now(timezone.utc)
+    <span class="k">if isinstance</span>(ts_str, datetime): <span class="k">return</span> ts_str
+    <span class="k">from</span> dateutil.parser <span class="k">import</span> parse
+    dt = parse(ts_str)
+    <span class="k">return</span> dt.replace(tzinfo=timezone.utc) <span class="k">if not</span> dt.tzinfo <span class="k">else</span> dt</pre></div>
+</section>
+
+<!-- ═══════════════════════════ 6 · SEMANTIC MEMORY ═══════════════════════════ -->
+<section class="section" id="s-semantic">
+<div class="sh">
+  <div class="sh-phase">Step 6</div>
+  <h1 class="sh-title">Semantic memory</h1>
+  <p class="sh-desc">Neo4j. The knowledge graph. Every event with entity_refs creates or strengthens edges between entities. You never manually edit this — it auto-builds from your event stream. After one week of events you'll have your entire environment mapped.</p>
+</div>
+
+<div class="call call-info"><span class="ci">ℹ</span><span>Cypher's <code>MERGE</code> is the key operation — it creates a node or relationship if it doesn't exist, or matches it if it does. This makes all writes idempotent. Running the same event twice just updates the timestamps, never creates duplicate nodes.</span></div>
+
+<div class="cw"><div class="cl">memory/semantic.py</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button><span class="k">"""
+Semantic Memory — Neo4j Knowledge Graph
+========================================
+Every entity_ref becomes a graph node.
+Every event connecting two refs strengthens their edge.
+"""</span>
+<span class="k">from</span> __future__ <span class="k">import</span> annotations
+<span class="k">from</span> neo4j <span class="k">import</span> AsyncGraphDatabase
+
+<span class="k">class</span> <span class="f">SemanticMemory</span>:
+    <span class="k">def</span> <span class="f">__init__</span>(self, uri: str, user: str, password: str):
+        self._uri  = uri
+        self._auth = (user, password)
+        self._driver = <span class="k">None</span>
+
+    <span class="k">async def</span> <span class="f">connect</span>(self):
+        self._driver = AsyncGraphDatabase.driver(self._uri, auth=self._auth)
+        <span class="k">await</span> self._driver.verify_connectivity()
+        <span class="k">await</span> self._create_indexes()
+
+    <span class="k">async def</span> <span class="f">disconnect</span>(self):
+        <span class="k">if</span> self._driver: <span class="k">await</span> self._driver.close()
+
+    <span class="k">async def</span> <span class="f">_create_indexes</span>(self):
+        <span class="k">async with</span> self._driver.session() <span class="k">as</span> s:
+            <span class="k">await</span> s.run(<span class="s">"CREATE INDEX entity_id IF NOT EXISTS FOR (e:Entity) ON (e.id)"</span>)
+            <span class="k">await</span> s.run(<span class="s">"CREATE INDEX entity_type IF NOT EXISTS FOR (e:Entity) ON (e.entity_type)"</span>)
+
+    <span class="k">async def</span> <span class="f">store</span>(self, event: dict):
+        <span class="k">"""Create/update entity nodes and strengthen relationship edges."""</span>
+        refs       = event.get(<span class="s">"entity_refs"</span>, [])
+        event_type = event[<span class="s">"event_type"</span>]
+        ts         = event.get(<span class="s">"timestamp"</span>, <span class="s">""</span>)
+        severity   = event.get(<span class="s">"severity"</span>, <span class="s">"info"</span>)
+
+        <span class="k">if not</span> refs: <span class="k">return</span>
+
+        <span class="k">async with</span> self._driver.session() <span class="k">as</span> s:
+            <span class="c"># Upsert each entity node</span>
+            <span class="k">for</span> ref <span class="k">in</span> refs:
+                entity_type = ref.split(<span class="s">":"</span>)[<span class="n">0</span>] <span class="k">if</span> <span class="s">":"</span> <span class="k">in</span> ref <span class="k">else</span> <span class="s">"unknown"</span>
+                <span class="k">await</span> s.run(<span class="s">"""
+                    MERGE (e:Entity {id: $id})
+                    SET e.entity_type  = $etype,
+                        e.last_seen    = $ts,
+                        e.last_event   = $event_type,
+                        e.last_severity= $severity
+                """</span>, id=ref, etype=entity_type,
+                    ts=ts, event_type=event_type, severity=severity)
+
+            <span class="c"># Create/strengthen edges between every pair of refs</span>
+            <span class="k">for</span> i <span class="k">in</span> range(len(refs)):
+                <span class="k">for</span> j <span class="k">in</span> range(i + <span class="n">1</span>, len(refs)):
+                    <span class="k">await</span> s.run(<span class="s">"""
+                        MATCH (a:Entity {id: $id_a})
+                        MATCH (b:Entity {id: $id_b})
+                        MERGE (a)-[r:CONNECTED_VIA]->(b)
+                        SET r.last_event  = $event_type,
+                            r.last_seen   = $ts,
+                            r.event_count = coalesce(r.event_count, 0) + 1,
+                            r.weight      = coalesce(r.weight, 0.0) + 0.1
+                    """</span>, id_a=refs[i], id_b=refs[j],
+                        event_type=event_type, ts=ts)
+
+    <span class="c"># ── READ / QUERY METHODS ──────────────────────────────────────</span>
+
+    <span class="k">async def</span> <span class="f">get_neighbors</span>(self, entity_id: str, depth: int = <span class="n">1</span>) -> list[dict]:
+        <span class="k">"""Get all entities connected to this one."""</span>
+        <span class="k">async with</span> self._driver.session() <span class="k">as</span> s:
+            result = <span class="k">await</span> s.run(<span class="s">"""
+                MATCH (a:Entity {id: $id})-[r*1..$depth]-(b:Entity)
+                RETURN DISTINCT b.id AS id, b.entity_type AS etype,
+                       b.last_event AS last_event, b.last_seen AS last_seen
+                LIMIT 50
+            """</span>, id=entity_id, depth=depth)
+            <span class="k">return</span> [dict(r) <span class="k">async for</span> r <span class="k">in</span> result]
+
+    <span class="k">async def</span> <span class="f">get_blast_radius</span>(self, entity_id: str) -> list[dict]:
+        <span class="k">"""All entities that could be affected if this entity fails."""</span>
+        <span class="k">async with</span> self._driver.session() <span class="k">as</span> s:
+            result = <span class="k">await</span> s.run(<span class="s">"""
+                MATCH (a:Entity {id: $id})-[r:CONNECTED_VIA*1..3]-(b:Entity)
+                WITH b, count(r) AS hops
+                RETURN b.id AS id, b.entity_type AS etype, hops
+                ORDER BY hops ASC LIMIT 25
+            """</span>, id=entity_id)
+            <span class="k">return</span> [dict(r) <span class="k">async for</span> r <span class="k">in</span> result]
+
+    <span class="k">async def</span> <span class="f">get_entity_count</span>(self) -> int:
+        <span class="k">async with</span> self._driver.session() <span class="k">as</span> s:
+            r = <span class="k">await</span> s.run(<span class="s">"MATCH (e:Entity) RETURN count(e) AS cnt"</span>)
+            rec = <span class="k">await</span> r.single()
+            <span class="k">return</span> rec[<span class="s">"cnt"</span>] <span class="k">if</span> rec <span class="k">else</span> <span class="n">0</span></pre></div>
+</section>
+
+<!-- ═══════════════════════════ 7 · MEMORY API ═══════════════════════════ -->
+<section class="section" id="s-api">
+<div class="sh">
+  <div class="sh-phase">Step 7</div>
+  <h1 class="sh-title">Memory query API</h1>
+  <p class="sh-desc">A FastAPI server that exposes all four memory layers through a unified HTTP interface. The reasoning engine (Phase 4) will call this. Also gives you a browser UI to inspect memory state during development.</p>
+</div>
+
+<div class="cw"><div class="cl">memory/api.py</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button><span class="k">"""
+Memory Query API
+================
+Unified HTTP interface over all four memory layers.
+The reasoning engine queries this instead of hitting DBs directly.
+"""</span>
+<span class="k">from</span> __future__ <span class="k">import</span> annotations
+<span class="k">import</span> os
+<span class="k">from</span> contextlib <span class="k">import</span> asynccontextmanager
+<span class="k">from</span> fastapi <span class="k">import</span> FastAPI, Query
+<span class="k">from</span> .working  <span class="k">import</span> WorkingMemory
+<span class="k">from</span> .episodic <span class="k">import</span> EpisodicMemory
+<span class="k">from</span> .semantic <span class="k">import</span> SemanticMemory
+
+working  = WorkingMemory(os.getenv(<span class="s">"REDIS_URL"</span>,    <span class="s">"redis://localhost:6379"</span>))
+episodic = EpisodicMemory(os.getenv(<span class="s">"POSTGRES_DSN"</span>, <span class="s">"postgresql://postgres:postgres@localhost:5432/cognitive"</span>))
+semantic = SemanticMemory(
+    os.getenv(<span class="s">"NEO4J_URI"</span>,      <span class="s">"bolt://localhost:7687"</span>),
+    os.getenv(<span class="s">"NEO4J_USER"</span>,     <span class="s">"neo4j"</span>),
+    os.getenv(<span class="s">"NEO4J_PASSWORD"</span>, <span class="s">"password123"</span>),
+)
+
+<span class="k">@asynccontextmanager</span>
+<span class="k">async def</span> <span class="f">lifespan</span>(app):
+    <span class="k">await</span> working.connect()
+    <span class="k">await</span> episodic.connect()
+    <span class="k">await</span> semantic.connect()
+    <span class="k">yield</span>
+    <span class="k">await</span> working.disconnect()
+    <span class="k">await</span> episodic.disconnect()
+    <span class="k">await</span> semantic.disconnect()
+
+app = FastAPI(title=<span class="s">"Memory API"</span>, lifespan=lifespan)
+
+<span class="c"># ── WORKING MEMORY ────────────────────────────────────────────</span>
+
+<span class="k">@app.get</span>(<span class="s">"/memory/working/recent"</span>)
+<span class="k">async def</span> <span class="f">recent_events</span>(limit: int = <span class="n">50</span>):
+    <span class="k">"""Get the N most recent HIGH/CRITICAL events from Redis."""</span>
+    <span class="k">return await</span> working.get_recent_events(limit)
+
+<span class="k">@app.get</span>(<span class="s">"/memory/working/entity/{entity_id:path}"</span>)
+<span class="k">async def</span> <span class="f">entity_state</span>(entity_id: str):
+    <span class="k">"""Current state of a specific entity from Redis."""</span>
+    state = <span class="k">await</span> working.get_entity_state(entity_id)
+    <span class="k">return</span> state <span class="k">or</span> {<span class="s">"status"</span>: <span class="s">"not in working memory"</span>}
+
+<span class="k">@app.get</span>(<span class="s">"/memory/working/critical"</span>)
+<span class="k">async def</span> <span class="f">active_critical</span>():
+    <span class="k">"""All currently active CRITICAL events."""</span>
+    <span class="k">return await</span> working.get_active_critical()
+
+<span class="c"># ── EPISODIC MEMORY ───────────────────────────────────────────</span>
+
+<span class="k">@app.get</span>(<span class="s">"/memory/episodic/entity/{entity_id:path}"</span>)
+<span class="k">async def</span> <span class="f">entity_history</span>(entity_id: str, hours: int = <span class="n">24</span>):
+    <span class="k">"""Full event history for an entity."""</span>
+    rows = <span class="k">await</span> episodic.query_by_entity(entity_id, hours)
+    <span class="k">return</span> {<span class="s">"entity_id"</span>: entity_id, <span class="s">"count"</span>: len(rows), <span class="s">"events"</span>: rows}
+
+<span class="k">@app.get</span>(<span class="s">"/memory/episodic/type/{event_type}"</span>)
+<span class="k">async def</span> <span class="f">events_by_type</span>(event_type: str, hours: int = <span class="n">24</span>):
+    <span class="k">return await</span> episodic.query_by_type(event_type, hours)
+
+<span class="k">@app.get</span>(<span class="s">"/memory/episodic/severity/{severity}"</span>)
+<span class="k">async def</span> <span class="f">events_by_severity</span>(severity: str, hours: int = <span class="n">6</span>):
+    <span class="k">return await</span> episodic.query_by_severity(severity, hours)
+
+<span class="k">@app.get</span>(<span class="s">"/memory/episodic/summary"</span>)
+<span class="k">async def</span> <span class="f">event_summary</span>():
+    <span class="k">"""Event type frequency for today."""</span>
+    <span class="k">return await</span> episodic.count_by_type_today()
+
+<span class="c"># ── SEMANTIC MEMORY ───────────────────────────────────────────</span>
+
+<span class="k">@app.get</span>(<span class="s">"/memory/graph/neighbors/{entity_id:path}"</span>)
+<span class="k">async def</span> <span class="f">graph_neighbors</span>(entity_id: str, depth: int = <span class="n">1</span>):
+    <span class="k">return await</span> semantic.get_neighbors(entity_id, depth)
+
+<span class="k">@app.get</span>(<span class="s">"/memory/graph/blast-radius/{entity_id:path}"</span>)
+<span class="k">async def</span> <span class="f">blast_radius</span>(entity_id: str):
+    <span class="k">"""What else is affected if this entity has a problem?"""</span>
+    <span class="k">return await</span> semantic.get_blast_radius(entity_id)
+
+<span class="k">@app.get</span>(<span class="s">"/memory/graph/stats"</span>)
+<span class="k">async def</span> <span class="f">graph_stats</span>():
+    count = <span class="k">await</span> semantic.get_entity_count()
+    <span class="k">return</span> {<span class="s">"entity_count"</span>: count}
+
+<span class="c"># ── HEALTH ────────────────────────────────────────────────────</span>
+<span class="k">@app.get</span>(<span class="s">"/health"</span>)
+<span class="k">async def</span> <span class="f">health</span>(): <span class="k">return</span> {<span class="s">"status"</span>: <span class="s">"ok"</span>}</pre></div>
+
+<div class="cw"><div class="cl">bash · start the Memory API</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button>uvicorn memory.api:app --reload --port 8090</pre></div>
+<div class="call call-ok"><span class="ci">✓</span><span>Memory API docs at <code>http://localhost:8090/docs</code> — auto-generated Swagger UI for every endpoint.</span></div>
+</section>
+
+<!-- ═══════════════════════════ 8 · UNIT TESTS ═══════════════════════════ -->
+<section class="section" id="s-test1">
+<div class="sh">
+  <div class="sh-phase">Test 1 · No Kafka needed</div>
+  <h1 class="sh-title">Unit tests — each layer in isolation</h1>
+  <p class="sh-desc">Test each memory layer as a pure database function — no Kafka, no router. Just connect to the database and write/read directly. These run fast and catch 80% of bugs before you touch the router.</p>
+</div>
+
+<span class="badge bg"><span class="bd"></span>Databases must be running · No Kafka needed</span>
+
+<div class="tabs" style="margin-top:16px">
+  <button class="tb on" onclick="tab(this,'tu0')">Working (Redis)</button>
+  <button class="tb" onclick="tab(this,'tu1')">Episodic (Timescale)</button>
+  <button class="tb" onclick="tab(this,'tu2')">Semantic (Neo4j)</button>
+  <button class="tb" onclick="tab(this,'tu3')">Run all</button>
+</div>
+
+<div class="tp on" id="tu0">
+<div class="cw"><div class="cl">tests/test_working_memory.py</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button><span class="k">import</span> pytest, asyncio
+<span class="k">from</span> memory.working <span class="k">import</span> WorkingMemory
+
+SAMPLE = {
+    <span class="s">"event_id"</span>:    <span class="s">"evt_test001"</span>,
+    <span class="s">"event_type"</span>:  <span class="s">"database_connection_timeout"</span>,
+    <span class="s">"severity"</span>:    <span class="s">"high"</span>,
+    <span class="s">"source_id"</span>:   <span class="s">"svc:auth-service"</span>,
+    <span class="s">"source_type"</span>: <span class="s">"log"</span>,
+    <span class="s">"confidence"</span>:  <span class="n">0.82</span>,
+    <span class="s">"timestamp"</span>:   <span class="s">"2024-01-15T14:23:11Z"</span>,
+    <span class="s">"payload"</span>:     {<span class="s">"database"</span>: <span class="s">"postgres-primary"</span>},
+    <span class="s">"entity_refs"</span>: [<span class="s">"svc:auth-service"</span>, <span class="s">"db:postgres-primary"</span>],
+    <span class="s">"tags"</span>:        [<span class="s">"log"</span>, <span class="s">"database"</span>],
+}
+
+<span class="k">@pytest.mark.asyncio</span>
+<span class="k">async def</span> <span class="f">test_store_and_retrieve</span>():
+    wm = WorkingMemory()
+    <span class="k">await</span> wm.connect()
+    <span class="k">await</span> wm.store(SAMPLE)
+
+    events = <span class="k">await</span> wm.get_recent_events(<span class="n">10</span>)
+    ids = [e[<span class="s">"event_id"</span>] <span class="k">for</span> e <span class="k">in</span> events]
+    <span class="k">assert</span> <span class="s">"evt_test001"</span> <span class="k">in</span> ids, <span class="s">"Event not found in recent events"</span>
+    <span class="k">await</span> wm.disconnect()
+
+<span class="k">@pytest.mark.asyncio</span>
+<span class="k">async def</span> <span class="f">test_entity_state_written</span>():
+    wm = WorkingMemory()
+    <span class="k">await</span> wm.connect()
+    <span class="k">await</span> wm.store(SAMPLE)
+
+    state = <span class="k">await</span> wm.get_entity_state(<span class="s">"svc:auth-service"</span>)
+    <span class="k">assert</span> state <span class="k">is not None</span>
+    <span class="k">assert</span> state[<span class="s">"last_event"</span>] == <span class="s">"database_connection_timeout"</span>
+    <span class="k">assert</span> state[<span class="s">"severity"</span>] == <span class="s">"high"</span>
+    <span class="k">await</span> wm.disconnect()
+
+<span class="k">@pytest.mark.asyncio</span>
+<span class="k">async def</span> <span class="f">test_critical_filter</span>():
+    wm = WorkingMemory()
+    <span class="k">await</span> wm.connect()
+    critical_event = {**SAMPLE, <span class="s">"event_id"</span>: <span class="s">"evt_crit001"</span>, <span class="s">"severity"</span>: <span class="s">"critical"</span>}
+    <span class="k">await</span> wm.store(critical_event)
+
+    criticals = <span class="k">await</span> wm.get_active_critical()
+    ids = [e[<span class="s">"event_id"</span>] <span class="k">for</span> e <span class="k">in</span> criticals]
+    <span class="k">assert</span> <span class="s">"evt_crit001"</span> <span class="k">in</span> ids
+    <span class="k">await</span> wm.disconnect()</pre></div>
+</div>
+
+<div class="tp" id="tu1">
+<div class="cw"><div class="cl">tests/test_episodic_memory.py</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button><span class="k">import</span> pytest
+<span class="k">from</span> memory.episodic <span class="k">import</span> EpisodicMemory
+
+DSN = <span class="s">"postgresql://postgres:postgres@localhost:5432/cognitive"</span>
+SAMPLE = {
+    <span class="s">"event_id"</span>:    <span class="s">"evt_ep_test001"</span>,
+    <span class="s">"event_type"</span>:  <span class="s">"cpu_spike"</span>,
+    <span class="s">"severity"</span>:    <span class="s">"high"</span>,
+    <span class="s">"source_id"</span>:   <span class="s">"metric:node-01"</span>,
+    <span class="s">"source_type"</span>: <span class="s">"metric"</span>,
+    <span class="s">"confidence"</span>:  <span class="n">0.98</span>,
+    <span class="s">"timestamp"</span>:   <span class="s">"2024-01-15T14:00:00Z"</span>,
+    <span class="s">"ingested_at"</span>: <span class="s">"2024-01-15T14:00:01Z"</span>,
+    <span class="s">"payload"</span>:     {<span class="s">"cpu_percent"</span>: <span class="n">87.3</span>},
+    <span class="s">"entity_refs"</span>: [<span class="s">"metric:node-01"</span>],
+    <span class="s">"tags"</span>:        [<span class="s">"metric"</span>, <span class="s">"cpu"</span>],
+}
+
+<span class="k">@pytest.mark.asyncio</span>
+<span class="k">async def</span> <span class="f">test_store_and_query_by_entity</span>():
+    em = EpisodicMemory(DSN)
+    <span class="k">await</span> em.connect()
+    <span class="k">await</span> em.store(SAMPLE)
+
+    rows = <span class="k">await</span> em.query_by_entity(<span class="s">"metric:node-01"</span>, hours=<span class="n">48</span>)
+    ids = [r[<span class="s">"event_id"</span>] <span class="k">for</span> r <span class="k">in</span> rows]
+    <span class="k">assert</span> <span class="s">"evt_ep_test001"</span> <span class="k">in</span> ids
+    <span class="k">await</span> em.disconnect()
+
+<span class="k">@pytest.mark.asyncio</span>
+<span class="k">async def</span> <span class="f">test_idempotent_insert</span>():
+    <span class="c">"""Inserting same event twice should not raise."""</span>
+    em = EpisodicMemory(DSN)
+    <span class="k">await</span> em.connect()
+    <span class="k">await</span> em.store(SAMPLE)
+    <span class="k">await</span> em.store(SAMPLE)  <span class="c"># ON CONFLICT DO NOTHING</span>
+    rows = <span class="k">await</span> em.query_by_entity(<span class="s">"metric:node-01"</span>, hours=<span class="n">48</span>)
+    count = sum(<span class="n">1</span> <span class="k">for</span> r <span class="k">in</span> rows <span class="k">if</span> r[<span class="s">"event_id"</span>] == <span class="s">"evt_ep_test001"</span>)
+    <span class="k">assert</span> count == <span class="n">1</span>  <span class="c"># exactly one, not two</span>
+    <span class="k">await</span> em.disconnect()
+
+<span class="k">@pytest.mark.asyncio</span>
+<span class="k">async def</span> <span class="f">test_query_by_severity</span>():
+    em = EpisodicMemory(DSN)
+    <span class="k">await</span> em.connect()
+    <span class="k">await</span> em.store(SAMPLE)
+    rows = <span class="k">await</span> em.query_by_severity(<span class="s">"high"</span>, hours=<span class="n">48</span>)
+    <span class="k">assert</span> len(rows) > <span class="n">0</span>
+    <span class="k">assert</span> <span class="k">all</span>(r[<span class="s">"severity"</span>] == <span class="s">"high"</span> <span class="k">for</span> r <span class="k">in</span> rows)
+    <span class="k">await</span> em.disconnect()</pre></div>
+</div>
+
+<div class="tp" id="tu2">
+<div class="cw"><div class="cl">tests/test_semantic_memory.py</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button><span class="k">import</span> pytest
+<span class="k">from</span> memory.semantic <span class="k">import</span> SemanticMemory
+
+SAMPLE = {
+    <span class="s">"event_id"</span>:    <span class="s">"evt_sem_test001"</span>,
+    <span class="s">"event_type"</span>:  <span class="s">"database_connection_timeout"</span>,
+    <span class="s">"severity"</span>:    <span class="s">"high"</span>,
+    <span class="s">"source_id"</span>:   <span class="s">"svc:auth-service"</span>,
+    <span class="s">"source_type"</span>: <span class="s">"log"</span>,
+    <span class="s">"timestamp"</span>:   <span class="s">"2024-01-15T14:23:11Z"</span>,
+    <span class="s">"entity_refs"</span>: [<span class="s">"svc:auth-service"</span>, <span class="s">"db:postgres-primary"</span>],
+}
+
+<span class="k">@pytest.mark.asyncio</span>
+<span class="k">async def</span> <span class="f">test_entity_nodes_created</span>():
+    sm = SemanticMemory(<span class="s">"bolt://localhost:7687"</span>, <span class="s">"neo4j"</span>, <span class="s">"password123"</span>)
+    <span class="k">await</span> sm.connect()
+    <span class="k">await</span> sm.store(SAMPLE)
+
+    count = <span class="k">await</span> sm.get_entity_count()
+    <span class="k">assert</span> count >= <span class="n">2</span>  <span class="c"># at least svc: and db: nodes exist</span>
+    <span class="k">await</span> sm.disconnect()
+
+<span class="k">@pytest.mark.asyncio</span>
+<span class="k">async def</span> <span class="f">test_neighbors_found</span>():
+    sm = SemanticMemory(<span class="s">"bolt://localhost:7687"</span>, <span class="s">"neo4j"</span>, <span class="s">"password123"</span>)
+    <span class="k">await</span> sm.connect()
+    <span class="k">await</span> sm.store(SAMPLE)
+
+    neighbors = <span class="k">await</span> sm.get_neighbors(<span class="s">"svc:auth-service"</span>)
+    ids = [n[<span class="s">"id"</span>] <span class="k">for</span> n <span class="k">in</span> neighbors]
+    <span class="k">assert</span> <span class="s">"db:postgres-primary"</span> <span class="k">in</span> ids
+    <span class="k">await</span> sm.disconnect()
+
+<span class="k">@pytest.mark.asyncio</span>
+<span class="k">async def</span> <span class="f">test_blast_radius</span>():
+    sm = SemanticMemory(<span class="s">"bolt://localhost:7687"</span>, <span class="s">"neo4j"</span>, <span class="s">"password123"</span>)
+    <span class="k">await</span> sm.connect()
+    <span class="k">await</span> sm.store(SAMPLE)
+
+    blast = <span class="k">await</span> sm.get_blast_radius(<span class="s">"db:postgres-primary"</span>)
+    ids = [b[<span class="s">"id"</span>] <span class="k">for</span> b <span class="k">in</span> blast]
+    <span class="k">assert</span> <span class="s">"svc:auth-service"</span> <span class="k">in</span> ids  <span class="c"># auth-service is in blast radius of db</span>
+    <span class="k">await</span> sm.disconnect()</pre></div>
+</div>
+
+<div class="tp" id="tu3">
+<div class="cw"><div class="cl">bash</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button>pip install pytest pytest-asyncio --break-system-packages
+
+<span class="c"># Run all memory tests</span>
+pytest tests/test_working_memory.py \
+       tests/test_episodic_memory.py \
+       tests/test_semantic_memory.py \
+       -v --asyncio-mode=auto</pre></div>
+<div class="test-out">
+<span class="to-info">collected 8 items</span>
+
+<span class="to-pass">PASSED</span> tests/test_working_memory.py::test_store_and_retrieve
+<span class="to-pass">PASSED</span> tests/test_working_memory.py::test_entity_state_written
+<span class="to-pass">PASSED</span> tests/test_working_memory.py::test_critical_filter
+<span class="to-pass">PASSED</span> tests/test_episodic_memory.py::test_store_and_query_by_entity
+<span class="to-pass">PASSED</span> tests/test_episodic_memory.py::test_idempotent_insert
+<span class="to-pass">PASSED</span> tests/test_episodic_memory.py::test_query_by_severity
+<span class="to-pass">PASSED</span> tests/test_semantic_memory.py::test_entity_nodes_created
+<span class="to-pass">PASSED</span> tests/test_semantic_memory.py::test_neighbors_found
+<span class="to-pass">PASSED</span> tests/test_semantic_memory.py::test_blast_radius
+
+<span class="to-info">======================== 9 passed in 2.41s ========================</span>
+</div>
+</div>
+</section>
+
+<!-- ═══════════════════════════ 9 · INTEGRATION TESTS ═══════════════════════════ -->
+<section class="section" id="s-test2">
+<div class="sh">
+  <div class="sh-phase">Test 2 · Router test</div>
+  <h1 class="sh-title">Integration test — router routes correctly</h1>
+  <p class="sh-desc">Test the router itself: push an event through it manually and verify it lands in all the right layers with correct data. No Kafka needed — call <code>_route()</code> directly.</p>
+</div>
+
+<div class="cw"><div class="cl">tests/test_memory_router.py</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button><span class="k">import</span> pytest
+<span class="k">from</span> memory.router  <span class="k">import</span> MemoryRouter
+<span class="k">from</span> memory.working <span class="k">import</span> WorkingMemory
+<span class="k">from</span> memory.episodic <span class="k">import</span> EpisodicMemory
+<span class="k">from</span> memory.semantic <span class="k">import</span> SemanticMemory
+
+CRITICAL_EVENT = {
+    <span class="s">"event_id"</span>:    <span class="s">"evt_route_test_001"</span>,
+    <span class="s">"event_type"</span>:  <span class="s">"connection_pool_exhausted"</span>,
+    <span class="s">"severity"</span>:    <span class="s">"critical"</span>,
+    <span class="s">"source_id"</span>:   <span class="s">"svc:auth-service"</span>,
+    <span class="s">"source_type"</span>: <span class="s">"log"</span>,
+    <span class="s">"confidence"</span>:  <span class="n">0.95</span>,
+    <span class="s">"timestamp"</span>:   <span class="s">"2024-01-15T14:23:11Z"</span>,
+    <span class="s">"ingested_at"</span>: <span class="s">"2024-01-15T14:23:12Z"</span>,
+    <span class="s">"payload"</span>:     {<span class="s">"pool_size"</span>: <span class="n">20</span>, <span class="s">"waiting"</span>: <span class="n">47</span>},
+    <span class="s">"entity_refs"</span>: [<span class="s">"svc:auth-service"</span>, <span class="s">"db:postgres-primary"</span>],
+    <span class="s">"tags"</span>:        [<span class="s">"database"</span>, <span class="s">"critical"</span>],
+}
+
+INFO_EVENT = {
+    <span class="s">"event_id"</span>:    <span class="s">"evt_route_test_002"</span>,
+    <span class="s">"event_type"</span>:  <span class="s">"service_health_restored"</span>,
+    <span class="s">"severity"</span>:    <span class="s">"info"</span>,
+    <span class="s">"source_id"</span>:   <span class="s">"svc:order-service"</span>,
+    <span class="s">"source_type"</span>: <span class="s">"api"</span>,
+    <span class="s">"confidence"</span>:  <span class="n">0.97</span>,
+    <span class="s">"timestamp"</span>:   <span class="s">"2024-01-15T14:25:00Z"</span>,
+    <span class="s">"ingested_at"</span>: <span class="s">"2024-01-15T14:25:01Z"</span>,
+    <span class="s">"payload"</span>:     {<span class="s">"latency_ms"</span>: <span class="n">42</span>},
+    <span class="s">"entity_refs"</span>: [<span class="s">"svc:order-service"</span>],
+    <span class="s">"tags"</span>:        [<span class="s">"api"</span>],
+}
+
+<span class="k">@pytest.mark.asyncio</span>
+<span class="k">async def</span> <span class="f">test_critical_routes_to_all_three_layers</span>():
+    router = MemoryRouter()
+    <span class="k">await</span> router.start()
+    <span class="k">await</span> router._route(CRITICAL_EVENT)  <span class="c"># call route directly, skip Kafka</span>
+
+    <span class="c"># 1. Check working memory (Redis)</span>
+    events = <span class="k">await</span> router.working.get_recent_events(<span class="n">10</span>)
+    assert any(e[<span class="s">"event_id"</span>] == <span class="s">"evt_route_test_001"</span> <span class="k">for</span> e <span class="k">in</span> events), \
+        <span class="s">"CRITICAL event not found in working memory"</span>
+
+    <span class="c"># 2. Check episodic memory (TimescaleDB)</span>
+    rows = <span class="k">await</span> router.episodic.query_by_entity(<span class="s">"svc:auth-service"</span>, hours=<span class="n">48</span>)
+    assert any(r[<span class="s">"event_id"</span>] == <span class="s">"evt_route_test_001"</span> <span class="k">for</span> r <span class="k">in</span> rows), \
+        <span class="s">"CRITICAL event not found in episodic memory"</span>
+
+    <span class="c"># 3. Check semantic memory (Neo4j)</span>
+    neighbors = <span class="k">await</span> router.semantic.get_neighbors(<span class="s">"svc:auth-service"</span>)
+    neighbor_ids = [n[<span class="s">"id"</span>] <span class="k">for</span> n <span class="k">in</span> neighbors]
+    assert <span class="s">"db:postgres-primary"</span> <span class="k">in</span> neighbor_ids, \
+        <span class="s">"db:postgres-primary not found as neighbor of svc:auth-service"</span>
+
+    <span class="k">await</span> router.stop()
+
+<span class="k">@pytest.mark.asyncio</span>
+<span class="k">async def</span> <span class="f">test_info_skips_working_memory</span>():
+    <span class="k">"""INFO events must NOT go to working memory."""</span>
+    router = MemoryRouter()
+    <span class="k">await</span> router.start()
+    <span class="k">await</span> router._route(INFO_EVENT)
+
+    <span class="c"># Should be in episodic</span>
+    rows = <span class="k">await</span> router.episodic.query_by_entity(<span class="s">"svc:order-service"</span>, hours=<span class="n">48</span>)
+    assert any(r[<span class="s">"event_id"</span>] == <span class="s">"evt_route_test_002"</span> <span class="k">for</span> r <span class="k">in</span> rows)
+
+    <span class="c"># Should NOT be in working memory</span>
+    w_events = <span class="k">await</span> router.working.get_recent_events(<span class="n">100</span>)
+    assert <span class="k">not</span> any(e[<span class="s">"event_id"</span>] == <span class="s">"evt_route_test_002"</span> <span class="k">for</span> e <span class="k">in</span> w_events), \
+        <span class="s">"INFO event should NOT be in working memory"</span>
+
+    <span class="k">await</span> router.stop()</pre></div>
+
+<div class="cw"><div class="cl">bash</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button>pytest tests/test_memory_router.py -v --asyncio-mode=auto</pre></div>
+<div class="test-out">
+<span class="to-pass">PASSED</span> test_critical_routes_to_all_three_layers
+<span class="to-pass">PASSED</span> test_info_skips_working_memory
+<span class="to-info">======================== 2 passed in 1.83s ========================</span>
+</div>
+</section>
+
+<!-- ═══════════════════════════ 10 · LIVE PIPELINE TEST ═══════════════════════════ -->
+<section class="section" id="s-test3">
+<div class="sh">
+  <div class="sh-phase">Test 3 · Full end-to-end</div>
+  <h1 class="sh-title">Live pipeline test</h1>
+  <p class="sh-desc">Run the complete chain: publish raw logs → LogAdapter normalizes → cognitive.events → MemoryRouter fans to all layers → verify each layer using the Memory API. Keep all four terminals open simultaneously.</p>
+</div>
+
+<span class="badge ba"><span class="bd"></span>All containers required · 4 terminals</span>
+
+<div class="steps" style="margin-top:20px">
+  <div class="step hi">
+    <div class="sn">1</div><div class="sl"></div>
+    <div class="sb2">
+      <div class="st">Terminal 1 — start the Memory Router</div>
+      <div class="cw"><div class="cl">bash · terminal 1</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button><span class="k">python</span> - &lt;&lt;<span class="s">'EOF'</span>
+<span class="k">import</span> asyncio, logging
+logging.basicConfig(level=logging.INFO,
+    format=<span class="s">'%(asctime)s [%(name)s] %(message)s'</span>)
+<span class="k">from</span> memory.router <span class="k">import</span> MemoryRouter
+asyncio.run(MemoryRouter().run())
+<span class="s">EOF</span></pre></div>
+      <div class="call call-info"><span class="ci">ℹ</span><span>You should see: <code>Memory router connected to all layers</code>. The router is now waiting for events on <code>cognitive.events</code>.</span></div>
+    </div>
+  </div>
+  <div class="step hi">
+    <div class="sn">2</div><div class="sl"></div>
+    <div class="sb2">
+      <div class="st">Terminal 2 — start the Memory API</div>
+      <div class="cw"><div class="cl">bash · terminal 2</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button>uvicorn memory.api:app --port 8090 --reload</pre></div>
+    </div>
+  </div>
+  <div class="step hi">
+    <div class="sn">3</div><div class="sl"></div>
+    <div class="sb2">
+      <div class="st">Terminal 3 — publish test events (simulates full perception pipeline)</div>
+      <div class="sd">This publishes events directly to <code>cognitive.events</code> — same format the LogAdapter would produce. Covers all severity levels and multiple entity combinations.</div>
+      <div class="cw"><div class="cl">python · terminal 3</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button><span class="k">import</span> asyncio, json
+<span class="k">from</span> aiokafka <span class="k">import</span> AIOKafkaProducer
+
+TEST_EVENTS = [
+    <span class="c"># CRITICAL — goes to working + episodic + semantic</span>
+    {<span class="s">"event_id"</span>:<span class="s">"evt_e2e_001"</span>,<span class="s">"event_type"</span>:<span class="s">"connection_pool_exhausted"</span>,
+     <span class="s">"severity"</span>:<span class="s">"critical"</span>,<span class="s">"source_id"</span>:<span class="s">"svc:auth-service"</span>,
+     <span class="s">"source_type"</span>:<span class="s">"log"</span>,<span class="s">"confidence"</span>:<span class="n">0.95</span>,
+     <span class="s">"timestamp"</span>:<span class="s">"2024-01-15T14:23:11Z"</span>,
+     <span class="s">"ingested_at"</span>:<span class="s">"2024-01-15T14:23:12Z"</span>,
+     <span class="s">"payload"</span>:{<span class="s">"pool_size"</span>:<span class="n">20</span>,<span class="s">"waiting"</span>:<span class="n">47</span>},
+     <span class="s">"entity_refs"</span>:[<span class="s">"svc:auth-service"</span>,<span class="s">"db:postgres-primary"</span>],
+     <span class="s">"tags"</span>:[<span class="s">"database"</span>,<span class="s">"critical"</span>]},
+
+    <span class="c"># HIGH — goes to working + episodic + semantic</span>
+    {<span class="s">"event_id"</span>:<span class="s">"evt_e2e_002"</span>,<span class="s">"event_type"</span>:<span class="s">"cpu_spike"</span>,
+     <span class="s">"severity"</span>:<span class="s">"high"</span>,<span class="s">"source_id"</span>:<span class="s">"metric:node-01"</span>,
+     <span class="s">"source_type"</span>:<span class="s">"metric"</span>,<span class="s">"confidence"</span>:<span class="n">0.98</span>,
+     <span class="s">"timestamp"</span>:<span class="s">"2024-01-15T14:24:00Z"</span>,
+     <span class="s">"ingested_at"</span>:<span class="s">"2024-01-15T14:24:01Z"</span>,
+     <span class="s">"payload"</span>:{<span class="s">"cpu_percent"</span>:<span class="n">87.3</span>},
+     <span class="s">"entity_refs"</span>:[<span class="s">"metric:node-01"</span>,<span class="s">"svc:api-gateway"</span>],
+     <span class="s">"tags"</span>:[<span class="s">"metric"</span>,<span class="s">"cpu"</span>]},
+
+    <span class="c"># INFO — goes to episodic + semantic ONLY (not working)</span>
+    {<span class="s">"event_id"</span>:<span class="s">"evt_e2e_003"</span>,<span class="s">"event_type"</span>:<span class="s">"service_health_restored"</span>,
+     <span class="s">"severity"</span>:<span class="s">"info"</span>,<span class="s">"source_id"</span>:<span class="s">"svc:order-service"</span>,
+     <span class="s">"source_type"</span>:<span class="s">"api"</span>,<span class="s">"confidence"</span>:<span class="n">0.97</span>,
+     <span class="s">"timestamp"</span>:<span class="s">"2024-01-15T14:25:00Z"</span>,
+     <span class="s">"ingested_at"</span>:<span class="s">"2024-01-15T14:25:01Z"</span>,
+     <span class="s">"payload"</span>:{<span class="s">"latency_ms"</span>:<span class="n">42</span>},
+     <span class="s">"entity_refs"</span>:[<span class="s">"svc:order-service"</span>,<span class="s">"ext:stripe"</span>],
+     <span class="s">"tags"</span>:[<span class="s">"api"</span>]},
+
+    <span class="c"># SECURITY — high severity with IP entity</span>
+    {<span class="s">"event_id"</span>:<span class="s">"evt_e2e_004"</span>,<span class="s">"event_type"</span>:<span class="s">"sql_injection_attempt"</span>,
+     <span class="s">"severity"</span>:<span class="s">"critical"</span>,<span class="s">"source_id"</span>:<span class="s">"security:cloudflare"</span>,
+     <span class="s">"source_type"</span>:<span class="s">"security_event"</span>,<span class="s">"confidence"</span>:<span class="n">0.92</span>,
+     <span class="s">"timestamp"</span>:<span class="s">"2024-01-15T14:26:00Z"</span>,
+     <span class="s">"ingested_at"</span>:<span class="s">"2024-01-15T14:26:01Z"</span>,
+     <span class="s">"payload"</span>:{<span class="s">"ip"</span>:<span class="s">"1.2.3.4"</span>,<span class="s">"uri"</span>:<span class="s">"/api/users?id=1 OR 1=1"</span>},
+     <span class="s">"entity_refs"</span>:[<span class="s">"security:cloudflare"</span>,<span class="s">"security:ip-1-2-3-4"</span>],
+     <span class="s">"tags"</span>:[<span class="s">"security"</span>,<span class="s">"waf"</span>]},
+]
+
+<span class="k">async def</span> <span class="f">publish</span>():
+    p = AIOKafkaProducer(bootstrap_servers=<span class="s">"localhost:9092"</span>)
+    <span class="k">await</span> p.start()
+    <span class="k">for</span> e <span class="k">in</span> TEST_EVENTS:
+        <span class="k">await</span> p.send_and_wait(<span class="s">"cognitive.events"</span>, json.dumps(e).encode())
+        <span class="k">print</span>(<span class="s">f"Published: {e['event_type']} ({e['severity']})"</span>)
+    <span class="k">await</span> p.stop()
+    <span class="k">print</span>(<span class="s">"Done. Watch terminal 1 for routing logs."</span>)
+
+asyncio.run(publish())</pre></div>
+    </div>
+  </div>
+  <div class="step">
+    <div class="sn">4</div>
+    <div class="sb2">
+      <div class="st">Terminal 4 — verify all layers received data</div>
+      <div class="cw"><div class="cl">bash · terminal 4 · verify working memory</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button><span class="c"># Should show CRITICAL and HIGH events, but NOT INFO</span>
+curl -s http://localhost:8090/memory/working/recent | \
+  python -m json.tool | grep event_type</pre></div>
+      <div class="test-out">
+<span class="to-key">"event_type"</span>: <span class="to-val">"connection_pool_exhausted"</span>
+<span class="to-key">"event_type"</span>: <span class="to-val">"cpu_spike"</span>
+<span class="to-key">"event_type"</span>: <span class="to-val">"sql_injection_attempt"</span>
+<span class="to-info">← service_health_restored is NOT here (it's INFO severity)</span>
+</div>
+
+      <div class="cw"><div class="cl">bash · verify episodic memory</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button><span class="c"># Should show ALL 4 events including INFO</span>
+curl -s "http://localhost:8090/memory/episodic/severity/info?hours=2" | \
+  python -m json.tool | grep event_type</pre></div>
+      <div class="test-out">
+<span class="to-key">"event_type"</span>: <span class="to-val">"service_health_restored"</span>
+<span class="to-info">← INFO event IS in episodic (everything goes here)</span>
+</div>
+
+      <div class="cw"><div class="cl">bash · verify knowledge graph</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button><span class="c"># Blast radius of postgres — what else is connected?</span>
+curl -s "http://localhost:8090/memory/graph/blast-radius/db:postgres-primary" | \
+  python -m json.tool</pre></div>
+      <div class="test-out">
+[
+  { <span class="to-key">"id"</span>: <span class="to-val">"svc:auth-service"</span>,  <span class="to-key">"etype"</span>: <span class="to-val">"svc"</span>, <span class="to-key">"hops"</span>: <span class="to-val">1</span> }
+]
+<span class="to-info">← auth-service is 1 hop from postgres</span>
+</div>
+
+      <div class="cw"><div class="cl">bash · graph stats</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button>curl -s http://localhost:8090/memory/graph/stats | python -m json.tool</pre></div>
+      <div class="test-out">
+{ <span class="to-key">"entity_count"</span>: <span class="to-val">7</span> }
+<span class="to-info">← 7 entity nodes auto-created from entity_refs in 4 events</span>
+</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════════ 11 · VERIFY & CONSOLE ═══════════════════════════ -->
+<section class="section" id="s-verify">
+<div class="sh">
+  <div class="sh-phase">Verification</div>
+  <h1 class="sh-title">Verify with visual tools</h1>
+  <p class="sh-desc">Three browser UIs give you a live visual view into all memory layers simultaneously. Open all three while running the live pipeline test.</p>
+</div>
+
+<div class="g2">
+  <div class="gc">
+    <div class="gc-t"><span style="color:var(--green)">●</span> Redpanda Console</div>
+    <div class="gc-d">Watch <code>cognitive.events</code> topic in real time. Verify events are arriving and their JSON is correct before they hit the router. Open at <code>http://localhost:8888</code></div>
+  </div>
+  <div class="gc">
+    <div class="gc-t"><span style="color:var(--acc)">●</span> Memory API docs</div>
+    <div class="gc-d">Swagger UI for all 12 memory endpoints. Try queries interactively. Open at <code>http://localhost:8090/docs</code></div>
+  </div>
+  <div class="gc">
+    <div class="gc-t"><span style="color:var(--purple)">●</span> Neo4j Browser</div>
+    <div class="gc-d">Visual knowledge graph. Run <code>MATCH (n)-[r]->(m) RETURN n,r,m LIMIT 50</code> to see your entity graph auto-built from events. Open at <code>http://localhost:7474</code></div>
+  </div>
+  <div class="gc">
+    <div class="gc-t"><span style="color:var(--amber)">●</span> TimescaleDB</div>
+    <div class="gc-d">Query directly via psql: <code>SELECT event_type, count(*) FROM cognitive_events GROUP BY event_type ORDER BY count DESC;</code></div>
+  </div>
+</div>
+
+<h2 style="font-size:15px;font-weight:700;margin:20px 0 10px">Neo4j Cypher queries to run after events flow</h2>
+<div class="cw"><div class="cl">neo4j browser · http://localhost:7474</div>
+<pre><button class="cpb" onclick="cp(this)">copy</button><span class="c">// See your full entity graph</span>
+<span class="k">MATCH</span> (n)-[r]->(m) <span class="k">RETURN</span> n,r,m <span class="k">LIMIT</span> <span class="n">50</span>
+
+<span class="c">// Find all entities connected to auth-service</span>
+<span class="k">MATCH</span> (a:Entity {id: <span class="s">"svc:auth-service"</span>})-[r*1..2]-(b:Entity)
+<span class="k">RETURN</span> DISTINCT b.id, b.entity_type, b.last_event
+
+<span class="c">// Find the most connected entities (most event traffic)</span>
+<span class="k">MATCH</span> (e:Entity)-[r:CONNECTED_VIA]-()
+<span class="k">RETURN</span> e.id, e.entity_type, sum(r.event_count) <span class="k">AS</span> traffic
+<span class="k">ORDER BY</span> traffic <span class="k">DESC LIMIT</span> <span class="n">10</span>
+
+<span class="c">// Blast radius: what fails if postgres goes down?</span>
+<span class="k">MATCH</span> (db:Entity {id: <span class="s">"db:postgres-primary"</span>})-[*1..3]-(affected)
+<span class="k">RETURN DISTINCT</span> affected.id, affected.entity_type</pre></div>
+
+<div class="call call-ok"><span class="ci">✓</span><span>At this point your memory system is fully operational. The perception layer produces events, the router fans them to all four databases, the Memory API serves queries, and Neo4j visually shows your environment's entity graph. You are ready for Phase 4: the World Model.</span></div>
+
+<hr>
+<h2 style="font-size:15px;font-weight:700;margin-bottom:12px">What connects to what — full picture</h2>
+<div class="conn-box">
+  <div class="conn-row">
+    <div class="cnode src">cognitive.events</div>
+    <div class="carr">→</div>
+    <div class="cdesc">Kafka topic. Memory router consumes from here with group_id <code>memory-router</code>. Perception layer publishes here — zero changes needed to existing code.</div>
+  </div>
+  <div class="conn-row">
+    <div class="cnode">MemoryRouter</div>
+    <div class="carr">→</div>
+    <div class="cdesc">All writes happen in parallel via <code>asyncio.gather</code>. Manual Kafka commit after all writes succeed. Failure in one layer is logged but doesn't block others.</div>
+  </div>
+  <div class="conn-row">
+    <div class="cnode">Redis :6379</div>
+    <div class="carr">→</div>
+    <div class="cdesc">Working memory. HIGH + CRITICAL events only. TTL 15–30 min. Entity state hashes. Time-ordered sorted set for recent event window.</div>
+  </div>
+  <div class="conn-row">
+    <div class="cnode">TimescaleDB :5432</div>
+    <div class="carr">→</div>
+    <div class="cdesc">Episodic memory. Every event, no filter. Hypertable partitioned by timestamp. ON CONFLICT DO NOTHING for idempotent writes.</div>
+  </div>
+  <div class="conn-row">
+    <div class="cnode">Neo4j :7687</div>
+    <div class="carr">→</div>
+    <div class="cdesc">Semantic memory. MERGE nodes for each entity_ref. MERGE edges between entity pairs. Edge weight increments with each event. Fully idempotent.</div>
+  </div>
+  <div class="conn-row">
+    <div class="cnode">Memory API :8090</div>
+    <div class="carr">→</div>
+    <div class="cdesc">FastAPI server. Queries all three layers. The reasoning engine (Phase 4) will call this. Swagger UI at /docs for manual inspection.</div>
+  </div>
+</div>
+</section>
+
+</main>
+</div>
+
+<script>
+function nav(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.sb-item').forEach(s=>s.classList.remove('on'));
+  document.getElementById('s-'+id).classList.add('on');
+  document.querySelectorAll('.sb-item').forEach(el=>{
+    if(el.getAttribute('onclick')&&el.getAttribute('onclick').includes("'"+id+"'"))
+      el.classList.add('on');
+  });
+  window.scrollTo(0,0);
+}
+function cp(btn){
+  const pre=btn.parentElement;
+  const text=Array.from(pre.childNodes)
+    .filter(n=>n.nodeType===Node.TEXT_NODE||(n.nodeType===Node.ELEMENT_NODE&&n.tagName!=='BUTTON'))
+    .map(n=>n.textContent).join('').trim();
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='copied ✓';btn.classList.add('ok');
+    setTimeout(()=>{btn.textContent='copy';btn.classList.remove('ok');},1800);
+  });
+}
+function toggleLayer(i){
+  const lc=document.getElementById('lc'+i);
+  const ld=document.getElementById('ld'+i);
+  const wasOn=lc.classList.contains('on');
+  document.querySelectorAll('.lc').forEach(c=>c.classList.remove('on'));
+  document.querySelectorAll('.lc-detail').forEach(d=>d.classList.remove('on'));
+  if(!wasOn){lc.classList.add('on');ld.classList.add('on');}
+}
+function tab(btn,id){
+  const parent=btn.parentElement;
+  parent.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const section=parent.nextElementSibling.parentElement||btn.closest('.section');
+  section.querySelectorAll('.tp').forEach(p=>p.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+</script>
+</body>
+</html>

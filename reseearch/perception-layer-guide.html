@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cognitive Perception Layer — Testing Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & BASE ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+:root {
+  --bg:       #0a0a0c;
+  --bg1:      #0f0f12;
+  --bg2:      #141418;
+  --bg3:      #1a1a20;
+  --bg4:      #202028;
+  --line:     #ffffff0f;
+  --line2:    #ffffff18;
+  --text:     #e8e8f0;
+  --text2:    #9898b0;
+  --text3:    #55556a;
+  --accent:   #7c6af7;
+  --accent2:  #a594ff;
+  --green:    #3ecf8e;
+  --green-bg: #3ecf8e12;
+  --amber:    #f0a429;
+  --amber-bg: #f0a42912;
+  --red:      #f0604a;
+  --red-bg:   #f0604a12;
+  --blue:     #52a8ff;
+  --blue-bg:  #52a8ff10;
+  --cyan:     #3ecfcf;
+  --purple:   #bf7af0;
+  --font-ui:  'Syne', sans-serif;
+  --font-mono:'JetBrains Mono', monospace;
+  --r:        6px;
+  --r2:       10px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── SCROLLBAR ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg1); }
+::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* ── LAYOUT ────────────────────────────────────────────────── */
+.shell {
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  grid-template-rows: 52px 1fr;
+  min-height: 100vh;
+}
+
+/* ── TOPBAR ────────────────────────────────────────────────── */
+.topbar {
+  grid-column: 1 / -1;
+  background: var(--bg1);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.logo-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+  animation: pulse 2.5s infinite;
+}
+@keyframes pulse {
+  0%,100% { box-shadow: 0 0 6px var(--accent); opacity: 1; }
+  50% { box-shadow: 0 0 18px var(--accent); opacity: .7; }
+}
+.topbar-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.topbar-sep { flex: 1; }
+.topbar-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--line2);
+  color: var(--text3);
+}
+.topbar-badge span { color: var(--green); }
+
+/* ── SIDEBAR ───────────────────────────────────────────────── */
+.sidebar {
+  background: var(--bg1);
+  border-right: 1px solid var(--line);
+  padding: 20px 0;
+  position: sticky;
+  top: 52px;
+  height: calc(100vh - 52px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sb-group {
+  padding: 16px 16px 6px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.sb-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all .15s;
+  font-size: 12.5px;
+  color: var(--text2);
+  text-decoration: none;
+}
+.sb-item:hover { background: var(--bg2); color: var(--text); }
+.sb-item.active {
+  background: var(--bg2);
+  border-left-color: var(--accent);
+  color: var(--text);
+}
+.sb-icon {
+  width: 16px; height: 16px;
+  opacity: .6;
+  flex-shrink: 0;
+}
+.sb-item.active .sb-icon { opacity: 1; }
+.sb-num {
+  width: 18px; height: 18px;
+  border-radius: 4px;
+  background: var(--bg3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text3);
+  flex-shrink: 0;
+}
+.sb-item.active .sb-num {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ── MAIN CONTENT ──────────────────────────────────────────── */
+.main {
+  padding: 32px 40px;
+  overflow-y: auto;
+  max-width: 960px;
+}
+
+/* ── SECTIONS ──────────────────────────────────────────────── */
+.section {
+  display: none;
+  animation: fadein .25s ease;
+}
+.section.active { display: block; }
+@keyframes fadein { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+/* ── SECTION HEADER ────────────────────────────────────────── */
+.section-header {
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.section-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+  margin-bottom: 10px;
+}
+.section-desc {
+  font-size: 13.5px;
+  color: var(--text2);
+  line-height: 1.7;
+  max-width: 620px;
+}
+
+/* ── BADGES ────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  padding: 3px 9px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+.badge-green { background: var(--green-bg); color: var(--green); border: 1px solid #3ecf8e30; }
+.badge-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid #f0a42930; }
+.badge-red   { background: var(--red-bg);   color: var(--red);   border: 1px solid #f0604a30; }
+.badge-blue  { background: var(--blue-bg);  color: var(--blue);  border: 1px solid #52a8ff30; }
+.badge-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+/* ── CALLOUTS ──────────────────────────────────────────────── */
+.callout {
+  border-radius: var(--r2);
+  padding: 12px 16px;
+  margin: 12px 0;
+  font-size: 13px;
+  line-height: 1.6;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.callout-ok  { background: var(--green-bg); border: 1px solid #3ecf8e25; color: #8eedc7; }
+.callout-warn{ background: var(--amber-bg); border: 1px solid #f0a42925; color: #f5c976; }
+.callout-info{ background: var(--blue-bg);  border: 1px solid #52a8ff25; color: #93c8ff; }
+.callout-icon{ font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+
+/* ── CODE BLOCKS ───────────────────────────────────────────── */
+.code-wrap {
+  position: relative;
+  margin: 10px 0;
+}
+.code-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 7px 14px 0;
+  background: var(--bg2);
+  border: 1px solid var(--line2);
+  border-bottom: none;
+  border-radius: var(--r) var(--r) 0 0;
+  display: inline-block;
+  margin-bottom: -1px;
+}
+pre {
+  background: var(--bg2);
+  border: 1px solid var(--line2);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.8;
+  color: #c8c8e0;
+  overflow-x: auto;
+  position: relative;
+}
+.code-label + pre { border-radius: 0 var(--r) var(--r) var(--r); }
+.cp-btn {
+  position: absolute;
+  top: 10px; right: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 4px 10px;
+  background: var(--bg3);
+  border: 1px solid var(--line2);
+  border-radius: 4px;
+  color: var(--text3);
+  cursor: pointer;
+  transition: all .15s;
+  letter-spacing: .05em;
+}
+.cp-btn:hover { background: var(--bg4); color: var(--text2); }
+.cp-btn.done { color: var(--green); border-color: #3ecf8e40; }
+
+/* syntax highlight helpers */
+.k { color: var(--purple); }
+.s { color: var(--green); }
+.n { color: var(--amber); }
+.c { color: var(--text3); font-style: italic; }
+.cmd { color: var(--cyan); }
+.flag { color: var(--blue); }
+
+/* ── STEPS ─────────────────────────────────────────────────── */
+.steps { display: flex; flex-direction: column; gap: 0; margin: 16px 0; }
+.step {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 0 16px;
+  position: relative;
+}
+.step:not(:last-child) .step-line {
+  position: absolute;
+  left: 15px;
+  top: 32px;
+  bottom: -8px;
+  width: 1px;
+  background: var(--line2);
+}
+.step-num {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--bg3);
+  border: 1px solid var(--line2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.step.active-step .step-num {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 16px #7c6af750;
+}
+.step-body { padding: 4px 0 20px; }
+.step-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.step-desc {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.65;
+  margin-bottom: 8px;
+}
+code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  background: var(--bg3);
+  border: 1px solid var(--line2);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--accent2);
+}
+
+/* ── PHASE CARDS (overview) ────────────────────────────────── */
+.phase-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin: 20px 0;
+}
+.phase-card {
+  background: var(--bg2);
+  border: 1px solid var(--line2);
+  border-radius: var(--r2);
+  padding: 16px;
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+  overflow: hidden;
+}
+.phase-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity .2s;
+}
+.phase-card:hover { border-color: var(--line2); background: var(--bg3); }
+.phase-card:hover::before { opacity: 1; }
+.phase-card.req-docker::before { background: var(--amber); }
+.pc-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text3);
+  margin-bottom: 8px;
+}
+.pc-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 5px;
+}
+.pc-desc { font-size: 12px; color: var(--text2); line-height: 1.5; margin-bottom: 10px; }
+
+/* ── ADAPTER TABS ──────────────────────────────────────────── */
+.adapter-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.at-btn {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  border: 1px solid var(--line2);
+  border-radius: 5px;
+  background: var(--bg2);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .15s;
+}
+.at-btn:hover { background: var(--bg3); color: var(--text); }
+.at-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.adapter-pane { display: none; }
+.adapter-pane.active { display: block; animation: fadein .2s ease; }
+
+/* ── FLOW DIAGRAM ──────────────────────────────────────────── */
+.flow-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.flow-node {
+  background: var(--bg3);
+  border: 1px solid var(--line2);
+  border-radius: var(--r);
+  padding: 8px 14px;
+  font-size: 12px;
+  text-align: center;
+}
+.flow-node .fn-label { font-size: 9px; color: var(--text3); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 2px; }
+.flow-node .fn-val { font-weight: 600; color: var(--text); }
+.flow-node.highlight { border-color: var(--accent); background: #7c6af710; }
+.flow-arrow {
+  color: var(--text3);
+  padding: 0 8px;
+  font-size: 18px;
+}
+
+/* ── CONSOLE MOCKUP ────────────────────────────────────────── */
+.console-shell {
+  background: var(--bg1);
+  border: 1px solid var(--line2);
+  border-radius: var(--r2);
+  overflow: hidden;
+  margin: 20px 0;
+}
+.console-topbar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--line);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.console-dots { display: flex; gap: 5px; }
+.cd { width: 10px; height: 10px; border-radius: 50%; }
+.cd-r { background: #ff5f57; }
+.cd-y { background: #febc2e; }
+.cd-g { background: #28c840; }
+.console-title { font-size: 12px; color: var(--text2); flex: 1; text-align: center; font-family: var(--font-mono); }
+.console-live { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--green); font-family: var(--font-mono); }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 1.5s infinite; }
+.console-inner { display: grid; grid-template-columns: 160px 1fr; }
+.console-sidebar {
+  background: #0d0d10;
+  border-right: 1px solid var(--line);
+  padding: 12px 0;
+}
+.cs-section { font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); padding: 10px 14px 4px; }
+.cs-item {
+  padding: 7px 14px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transition: background .1s;
+}
+.cs-item:hover { background: var(--bg2); }
+.cs-item.active { background: var(--bg3); color: var(--text); }
+.cs-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+.cs-item.active .cs-dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.console-main { display: flex; flex-direction: column; }
+.console-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-bottom: 1px solid var(--line);
+}
+.cstat {
+  padding: 10px 14px;
+  border-right: 1px solid var(--line);
+}
+.cstat:last-child { border-right: none; }
+.cstat-label { font-size: 10px; color: var(--text3); margin-bottom: 3px; font-family: var(--font-mono); }
+.cstat-val { font-size: 18px; font-weight: 700; font-family: var(--font-mono); color: var(--text); }
+.msg-table { flex: 1; }
+.msg-header {
+  display: grid;
+  grid-template-columns: 70px 1fr 90px;
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.msg-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 90px;
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  transition: background .1s;
+  align-items: center;
+}
+.msg-row:hover { background: var(--bg2); }
+.msg-row.selected { background: #7c6af710; }
+.msg-offset { font-family: var(--font-mono); font-size: 11px; color: var(--text3); }
+.msg-preview { font-family: var(--font-mono); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text2); }
+.msg-preview .ev-type { color: var(--accent2); }
+.msg-preview .ev-sev { }
+.sev-critical { color: var(--red); }
+.sev-high     { color: var(--amber); }
+.sev-medium   { color: var(--blue); }
+.sev-info     { color: var(--text3); }
+.msg-time { font-family: var(--font-mono); font-size: 10px; color: var(--text3); text-align: right; }
+.detail-panel {
+  background: #0d0d10;
+  border-top: 1px solid var(--line);
+  padding: 12px 14px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.9;
+}
+.jp-k  { color: var(--purple); }
+.jp-s  { color: var(--green); }
+.jp-n  { color: var(--amber); }
+.jp-a  { color: var(--text2); }
+.jp-b  { color: var(--red); }
+
+/* ── CONNECTION FLOW ───────────────────────────────────────── */
+.conn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 16px 0;
+}
+.conn-card {
+  background: var(--bg2);
+  border: 1px solid var(--line2);
+  border-radius: var(--r2);
+  padding: 14px 16px;
+}
+.conn-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.conn-desc { font-size: 12px; color: var(--text2); line-height: 1.55; }
+
+/* ── DIVIDER ───────────────────────────────────────────────── */
+.divider {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 24px 0;
+}
+
+/* ── ENDPOINT GRID ─────────────────────────────────────────── */
+.ep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+.ep-card {
+  background: var(--bg2);
+  border: 1px solid var(--line2);
+  border-radius: var(--r);
+  padding: 10px 13px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.ep-card:hover, .ep-card.active { border-color: var(--accent); background: #7c6af710; }
+.ep-path { font-family: var(--font-mono); font-size: 11.5px; color: var(--accent2); margin-bottom: 3px; }
+.ep-who { font-size: 11px; color: var(--text3); }
+.ep-detail { display: none; }
+.ep-detail.active { display: block; animation: fadein .2s ease; }
+
+/* ── PROGRESS TRACKER ──────────────────────────────────────── */
+.progress-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 20px 0;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.pb-step {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+}
+.pb-node {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--line2);
+  background: var(--bg2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text3);
+  cursor: pointer;
+  transition: all .2s;
+  flex-shrink: 0;
+}
+.pb-node.done { background: var(--green-bg); border-color: #3ecf8e40; color: var(--green); }
+.pb-node.current { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 16px #7c6af750; }
+.pb-label {
+  font-size: 11px;
+  color: var(--text3);
+  margin: 4px 4px 0;
+  white-space: nowrap;
+  text-align: center;
+  min-width: 28px;
+}
+.pb-line {
+  height: 1px;
+  width: 32px;
+  background: var(--line2);
+  flex-shrink: 0;
+}
+.pb-line.done { background: var(--green); }
+
+/* ── TABLE ─────────────────────────────────────────────────── */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 12.5px;
+}
+.data-table th {
+  text-align: left;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--line2);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.data-table td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  color: var(--text2);
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table td:first-child { font-family: var(--font-mono); font-size: 12px; color: var(--accent2); }
+
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+<!-- ── TOPBAR ──────────────────────────────────────────────── -->
+<header class="topbar">
+  <div class="topbar-logo">
+    <div class="logo-dot"></div>
+    <span class="topbar-title">Cognitive Perception Layer</span>
+  </div>
+  <div class="topbar-sep"></div>
+  <div class="topbar-badge">status <span>operational</span></div>
+  <div class="topbar-badge">kafka <span id="kafka-status">offline</span></div>
+</header>
+
+<!-- ── SIDEBAR ─────────────────────────────────────────────── -->
+<nav class="sidebar">
+  <div class="sb-group">Testing Phases</div>
+  <a class="sb-item active" onclick="showSection('overview')">
+    <div class="sb-num">0</div>
+    Overview &amp; order
+  </a>
+  <a class="sb-item" onclick="showSection('phase1')">
+    <div class="sb-num">1</div>
+    Project setup
+  </a>
+  <a class="sb-item" onclick="showSection('phase2')">
+    <div class="sb-num">2</div>
+    Unit tests
+  </a>
+  <a class="sb-item" onclick="showSection('phase3')">
+    <div class="sb-num">3</div>
+    Normalizer REPL
+  </a>
+  <a class="sb-item" onclick="showSection('phase4')">
+    <div class="sb-num">4</div>
+    FastAPI webhooks
+  </a>
+  <a class="sb-item" onclick="showSection('phase5')">
+    <div class="sb-num">5</div>
+    Full pipeline
+  </a>
+  <a class="sb-item" onclick="showSection('phase6')">
+    <div class="sb-num">6</div>
+    Redpanda console
+  </a>
+
+  <div class="sb-group" style="margin-top:8px">Adapter Tests</div>
+  <a class="sb-item" onclick="showSection('adapters')">
+    <svg class="sb-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M5 8h6M8 5v6" stroke="currentColor" stroke-width="1.2"/></svg>
+    All adapters
+  </a>
+
+  <div class="sb-group" style="margin-top:8px">Console</div>
+  <a class="sb-item" onclick="showSection('console')">
+    <svg class="sb-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="10" rx="2" stroke="currentColor" stroke-width="1.2"/><path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+    Console mockup
+  </a>
+</nav>
+
+<!-- ── MAIN ─────────────────────────────────────────────────── -->
+<main class="main">
+
+<!-- ══════════════════════════════════════════════════════════
+     OVERVIEW
+═══════════════════════════════════════════════════════════ -->
+<section class="section active" id="s-overview">
+  <div class="section-header">
+    <div class="section-label">Start here</div>
+    <h1 class="section-title">What to run, and when</h1>
+    <p class="section-desc">Six phases in order. The first three need zero infrastructure — no Docker, no Kafka. Phases 4–6 need Redpanda running. Always start Redpanda Console before running adapter tests so you can see output in real time.</p>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="progress-bar">
+    <div class="pb-step">
+      <div class="pb-node current" onclick="showSection('phase1')">1</div>
+    </div>
+    <div class="pb-line"></div>
+    <div class="pb-step">
+      <div class="pb-node" onclick="showSection('phase2')">2</div>
+    </div>
+    <div class="pb-line"></div>
+    <div class="pb-step">
+      <div class="pb-node" onclick="showSection('phase3')">3</div>
+    </div>
+    <div class="pb-line"></div>
+    <div class="pb-step">
+      <div class="pb-node" onclick="showSection('phase4')">4</div>
+    </div>
+    <div class="pb-line"></div>
+    <div class="pb-step">
+      <div class="pb-node" onclick="showSection('phase5')">5</div>
+    </div>
+    <div class="pb-line"></div>
+    <div class="pb-step">
+      <div class="pb-node" onclick="showSection('phase6')">6</div>
+    </div>
+  </div>
+
+  <div class="phase-grid">
+    <div class="phase-card" onclick="showSection('phase1')">
+      <div class="pc-num">Phase 01 · No infra</div>
+      <div class="pc-title">Project setup</div>
+      <div class="pc-desc">Package structure, __init__.py files, pip install all deps, generate sources.yaml</div>
+      <span class="badge badge-green"><span class="badge-dot"></span>No Docker needed</span>
+    </div>
+    <div class="phase-card" onclick="showSection('phase2')">
+      <div class="pc-num">Phase 02 · No infra</div>
+      <div class="pc-title">Unit tests</div>
+      <div class="pc-desc">Test every normalizer as a pure function. No Kafka, no network. Fastest feedback loop.</div>
+      <span class="badge badge-green"><span class="badge-dot"></span>No Docker needed</span>
+    </div>
+    <div class="phase-card" onclick="showSection('phase3')">
+      <div class="pc-num">Phase 03 · No infra</div>
+      <div class="pc-title">Normalizer REPL</div>
+      <div class="pc-desc">Run any normalizer interactively from a Python shell. Instant output inspection.</div>
+      <span class="badge badge-green"><span class="badge-dot"></span>No Docker needed</span>
+    </div>
+    <div class="phase-card req-docker" onclick="showSection('phase4')">
+      <div class="pc-num">Phase 04 · uvicorn only</div>
+      <div class="pc-title">FastAPI webhooks</div>
+      <div class="pc-desc">Test all 6 push endpoints with curl. Kafka optional — server runs and normalizes without it.</div>
+      <span class="badge badge-blue"><span class="badge-dot"></span>uvicorn only</span>
+    </div>
+    <div class="phase-card req-docker" onclick="showSection('phase5')">
+      <div class="pc-num">Phase 05 · Docker required</div>
+      <div class="pc-title">Full pipeline</div>
+      <div class="pc-desc">Raw message → adapter → normalizer → cognitive.events. Requires Redpanda + Redis.</div>
+      <span class="badge badge-amber"><span class="badge-dot"></span>Docker required</span>
+    </div>
+    <div class="phase-card req-docker" onclick="showSection('phase6')">
+      <div class="pc-num">Phase 06 · Docker required</div>
+      <div class="pc-title">Redpanda console</div>
+      <div class="pc-desc">Live visual of all events on cognitive.events. Keep open while running all adapter tests.</div>
+      <span class="badge badge-amber"><span class="badge-dot"></span>Docker required</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <h2 style="font-size:15px;font-weight:700;margin-bottom:12px">How the data flows end-to-end</h2>
+  <div class="flow-row">
+    <div class="flow-node"><div class="fn-label">Real world</div><div class="fn-val">Signal source</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node highlight"><div class="fn-label">Adapter</div><div class="fn-val">Transport</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node highlight"><div class="fn-label">Normalizer</div><div class="fn-val">Semantic</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><div class="fn-label">Kafka topic</div><div class="fn-val">cognitive.events</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><div class="fn-label">Console</div><div class="fn-val">You see output</div></div>
+  </div>
+
+  <div class="callout callout-info">
+    <span class="callout-icon">ℹ</span>
+    <span><strong>Start Redpanda Console first</strong> (phase 6 setup) before running any adapter test in phase 5. The console is the screen — without it running, you can't see what the adapters are producing.</span>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     PHASE 1 — SETUP
+═══════════════════════════════════════════════════════════ -->
+<section class="section" id="s-phase1">
+  <div class="section-header">
+    <div class="section-label">Phase 01</div>
+    <h1 class="section-title">Project setup</h1>
+    <p class="section-desc">Create the package structure, install dependencies, generate sources.yaml. Do this once before anything else.</p>
+  </div>
+  <span class="badge badge-green"><span class="badge-dot"></span>No Docker needed</span>
+
+  <div class="steps" style="margin-top:20px">
+    <div class="step active-step">
+      <div class="step-num">1</div>
+      <div class="step-line"></div>
+      <div class="step-body">
+        <div class="step-title">Create package structure</div>
+        <div class="step-desc">The codebase uses relative imports, so every folder needs an <code>__init__.py</code>.</div>
+        <div class="code-wrap">
+          <div class="code-label">bash</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button><span class="cmd">mkdir</span> -p cognitive_perception/{schema,adapters,normalizers,perception_api}
+<span class="cmd">touch</span> cognitive_perception/__init__.py
+<span class="cmd">touch</span> cognitive_perception/schema/__init__.py
+<span class="cmd">touch</span> cognitive_perception/adapters/__init__.py
+<span class="cmd">touch</span> cognitive_perception/normalizers/__init__.py
+<span class="cmd">touch</span> cognitive_perception/perception_api/__init__.py</pre>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-line"></div>
+      <div class="step-body">
+        <div class="step-title">Move files into place</div>
+        <div class="step-desc">Copy your project files to the right subpackage directories.</div>
+        <table class="data-table">
+          <thead><tr><th>Files</th><th>Destination</th></tr></thead>
+          <tbody>
+            <tr><td>event.py, event_types.py</td><td style="color:var(--text2)">cognitive_perception/schema/</td></tr>
+            <tr><td>base.py, *_normalizer.py</td><td style="color:var(--text2)">cognitive_perception/normalizers/</td></tr>
+            <tr><td>*_adapter.py, sources.py</td><td style="color:var(--text2)">cognitive_perception/adapters/</td></tr>
+            <tr><td>main.py</td><td style="color:var(--text2)">cognitive_perception/perception_api/</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-line"></div>
+      <div class="step-body">
+        <div class="step-title">Install all dependencies</div>
+        <div class="code-wrap">
+          <div class="code-label">bash</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button><span class="cmd">pip</span> install aiokafka asyncpg httpx watchdog aiomqtt \
+  <span class="s">"redis[asyncio]"</span> confluent-kafka fastapi <span class="s">"uvicorn[standard]"</span> \
+  pydantic python-dateutil pyyaml pytest pytest-asyncio</pre>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <div class="step-title">Generate sources.yaml</div>
+        <div class="code-wrap">
+          <div class="code-label">python</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button><span class="k">from</span> cognitive_perception.adapters.sources <span class="k">import</span> write_example_config
+write_example_config()</pre>
+        </div>
+        <div class="callout callout-ok"><span class="callout-icon">✓</span><span>After this step: imports work, pytest runs, sources.yaml exists. You're ready for phase 2.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     PHASE 2 — UNIT TESTS
+═══════════════════════════════════════════════════════════ -->
+<section class="section" id="s-phase2">
+  <div class="section-header">
+    <div class="section-label">Phase 02</div>
+    <h1 class="section-title">Unit tests</h1>
+    <p class="section-desc">Test every normalizer as a pure function — raw dict in, assert the output. Zero infrastructure. This catches 80% of bugs before you ever touch Kafka.</p>
+  </div>
+  <span class="badge badge-green"><span class="badge-dot"></span>No Docker needed · runs in ~2 seconds</span>
+
+  <div class="steps" style="margin-top:20px">
+    <div class="step active-step">
+      <div class="step-num">1</div>
+      <div class="step-line"></div>
+      <div class="step-body">
+        <div class="step-title">Create test file</div>
+        <div class="code-wrap">
+          <div class="code-label">bash</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button><span class="cmd">mkdir</span> tests &amp;&amp; <span class="cmd">touch</span> tests/__init__.py tests/test_normalizers.py</pre>
+        </div>
+      </div>
+    </div>
+    <div class="step active-step">
+      <div class="step-num">2</div>
+      <div class="step-line"></div>
+      <div class="step-body">
+        <div class="step-title">Paste test suite into test_normalizers.py</div>
+        <div class="code-wrap">
+          <div class="code-label">python · tests/test_normalizers.py</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button><span class="k">import</span> pytest
+<span class="k">from</span> cognitive_perception.normalizers.log_normalizer <span class="k">import</span> LogNormalizer
+<span class="k">from</span> cognitive_perception.normalizers.api_normalizer <span class="k">import</span> APINormalizer
+<span class="k">from</span> cognitive_perception.normalizers.sensor_normalizer <span class="k">import</span> SensorNormalizer
+<span class="k">from</span> cognitive_perception.normalizers.security_normalizer <span class="k">import</span> SecurityEventNormalizer
+<span class="k">from</span> cognitive_perception.normalizers.metric_normalizer <span class="k">import</span> MetricNormalizer
+<span class="k">from</span> cognitive_perception.schema.event <span class="k">import</span> CognitiveEvent, PerceptionFailure
+
+<span class="k">def</span> test_log_db_timeout():
+    result = LogNormalizer().normalize({
+        <span class="s">"message"</span>: <span class="s">"connection to postgres-primary timed out after 5000ms"</span>,
+        <span class="s">"level"</span>: <span class="s">"error"</span>, <span class="s">"service"</span>: <span class="s">"auth-service"</span>,
+        <span class="s">"timestamp"</span>: <span class="s">"2024-01-15T14:23:11Z"</span>
+    }, <span class="s">"svc:auth-service"</span>)
+    <span class="k">assert</span> isinstance(result, CognitiveEvent)
+    <span class="k">assert</span> result.event_type == <span class="s">"database_connection_timeout"</span>
+    <span class="k">assert</span> result.severity == <span class="s">"high"</span>
+
+<span class="k">def</span> test_log_bad_input_returns_failure():
+    result = LogNormalizer().normalize({<span class="s">"level"</span>: <span class="s">"info"</span>}, <span class="s">"svc:auth-service"</span>)
+    <span class="k">assert</span> isinstance(result, PerceptionFailure)
+    <span class="k">assert</span> result.normalizer == <span class="s">"LogNormalizer"</span>
+
+<span class="k">def</span> test_api_ssl_expiring():
+    result = APINormalizer().normalize({
+        <span class="s">"url"</span>: <span class="s">"https://example.com"</span>, <span class="s">"status_code"</span>: <span class="n">200</span>,
+        <span class="s">"latency_ms"</span>: <span class="n">100</span>, <span class="s">"ok"</span>: <span class="k">True</span>, <span class="s">"error"</span>: <span class="k">None</span>,
+        <span class="s">"ssl_days_remaining"</span>: <span class="n">5</span>, <span class="s">"latency_warn_ms"</span>: <span class="n">500</span>, <span class="s">"latency_high_ms"</span>: <span class="n">2000</span>
+    }, <span class="s">"svc:example"</span>)
+    <span class="k">assert</span> result.event_type == <span class="s">"service_ssl_expiring"</span>
+    <span class="k">assert</span> result.severity == <span class="s">"high"</span>
+
+<span class="k">def</span> test_sensor_temperature_critical():
+    result = SensorNormalizer().normalize({
+        <span class="s">"sensor_type"</span>: <span class="s">"temperature"</span>, <span class="s">"value"</span>: <span class="n">50.0</span>,
+        <span class="s">"location"</span>: <span class="s">"server-room"</span>,
+        <span class="s">"thresholds"</span>: {<span class="s">"warn"</span>: <span class="n">35.0</span>, <span class="s">"critical"</span>: <span class="n">45.0</span>}
+    }, <span class="s">"sensor:server-room-temp"</span>)
+    <span class="k">assert</span> result.event_type == <span class="s">"temperature_critical"</span>
+    <span class="k">assert</span> result.severity == <span class="s">"critical"</span>
+
+<span class="k">def</span> test_security_sql_injection():
+    result = SecurityEventNormalizer().normalize({
+        <span class="s">"type"</span>: <span class="s">"SQL_INJECTION"</span>, <span class="s">"ip"</span>: <span class="s">"1.2.3.4"</span>,
+        <span class="s">"uri"</span>: <span class="s">"/api/users?id=1 OR 1=1"</span>, <span class="s">"country"</span>: <span class="s">"RU"</span>
+    }, <span class="s">"security:cloudflare"</span>)
+    <span class="k">assert</span> result.event_type == <span class="s">"sql_injection_attempt"</span>
+    <span class="k">assert</span> <span class="s">"security:ip-1-2-3-4"</span> <span class="k">in</span> result.entity_refs
+
+<span class="k">def</span> test_metric_cpu_spike():
+    result = MetricNormalizer().normalize({
+        <span class="s">"labels"</span>: {<span class="s">"alertname"</span>: <span class="s">"HighCPUUsage"</span>, <span class="s">"instance"</span>: <span class="s">"node-01:9100"</span>, <span class="s">"job"</span>: <span class="s">"node"</span>},
+        <span class="s">"annotations"</span>: {<span class="s">"summary"</span>: <span class="s">"CPU above 85%"</span>},
+        <span class="s">"status"</span>: <span class="s">"firing"</span>, <span class="s">"startsAt"</span>: <span class="s">"2024-01-15T14:00:00Z"</span>
+    }, <span class="s">"metric:node-01"</span>)
+    <span class="k">assert</span> result.event_type == <span class="s">"cpu_spike"</span>
+    <span class="k">assert</span> result.confidence == <span class="n">0.98</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">Run the tests</div>
+        <div class="code-wrap">
+          <div class="code-label">bash</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button>pytest tests/test_normalizers.py -v</pre>
+        </div>
+        <div class="callout callout-ok"><span class="callout-icon">✓</span><span>All 6 tests pass in under 2 seconds. If an import fails, check that all __init__.py files exist.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     PHASE 3 — REPL
+═══════════════════════════════════════════════════════════ -->
+<section class="section" id="s-phase3">
+  <div class="section-header">
+    <div class="section-label">Phase 03</div>
+    <h1 class="section-title">Normalizer REPL</h1>
+    <p class="section-desc">Run any normalizer interactively in a Python shell. Faster than writing a test every time you want to check one thing.</p>
+  </div>
+  <span class="badge badge-green"><span class="badge-dot"></span>No Docker needed · instant</span>
+
+  <div class="steps" style="margin-top:20px">
+    <div class="step active-step">
+      <div class="step-num">1</div>
+      <div class="step-line"></div>
+      <div class="step-body">
+        <div class="step-title">Open Python shell and try the log normalizer</div>
+        <div class="code-wrap">
+          <div class="code-label">python shell</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button><span class="k">from</span> cognitive_perception.normalizers.log_normalizer <span class="k">import</span> LogNormalizer
+n = LogNormalizer()
+r = n.normalize({
+    <span class="s">"message"</span>: <span class="s">"connection pool exhausted — all 100 connections in use"</span>,
+    <span class="s">"level"</span>: <span class="s">"error"</span>, <span class="s">"service"</span>: <span class="s">"order-service"</span>
+}, <span class="s">"svc:order-service"</span>)
+<span class="cmd">print</span>(r.event_type)    <span class="c"># database_connection_timeout</span>
+<span class="cmd">print</span>(r.severity)     <span class="c"># high</span>
+<span class="cmd">print</span>(r.entity_refs)  <span class="c"># ['svc:order-service', 'db:...']</span>
+<span class="cmd">print</span>(r.confidence)   <span class="c"># 0.82</span>
+<span class="cmd">print</span>(r.model_dump_json(indent=<span class="n">2</span>))  <span class="c"># full JSON output</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="step active-step">
+      <div class="step-num">2</div>
+      <div class="step-line"></div>
+      <div class="step-body">
+        <div class="step-title">Test that bad input never crashes — returns PerceptionFailure</div>
+        <div class="code-wrap">
+          <div class="code-label">python shell</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button><span class="k">from</span> cognitive_perception.normalizers.metric_normalizer <span class="k">import</span> MetricNormalizer
+r = MetricNormalizer().normalize({<span class="s">"labels"</span>: {}, <span class="s">"status"</span>: <span class="s">"firing"</span>}, <span class="s">"metric:node-01"</span>)
+<span class="cmd">print</span>(type(r))            <span class="c"># &lt;class 'PerceptionFailure'&gt;</span>
+<span class="cmd">print</span>(r.error_message)    <span class="c"># Alertmanager payload missing 'alertname' label</span>
+<span class="cmd">print</span>(r.normalizer)       <span class="c"># MetricNormalizer</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">Inspect security event entity_refs</div>
+        <div class="code-wrap">
+          <div class="code-label">python shell</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button><span class="k">from</span> cognitive_perception.normalizers.security_normalizer <span class="k">import</span> SecurityEventNormalizer
+r = SecurityEventNormalizer().normalize({
+    <span class="s">"type"</span>: <span class="s">"BRUTE_FORCE"</span>, <span class="s">"ip"</span>: <span class="s">"192.168.1.100"</span>,
+    <span class="s">"request_count"</span>: <span class="n">1500</span>, <span class="s">"country"</span>: <span class="s">"CN"</span>
+}, <span class="s">"security:fail2ban"</span>)
+<span class="cmd">print</span>(r.entity_refs)
+<span class="c"># ['security:fail2ban', 'security:ip-192-168-1-100', 'security:country-cn']</span>
+<span class="cmd">print</span>(r.severity)   <span class="c"># high (auto-elevated because request_count &gt; 1000)</span></pre>
+        </div>
+        <div class="callout callout-info"><span class="callout-icon">ℹ</span><span>The REPL is your fastest debugging tool. Before writing a pytest, just run the normalizer here and inspect the output directly.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     PHASE 4 — FASTAPI
+═══════════════════════════════════════════════════════════ -->
+<section class="section" id="s-phase4">
+  <div class="section-header">
+    <div class="section-label">Phase 04</div>
+    <h1 class="section-title">FastAPI webhooks</h1>
+    <p class="section-desc">The FastAPI server is the push adapter — external systems POST data to it instead of you polling them. Start the server, then test each endpoint with the curl commands below.</p>
+  </div>
+  <span class="badge badge-blue"><span class="badge-dot"></span>uvicorn only — Kafka optional</span>
+
+  <div class="steps" style="margin-top:20px">
+    <div class="step active-step">
+      <div class="step-num">1</div>
+      <div class="step-line"></div>
+      <div class="step-body">
+        <div class="step-title">Start the server</div>
+        <div class="code-wrap">
+          <div class="code-label">bash · terminal 1</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button>uvicorn cognitive_perception.perception_api.main:app --reload --port 8080</pre>
+        </div>
+        <div class="callout callout-warn"><span class="callout-icon">⚠</span><span>You'll see a warning about Kafka being offline if Redpanda isn't running. That's fine — the server still normalizes events and logs them. Events just won't reach Kafka until you start Redpanda.</span></div>
+      </div>
+    </div>
+    <div class="step active-step">
+      <div class="step-num">2</div>
+      <div class="step-line"></div>
+      <div class="step-body">
+        <div class="step-title">Test each endpoint — click to see the curl command</div>
+        <div class="ep-grid">
+          <div class="ep-card active" onclick="showEp(0)">
+            <div class="ep-path">POST /perception/security-events</div>
+            <div class="ep-who">Cloudflare WAF · Fail2ban · custom WAF</div>
+          </div>
+          <div class="ep-card" onclick="showEp(1)">
+            <div class="ep-path">POST /perception/prometheus-alerts</div>
+            <div class="ep-who">Alertmanager webhook</div>
+          </div>
+          <div class="ep-card" onclick="showEp(2)">
+            <div class="ep-path">POST /perception/user-events</div>
+            <div class="ep-who">Browser JS SDK (batched)</div>
+          </div>
+          <div class="ep-card" onclick="showEp(3)">
+            <div class="ep-path">POST /perception/browser-events</div>
+            <div class="ep-who">Browser JS errors · Web Vitals</div>
+          </div>
+          <div class="ep-card" onclick="showEp(4)">
+            <div class="ep-path">POST /perception/agent-events</div>
+            <div class="ep-who">Cognitive sub-agents</div>
+          </div>
+          <div class="ep-card" onclick="showEp(5)">
+            <div class="ep-path">POST /perception/deployment-events</div>
+            <div class="ep-who">GitHub · GitLab · ArgoCD</div>
+          </div>
+        </div>
+
+        <div class="ep-detail active" id="ep0">
+          <div class="code-wrap"><div class="code-label">bash · terminal 2</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button>curl -X POST http://localhost:8080/perception/security-events \
+  -H <span class="s">"Content-Type: application/json"</span> \
+  -H <span class="s">"X-Security-Source: cloudflare"</span> \
+  -d <span class="s">'{"type":"SQL_INJECTION","ip":"1.2.3.4","uri":"/api/users?id=1 OR 1=1","country":"RU"}'</span></pre></div>
+          <div class="callout callout-ok"><span class="callout-icon">✓</span><span>Returns <code>{"accepted":true}</code>. Produces event_type: <code>sql_injection_attempt</code> · severity: critical · entity_refs includes <code>security:ip-1-2-3-4</code></span></div>
+        </div>
+        <div class="ep-detail" id="ep1">
+          <div class="code-wrap"><div class="code-label">bash · terminal 2</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button>curl -X POST http://localhost:8080/perception/prometheus-alerts \
+  -H <span class="s">"Content-Type: application/json"</span> \
+  -d <span class="s">'{"alerts":[{"labels":{"alertname":"HighCPUUsage","instance":"node-01:9100","job":"node-exporter"},"annotations":{"summary":"CPU above 85%"},"status":"firing","startsAt":"2024-01-15T14:00:00Z"}]}'</span></pre></div>
+          <div class="callout callout-ok"><span class="callout-icon">✓</span><span>Returns <code>{"accepted":1}</code>. Produces event_type: <code>cpu_spike</code> · severity: high · confidence: 0.98</span></div>
+        </div>
+        <div class="ep-detail" id="ep2">
+          <div class="code-wrap"><div class="code-label">bash · terminal 2</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button>curl -X POST http://localhost:8080/perception/user-events \
+  -H <span class="s">"Content-Type: application/json"</span> \
+  -d <span class="s">'{"session_id":"sess_abc123","user_id":"user_42","events":[{"event_type":"rage_click","page":"/checkout","element":"#pay-btn"},{"event_type":"checkout_fail","page":"/checkout","context":{"error_code":"500"}}]}'</span></pre></div>
+          <div class="callout callout-ok"><span class="callout-icon">✓</span><span>Returns <code>{"accepted":2}</code>. Two events: <code>rage_click_detected</code> (medium) and <code>checkout_failed</code> (high, elevated because error_code starts with 5)</span></div>
+        </div>
+        <div class="ep-detail" id="ep3">
+          <div class="code-wrap"><div class="code-label">bash · terminal 2</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button>curl -X POST http://localhost:8080/perception/browser-events \
+  -H <span class="s">"Content-Type: application/json"</span> \
+  -d <span class="s">'{"type":"LCP","value":5200,"url":"https://myapp.com/checkout","browser":"Chrome 120","device":"mobile","session_id":"sess_abc123"}'</span></pre></div>
+          <div class="callout callout-ok"><span class="callout-icon">✓</span><span>Produces event_type: <code>lcp_poor</code> · severity: high. (5200ms &gt; 4000ms poor threshold)</span></div>
+        </div>
+        <div class="ep-detail" id="ep4">
+          <div class="code-wrap"><div class="code-label">bash · terminal 2</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button>curl -X POST http://localhost:8080/perception/agent-events \
+  -H <span class="s">"Content-Type: application/json"</span> \
+  -d <span class="s">'{"agent_id":"agent:reasoning-engine-01","event_type":"action_completed","severity":"info","payload":{"action":"restart_service","target":"svc:auth-service"},"entity_refs":["agent:reasoning-engine-01","svc:auth-service"]}'</span></pre></div>
+          <div class="callout callout-ok"><span class="callout-icon">✓</span><span>Produces event_type: <code>action_completed</code> · source_type: agent_event · confidence: 1.0</span></div>
+        </div>
+        <div class="ep-detail" id="ep5">
+          <div class="code-wrap"><div class="code-label">bash · terminal 2</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button>curl -X POST http://localhost:8080/perception/deployment-events \
+  -H <span class="s">"Content-Type: application/json"</span> \
+  -H <span class="s">"X-GitHub-Event: deployment"</span> \
+  -d <span class="s">'{"repository":{"name":"auth-service"},"deployment":{"environment":"production","ref":"v2.4.1"}}'</span></pre></div>
+          <div class="callout callout-ok"><span class="callout-icon">✓</span><span>Produces event_type: <code>deployment_started</code> · source_id: <code>svc:auth-service</code> · severity: info</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">Check server health</div>
+        <div class="code-wrap"><div class="code-label">bash</div>
+        <pre><button class="cp-btn" onclick="cp(this)">copy</button>curl http://localhost:8080/health
+<span class="c"># {"status":"ok","kafka":"disconnected"}  ← expected if Redpanda not running yet</span>
+<span class="c"># {"status":"ok","kafka":"connected"}     ← after starting Redpanda</span></pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     PHASE 5 — FULL PIPELINE
+═══════════════════════════════════════════════════════════ -->
+<section class="section" id="s-phase5">
+  <div class="section-header">
+    <div class="section-label">Phase 05</div>
+    <h1 class="section-title">Full pipeline</h1>
+    <p class="section-desc">Run the complete end-to-end flow. Publish a raw message, watch the adapter consume it, verify the output on cognitive.events. Keep Redpanda Console open in your browser while doing this.</p>
+  </div>
+  <span class="badge badge-amber"><span class="badge-dot"></span>Redpanda + Redis required</span>
+
+  <div class="steps" style="margin-top:20px">
+    <div class="step active-step">
+      <div class="step-num">1</div>
+      <div class="step-line"></div>
+      <div class="step-body">
+        <div class="step-title">Start Redpanda and Redis</div>
+        <div class="code-wrap"><div class="code-label">bash · terminal 1</div>
+        <pre><button class="cp-btn" onclick="cp(this)">copy</button>docker run -d --name redpanda -p 9092:9092 \
+  redpandadata/redpanda:latest redpanda start \
+  --overprovisioned --smp 1 \
+  --kafka-addr PLAINTEXT://0.0.0.0:9092 \
+  --advertise-kafka-addr PLAINTEXT://localhost:9092
+
+docker run -d --name redis -p 6379:6379 redis:7-alpine
+
+<span class="c"># Create topics</span>
+docker exec redpanda rpk topic create raw.logs cognitive.events cognitive.perception_failures</pre></div>
+      </div>
+    </div>
+    <div class="step active-step">
+      <div class="step-num">2</div>
+      <div class="step-line"></div>
+      <div class="step-body">
+        <div class="step-title">Open Console in browser (keep this tab open)</div>
+        <div class="code-wrap"><div class="code-label">bash</div>
+        <pre><button class="cp-btn" onclick="cp(this)">copy</button>docker run -d --name rpk-console -p 8888:8080 \
+  -e KAFKA_BROKERS=host.docker.internal:9092 \
+  redpandadata/console:latest
+
+open http://localhost:8888   <span class="c"># or just go there in your browser</span></pre></div>
+        <div class="callout callout-info"><span class="callout-icon">ℹ</span><span>Navigate to Topics → cognitive.events in the console before step 3. You'll see events appear in real time as the adapter processes them.</span></div>
+      </div>
+    </div>
+    <div class="step active-step">
+      <div class="step-num">3</div>
+      <div class="step-line"></div>
+      <div class="step-body">
+        <div class="step-title">Publish test raw logs (simulates Fluent Bit)</div>
+        <div class="code-wrap"><div class="code-label">python · terminal 2</div>
+        <pre><button class="cp-btn" onclick="cp(this)">copy</button><span class="k">import</span> asyncio, json
+<span class="k">from</span> aiokafka <span class="k">import</span> AIOKafkaProducer
+
+TEST_LOGS = [
+    {<span class="s">"tag"</span>:<span class="s">"auth-service"</span>,<span class="s">"level"</span>:<span class="s">"error"</span>,
+     <span class="s">"message"</span>:<span class="s">"connection to postgres-primary timed out after 5000ms"</span>,
+     <span class="s">"timestamp"</span>:<span class="s">"2024-01-15T14:23:11Z"</span>,<span class="s">"trace_id"</span>:<span class="s">"trace-001"</span>},
+    {<span class="s">"tag"</span>:<span class="s">"auth-service"</span>,<span class="s">"level"</span>:<span class="s">"warn"</span>,
+     <span class="s">"message"</span>:<span class="s">"JWT token is expired, rejecting request"</span>,
+     <span class="s">"timestamp"</span>:<span class="s">"2024-01-15T14:23:15Z"</span>},
+    {<span class="s">"tag"</span>:<span class="s">"order-service"</span>,<span class="s">"level"</span>:<span class="s">"fatal"</span>,
+     <span class="s">"message"</span>:<span class="s">"worker process crashed unexpectedly"</span>,
+     <span class="s">"timestamp"</span>:<span class="s">"2024-01-15T14:23:20Z"</span>},
+    {<span class="s">"tag"</span>:<span class="s">"auth-service"</span>,<span class="s">"level"</span>:<span class="s">"error"</span>},  <span class="c"># no message → PerceptionFailure</span>
+]
+
+<span class="k">async def</span> publish():
+    p = AIOKafkaProducer(bootstrap_servers=<span class="s">"localhost:9092"</span>)
+    <span class="k">await</span> p.start()
+    <span class="k">for</span> log <span class="k">in</span> TEST_LOGS:
+        <span class="k">await</span> p.send_and_wait(<span class="s">"raw.logs"</span>, json.dumps(log).encode())
+    <span class="k">await</span> p.stop()
+    <span class="cmd">print</span>(<span class="s">"Published 4 test logs to raw.logs"</span>)
+
+asyncio.run(publish())</pre></div>
+      </div>
+    </div>
+    <div class="step active-step">
+      <div class="step-num">4</div>
+      <div class="step-line"></div>
+      <div class="step-body">
+        <div class="step-title">Run the LogAdapter (terminal 3)</div>
+        <div class="code-wrap"><div class="code-label">python · terminal 3</div>
+        <pre><button class="cp-btn" onclick="cp(this)">copy</button><span class="k">import</span> asyncio
+<span class="k">from</span> cognitive_perception.adapters.log_adapter <span class="k">import</span> LogAdapter, LogSourceConfig
+
+sources = [
+    LogSourceConfig(fluent_bit_tag=<span class="s">"auth-service"</span>,  source_id=<span class="s">"svc:auth-service"</span>),
+    LogSourceConfig(fluent_bit_tag=<span class="s">"order-service"</span>, source_id=<span class="s">"svc:order-service"</span>),
+]
+asyncio.run(LogAdapter(sources).run())</pre></div>
+        <div class="callout callout-info"><span class="callout-icon">ℹ</span><span>Switch to the Redpanda Console browser tab now. You'll see 3 events appear on cognitive.events and 1 PerceptionFailure on cognitive.perception_failures.</span></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <div class="step-title">Verify output from terminal (optional — console shows the same thing visually)</div>
+        <div class="code-wrap"><div class="code-label">python · terminal 4</div>
+        <pre><button class="cp-btn" onclick="cp(this)">copy</button><span class="k">import</span> asyncio, json
+<span class="k">from</span> aiokafka <span class="k">import</span> AIOKafkaConsumer
+
+<span class="k">async def</span> read():
+    c = AIOKafkaConsumer(<span class="s">"cognitive.events"</span>, bootstrap_servers=<span class="s">"localhost:9092"</span>,
+        auto_offset_reset=<span class="s">"earliest"</span>, consumer_timeout_ms=<span class="n">5000</span>, group_id=<span class="s">"verify"</span>)
+    <span class="k">await</span> c.start()
+    <span class="k">async for</span> msg <span class="k">in</span> c:
+        e = json.loads(msg.value)
+        <span class="cmd">print</span>(<span class="s">f"  {e['event_type']:40} {e['severity']:8} conf:{e['confidence']}"</span>)
+    <span class="k">await</span> c.stop()
+
+asyncio.run(read())</pre></div>
+        <div class="callout callout-ok"><span class="callout-icon">✓</span><span>Expected output: database_connection_timeout (high 0.82) · jwt_validation_failure (medium 0.85) · service_crashed (critical 0.78)</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     PHASE 6 — CONSOLE
+═══════════════════════════════════════════════════════════ -->
+<section class="section" id="s-phase6">
+  <div class="section-header">
+    <div class="section-label">Phase 06</div>
+    <h1 class="section-title">Redpanda console</h1>
+    <p class="section-desc">The console is a browser UI that shows every event flowing through Kafka in real time. Start it before running any adapter test — it's the screen you keep open while everything else runs.</p>
+  </div>
+  <span class="badge badge-amber"><span class="badge-dot"></span>Redpanda must be running first</span>
+
+  <div class="steps" style="margin-top:20px">
+    <div class="step active-step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">Start the console</div>
+        <div class="code-wrap"><div class="code-label">bash</div>
+        <pre><button class="cp-btn" onclick="cp(this)">copy</button>docker run -d --name rpk-console -p 8888:8080 \
+  -e KAFKA_BROKERS=host.docker.internal:9092 \
+  redpandadata/console:latest
+
+<span class="c"># Then open in browser:</span>
+open http://localhost:8888</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <h2 style="font-size:14px;font-weight:700;margin:20px 0 12px">What the console looks like</h2>
+  <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Click a message row to inspect its full JSON. Click the sidebar items to switch views.</p>
+
+  <!-- ── CONSOLE MOCKUP ──────────────────────────────────────── -->
+  <div class="console-shell">
+    <div class="console-topbar">
+      <div class="console-dots">
+        <div class="cd cd-r"></div>
+        <div class="cd cd-y"></div>
+        <div class="cd cd-g"></div>
+      </div>
+      <div class="console-title">Redpanda Console · localhost:8888</div>
+      <div class="console-live"><div class="live-dot"></div>live</div>
+    </div>
+    <div class="console-inner">
+      <div class="console-sidebar">
+        <div class="cs-section">Topics</div>
+        <div class="cs-item active" onclick="cswitch('events')">
+          <div class="cs-dot"></div>cognitive.events
+        </div>
+        <div class="cs-item" onclick="cswitch('failures')">
+          <div class="cs-dot"></div>perception_failures
+        </div>
+        <div class="cs-item" onclick="cswitch('rawlogs')">
+          <div class="cs-dot"></div>raw.logs
+        </div>
+        <div class="cs-section">Consumers</div>
+        <div class="cs-item" onclick="cswitch('groups')">
+          <div class="cs-dot"></div>consumer groups
+        </div>
+      </div>
+      <div class="console-main" id="cmain">
+
+        <!-- EVENTS view -->
+        <div id="cv-events">
+          <div class="console-stats">
+            <div class="cstat"><div class="cstat-label">messages</div><div class="cstat-val" id="msg-count">1847</div></div>
+            <div class="cstat"><div class="cstat-label">partitions</div><div class="cstat-val">3</div></div>
+            <div class="cstat"><div class="cstat-label">size</div><div class="cstat-val">2.1MB</div></div>
+            <div class="cstat"><div class="cstat-label">lag</div><div class="cstat-val" style="color:var(--green)">0</div></div>
+          </div>
+          <div class="msg-table">
+            <div class="msg-header">
+              <span>offset</span><span>value preview</span><span style="text-align:right">time</span>
+            </div>
+            <div class="msg-row selected" onclick="selectMsg(this,0)">
+              <span class="msg-offset">#1847</span>
+              <span class="msg-preview"><span class="ev-type">database_connection_timeout</span> · <span class="sev-high">high</span> · svc:auth-service</span>
+              <span class="msg-time">just now</span>
+            </div>
+            <div class="msg-row" onclick="selectMsg(this,1)">
+              <span class="msg-offset">#1846</span>
+              <span class="msg-preview"><span class="ev-type">cpu_spike</span> · <span class="sev-high">high</span> · metric:node-01</span>
+              <span class="msg-time">12s ago</span>
+            </div>
+            <div class="msg-row" onclick="selectMsg(this,2)">
+              <span class="msg-offset">#1845</span>
+              <span class="msg-preview"><span class="ev-type">rage_click_detected</span> · <span class="sev-medium">medium</span> · usr:user_42</span>
+              <span class="msg-time">31s ago</span>
+            </div>
+            <div class="msg-row" onclick="selectMsg(this,3)">
+              <span class="msg-offset">#1844</span>
+              <span class="msg-preview"><span class="ev-type">sql_injection_attempt</span> · <span class="sev-critical">critical</span> · security:cloudflare</span>
+              <span class="msg-time">55s ago</span>
+            </div>
+            <div class="msg-row" onclick="selectMsg(this,4)">
+              <span class="msg-offset">#1843</span>
+              <span class="msg-preview"><span class="ev-type">service_health_restored</span> · <span class="sev-info">info</span> · svc:order-service</span>
+              <span class="msg-time">2m ago</span>
+            </div>
+          </div>
+          <div class="detail-panel" id="detail-box">
+            <span class="jp-a">{</span><br>
+            &nbsp;&nbsp;<span class="jp-k">"event_id"</span>: <span class="jp-s">"evt_a1b2c3d4e5f6"</span>,<br>
+            &nbsp;&nbsp;<span class="jp-k">"event_type"</span>: <span class="jp-s">"database_connection_timeout"</span>,<br>
+            &nbsp;&nbsp;<span class="jp-k">"severity"</span>: <span class="jp-s">"high"</span>,<br>
+            &nbsp;&nbsp;<span class="jp-k">"source_id"</span>: <span class="jp-s">"svc:auth-service"</span>,<br>
+            &nbsp;&nbsp;<span class="jp-k">"source_type"</span>: <span class="jp-s">"log"</span>,<br>
+            &nbsp;&nbsp;<span class="jp-k">"confidence"</span>: <span class="jp-n">0.82</span>,<br>
+            &nbsp;&nbsp;<span class="jp-k">"entity_refs"</span>: <span class="jp-a">["svc:auth-service", "db:postgres-primary"]</span>,<br>
+            &nbsp;&nbsp;<span class="jp-k">"tags"</span>: <span class="jp-a">["log", "auth-service", "error", "trace_id:trace-001"]</span><br>
+            <span class="jp-a">}</span>
+          </div>
+        </div>
+
+        <!-- FAILURES view -->
+        <div id="cv-failures" style="display:none">
+          <div class="console-stats">
+            <div class="cstat"><div class="cstat-label">failures today</div><div class="cstat-val" style="color:var(--red)">3</div></div>
+            <div class="cstat"><div class="cstat-label">top normalizer</div><div class="cstat-val" style="font-size:13px;color:var(--amber)">LogNormalizer</div></div>
+            <div class="cstat"><div class="cstat-label">last hour</div><div class="cstat-val">2</div></div>
+            <div class="cstat"><div class="cstat-label">total</div><div class="cstat-val">3</div></div>
+          </div>
+          <div class="msg-table">
+            <div class="msg-header" style="grid-template-columns:70px 140px 1fr">
+              <span>time</span><span>normalizer</span><span>error</span>
+            </div>
+            <div class="msg-row" style="grid-template-columns:70px 140px 1fr">
+              <span class="msg-time" style="text-align:left">14:23:11</span>
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--accent2)">LogNormalizer</span>
+              <span style="font-size:11.5px;color:var(--red)">Log entry has no message field — cannot normalize</span>
+            </div>
+            <div class="msg-row" style="grid-template-columns:70px 140px 1fr">
+              <span class="msg-time" style="text-align:left">14:19:04</span>
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--accent2)">MetricNormalizer</span>
+              <span style="font-size:11.5px;color:var(--red)">Alertmanager payload missing 'alertname' label</span>
+            </div>
+            <div class="msg-row" style="grid-template-columns:70px 140px 1fr">
+              <span class="msg-time" style="text-align:left">14:08:52</span>
+              <span style="font-family:var(--font-mono);font-size:11px;color:var(--accent2)">SensorNormalizer</span>
+              <span style="font-size:11.5px;color:var(--red)">source_id 'temp-1' missing namespace prefix</span>
+            </div>
+          </div>
+          <div class="detail-panel" style="font-size:12px;color:var(--text3)">← click a failure row to inspect the raw_input that caused it</div>
+        </div>
+
+        <!-- RAW LOGS view -->
+        <div id="cv-rawlogs" style="display:none">
+          <div class="console-stats">
+            <div class="cstat"><div class="cstat-label">messages</div><div class="cstat-val">924</div></div>
+            <div class="cstat"><div class="cstat-label">producer</div><div class="cstat-val" style="font-size:12px;color:var(--green)">fluent-bit</div></div>
+            <div class="cstat"><div class="cstat-label">consumer</div><div class="cstat-val" style="font-size:12px;color:var(--accent2)">log-adapter</div></div>
+            <div class="cstat"><div class="cstat-label">lag</div><div class="cstat-val" style="color:var(--green)">2</div></div>
+          </div>
+          <div class="msg-table">
+            <div class="msg-header"><span>offset</span><span>raw payload from Fluent Bit</span><span style="text-align:right">time</span></div>
+            <div class="msg-row">
+              <span class="msg-offset">#924</span>
+              <span class="msg-preview" style="color:var(--text3)">{"tag":"auth-service","level":"error","message":"connection to postgres..."}</span>
+              <span class="msg-time">just now</span>
+            </div>
+            <div class="msg-row">
+              <span class="msg-offset">#923</span>
+              <span class="msg-preview" style="color:var(--text3)">{"tag":"order-service","level":"info","message":"Order 84291 processed"}</span>
+              <span class="msg-time">8s ago</span>
+            </div>
+          </div>
+          <div class="detail-panel" style="font-size:12px;color:var(--text3)">This is the raw unprocessed input before the LogAdapter consumes it. Compare with cognitive.events to see what the normalizer extracted.</div>
+        </div>
+
+        <!-- CONSUMER GROUPS view -->
+        <div id="cv-groups" style="display:none;padding:14px">
+          <table class="data-table">
+            <thead><tr><th>Group ID</th><th>Topic</th><th>Lag</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>perception-log-normalizer</td>
+                <td style="color:var(--text2);font-family:var(--font-mono);font-size:11px">raw.logs</td>
+                <td style="color:var(--green);font-family:var(--font-mono)">2</td>
+                <td><span class="badge badge-green"><span class="badge-dot"></span>healthy</span></td>
+              </tr>
+              <tr>
+                <td>downstream-reasoning</td>
+                <td style="color:var(--text2);font-family:var(--font-mono);font-size:11px">cognitive.events</td>
+                <td style="color:var(--green);font-family:var(--font-mono)">0</td>
+                <td><span class="badge badge-green"><span class="badge-dot"></span>healthy</span></td>
+              </tr>
+              <tr>
+                <td>test-verifier</td>
+                <td style="color:var(--text2);font-family:var(--font-mono);font-size:11px">cognitive.events</td>
+                <td style="color:var(--amber);font-family:var(--font-mono)">841</td>
+                <td><span class="badge badge-amber"><span class="badge-dot"></span>lagging</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-info" style="margin-top:12px"><span class="callout-icon">ℹ</span><span>Lag near 0 = adapter is keeping up. Growing lag = adapter is slower than producers. The test-verifier group is lagging because it's a one-time script that ran and stopped.</span></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+  <h2 style="font-size:14px;font-weight:700;margin-bottom:10px">Quick rpk CLI commands</h2>
+  <div class="code-wrap"><div class="code-label">bash</div>
+  <pre><button class="cp-btn" onclick="cp(this)">copy</button><span class="c"># List all topics</span>
+docker exec redpanda rpk topic list
+
+<span class="c"># Read last 5 events from cognitive.events</span>
+docker exec redpanda rpk topic consume cognitive.events --num 5
+
+<span class="c"># Read failures topic</span>
+docker exec redpanda rpk topic consume cognitive.perception_failures --num 5
+
+<span class="c"># Check consumer group lag</span>
+docker exec redpanda rpk group list</pre></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     ADAPTERS
+═══════════════════════════════════════════════════════════ -->
+<section class="section" id="s-adapters">
+  <div class="section-header">
+    <div class="section-label">Adapter Tests</div>
+    <h1 class="section-title">Testing each adapter</h1>
+    <p class="section-desc">Each adapter has different infrastructure requirements. Four work right now without Docker, two need one container each. Open Redpanda Console before running these so you see events appear in real time.</p>
+  </div>
+
+  <div class="adapter-tabs">
+    <button class="at-btn active" onclick="showAdapter('api')">① API adapter</button>
+    <button class="at-btn" onclick="showAdapter('log')">② Log adapter</button>
+    <button class="at-btn" onclick="showAdapter('file')">③ File adapter</button>
+    <button class="at-btn" onclick="showAdapter('db')">④ Database adapter</button>
+  </div>
+
+  <!-- API ADAPTER -->
+  <div class="adapter-pane active" id="a-api">
+    <span class="badge badge-green" style="margin-bottom:14px"><span class="badge-dot"></span>No Docker needed</span>
+    <p class="section-desc" style="margin-bottom:16px">Point the adapter at any public URL. httpbin.org always returns 200 with JSON — perfect for testing without a real service.</p>
+    <div class="steps">
+      <div class="step active-step">
+        <div class="step-num">1</div>
+        <div class="step-line"></div>
+        <div class="step-body">
+          <div class="step-title">Run adapter pointing at httpbin.org</div>
+          <div class="code-wrap"><div class="code-label">python · terminal</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button><span class="k">import</span> asyncio
+<span class="k">from</span> cognitive_perception.adapters.api_adapter <span class="k">import</span> APIAdapter, APISourceConfig
+
+sources = [APISourceConfig(
+    source_id=<span class="s">"ext:httpbin"</span>, url=<span class="s">"https://httpbin.org/get"</span>,
+    poll_interval_s=<span class="n">10</span>, latency_warn_ms=<span class="n">500</span>, latency_high_ms=<span class="n">2000</span>, tags=[<span class="s">"test"</span>]
+)]
+asyncio.run(APIAdapter(sources).run())</pre></div>
+          <div class="callout callout-ok"><span class="callout-icon">✓</span><span>Produces <code>service_health_restored</code> (info). No second event because Redis sees no state change.</span></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Force a 503 to trigger service_health_degraded</div>
+          <div class="code-wrap"><div class="code-label">python — change URL to</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button>url=<span class="s">"https://httpbin.org/status/503"</span>  <span class="c"># returns 503 Service Unavailable</span></pre></div>
+          <div class="callout callout-ok"><span class="callout-icon">✓</span><span>Produces <code>service_health_degraded</code> (high). Switch back to /get — Redis detects the state change and fires <code>service_health_restored</code>.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOG ADAPTER -->
+  <div class="adapter-pane" id="a-log">
+    <span class="badge badge-amber" style="margin-bottom:14px"><span class="badge-dot"></span>Redpanda required</span>
+    <p class="section-desc" style="margin-bottom:16px">You publish fake log messages to <code>raw.logs</code> yourself — no Fluent Bit needed. The adapter doesn't care who put them there.</p>
+    <div class="callout callout-info"><span class="callout-icon">ℹ</span><span>This is fully covered in Phase 5 above with all test payloads. Each log message is crafted to trigger a different normalizer pattern.</span></div>
+    <p style="font-size:13px;color:var(--text2);margin-top:10px">See Phase 05 steps 3–5 for the complete log adapter test. The 4 test logs cover: <code>database_connection_timeout</code>, <code>jwt_validation_failure</code>, <code>service_crashed</code>, and a deliberate PerceptionFailure (log with no message field).</p>
+  </div>
+
+  <!-- FILE ADAPTER -->
+  <div class="adapter-pane" id="a-file">
+    <span class="badge badge-green" style="margin-bottom:14px"><span class="badge-dot"></span>No Docker needed</span>
+    <p class="section-desc" style="margin-bottom:16px">Watches a local folder. No external service at all — just create and edit files to trigger events.</p>
+    <div class="steps">
+      <div class="step active-step">
+        <div class="step-num">1</div>
+        <div class="step-line"></div>
+        <div class="step-body">
+          <div class="step-title">Create test folders and run adapter</div>
+          <div class="code-wrap"><div class="code-label">bash</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button>mkdir -p /tmp/test-watch/{configs,certs,secrets}</pre></div>
+          <div class="code-wrap"><div class="code-label">python · terminal 1</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button><span class="k">import</span> asyncio
+<span class="k">from</span> cognitive_perception.adapters.file_adapter <span class="k">import</span> FileAdapter, FileSourceConfig
+
+sources = [
+    FileSourceConfig(source_id=<span class="s">"file:nginx-config"</span>, watch_path=<span class="s">"/tmp/test-watch/configs"</span>),
+    FileSourceConfig(source_id=<span class="s">"file:secrets"</span>, watch_path=<span class="s">"/tmp/test-watch/secrets"</span>, is_secret=<span class="k">True</span>),
+]
+asyncio.run(FileAdapter(sources).run())</pre></div>
+        </div>
+      </div>
+      <div class="step active-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Trigger events by touching files (terminal 2)</div>
+          <div class="code-wrap"><div class="code-label">bash · terminal 2</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button><span class="c"># → config_file_modified (medium)</span>
+echo <span class="s">"server_name localhost;"</span> > /tmp/test-watch/configs/nginx.conf
+
+<span class="c"># → config_file_deleted (high)</span>
+rm /tmp/test-watch/configs/nginx.conf
+
+<span class="c"># → secret_file_modified (high) — 'password' in filename triggers detection</span>
+echo <span class="s">"DB_PASS=secret123"</span> > /tmp/test-watch/secrets/db_password.env
+
+<span class="c"># → deployment_artifact_created (info)</span>
+touch /tmp/test-watch/configs/app-v2.tar.gz</pre></div>
+          <div class="callout callout-ok"><span class="callout-icon">✓</span><span>Events appear in Redpanda Console within milliseconds. The OS kernel fires instantly — no polling delay.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATABASE ADAPTER -->
+  <div class="adapter-pane" id="a-db">
+    <span class="badge badge-amber" style="margin-bottom:14px"><span class="badge-dot"></span>Postgres required (one Docker command)</span>
+    <p class="section-desc" style="margin-bottom:16px">Needs a live Postgres because it runs real SQL against system tables. An empty Postgres is enough.</p>
+    <div class="steps">
+      <div class="step active-step">
+        <div class="step-num">1</div>
+        <div class="step-line"></div>
+        <div class="step-body">
+          <div class="step-title">Start Postgres</div>
+          <div class="code-wrap"><div class="code-label">bash</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button>docker run -d --name postgres-test -p 5432:5432 \
+  -e POSTGRES_PASSWORD=postgres postgres:15</pre></div>
+        </div>
+      </div>
+      <div class="step active-step">
+        <div class="step-num">2</div>
+        <div class="step-line"></div>
+        <div class="step-body">
+          <div class="step-title">Run the DatabaseAdapter</div>
+          <div class="code-wrap"><div class="code-label">python · terminal 1</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button><span class="k">import</span> asyncio
+<span class="k">from</span> cognitive_perception.adapters.database_adapter <span class="k">import</span> DatabaseAdapter, DatabaseSourceConfig
+
+sources = [DatabaseSourceConfig(
+    source_id=<span class="s">"db:postgres-primary"</span>,
+    dsn=<span class="s">"postgresql://postgres:postgres@localhost:5432/postgres"</span>,
+    slow_query_ms=<span class="n">100.0</span>, poll_interval_s=<span class="n">10</span>
+)]
+asyncio.run(DatabaseAdapter(sources).run())</pre></div>
+          <div class="callout callout-info"><span class="callout-icon">ℹ</span><span>On a fresh idle Postgres you'll see nothing — that's correct. The adapter only emits events when something is actually wrong.</span></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Simulate a slow query to trigger an event</div>
+          <div class="code-wrap"><div class="code-label">bash · terminal 2</div>
+          <pre><button class="cp-btn" onclick="cp(this)">copy</button><span class="c"># Open psql and run a 10-second query (crosses the 100ms threshold)</span>
+docker exec -it postgres-test psql -U postgres -c <span class="s">"SELECT pg_sleep(10);"</span></pre></div>
+          <div class="callout callout-ok"><span class="callout-icon">✓</span><span>While pg_sleep is running, the adapter detects it in pg_stat_activity and emits <code>slow_query_detected</code> (high, confidence: 0.97). Check Redpanda Console.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     CONSOLE SECTION
+═══════════════════════════════════════════════════════════ -->
+<section class="section" id="s-console">
+  <div class="section-header">
+    <div class="section-label">Console reference</div>
+    <h1 class="section-title">What each console section tells you</h1>
+    <p class="section-desc">The Redpanda Console has four views. Each one answers a different question about your pipeline's health.</p>
+  </div>
+
+  <div class="conn-grid">
+    <div class="conn-card">
+      <div class="conn-title">
+        <span style="color:var(--green)">●</span>
+        Topics → cognitive.events
+      </div>
+      <div class="conn-desc">Your main output. Every CognitiveEvent from every adapter appears here. Click any row to see the full JSON — event_type, severity, entity_refs, confidence, tags. This is how you verify "did my adapter produce the right event?"</div>
+    </div>
+    <div class="conn-card">
+      <div class="conn-title">
+        <span style="color:var(--red)">●</span>
+        Topics → perception_failures
+      </div>
+      <div class="conn-desc">Every PerceptionFailure lands here. Contains the normalizer name, exact error message, and the raw_input that caused it. High count on one normalizer = schema changed upstream or a bug in that normalizer.</div>
+    </div>
+    <div class="conn-card">
+      <div class="conn-title">
+        <span style="color:var(--amber)">●</span>
+        Topics → raw.logs
+      </div>
+      <div class="conn-desc">Raw unprocessed logs from Fluent Bit (or your test scripts). Compare this with cognitive.events to see exactly what the LogNormalizer extracted from each message.</div>
+    </div>
+    <div class="conn-card">
+      <div class="conn-title">
+        <span style="color:var(--blue)">●</span>
+        Consumer groups
+      </div>
+      <div class="conn-desc">Shows lag per consumer group. Lag near 0 = adapter is keeping up. Growing lag = adapter is processing slower than producers are writing. First sign of a performance problem.</div>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+// ── NAVIGATION ──────────────────────────────────────────────
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(el => {
+    if (el.getAttribute('onclick') && el.getAttribute('onclick').includes(id)) {
+      el.classList.add('active');
+    }
+  });
+  window.scrollTo(0, 0);
+}
+
+// ── COPY BUTTONS ────────────────────────────────────────────
+function cp(btn) {
+  const pre = btn.parentElement;
+  const text = Array.from(pre.childNodes)
+    .filter(n => n.nodeType === Node.TEXT_NODE || (n.nodeType === Node.ELEMENT_NODE && n.tagName !== 'BUTTON'))
+    .map(n => n.textContent)
+    .join('').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'copied ✓';
+    btn.classList.add('done');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('done'); }, 1800);
+  });
+}
+
+// ── ADAPTER TABS ────────────────────────────────────────────
+function showAdapter(id) {
+  document.querySelectorAll('.adapter-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.at-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('a-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── ENDPOINT CARDS (phase 4) ─────────────────────────────────
+function showEp(i) {
+  document.querySelectorAll('.ep-card').forEach((c, j) => c.classList.toggle('active', j === i));
+  document.querySelectorAll('.ep-detail').forEach((d, j) => d.classList.toggle('active', j === i));
+}
+
+// ── CONSOLE MOCKUP ───────────────────────────────────────────
+const msgDetails = [
+  `<span class="jp-a">{</span><br>
+  &nbsp;&nbsp;<span class="jp-k">"event_type"</span>: <span class="jp-s">"database_connection_timeout"</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"severity"</span>: <span class="jp-s">"high"</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"source_id"</span>: <span class="jp-s">"svc:auth-service"</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"confidence"</span>: <span class="jp-n">0.82</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"entity_refs"</span>: <span class="jp-a">["svc:auth-service", "db:postgres-primary"]</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"tags"</span>: <span class="jp-a">["log", "auth-service", "error", "trace_id:trace-001"]</span><br>
+  <span class="jp-a">}</span>`,
+
+  `<span class="jp-a">{</span><br>
+  &nbsp;&nbsp;<span class="jp-k">"event_type"</span>: <span class="jp-s">"cpu_spike"</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"severity"</span>: <span class="jp-s">"high"</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"source_id"</span>: <span class="jp-s">"metric:node-01"</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"confidence"</span>: <span class="jp-n">0.98</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"entity_refs"</span>: <span class="jp-a">["metric:node-01", "svc:node-exporter"]</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"payload"</span>: <span class="jp-a">{"alert_name": "HighCPUUsage", "status": "firing"}</span><br>
+  <span class="jp-a">}</span>`,
+
+  `<span class="jp-a">{</span><br>
+  &nbsp;&nbsp;<span class="jp-k">"event_type"</span>: <span class="jp-s">"rage_click_detected"</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"severity"</span>: <span class="jp-s">"medium"</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"source_id"</span>: <span class="jp-s">"usr:user_42"</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"confidence"</span>: <span class="jp-n">0.92</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"entity_refs"</span>: <span class="jp-a">["usr:user_42", "svc:web-app"]</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"payload"</span>: <span class="jp-a">{"page": "/checkout", "element": "#pay-btn", "category": "frustration"}</span><br>
+  <span class="jp-a">}</span>`,
+
+  `<span class="jp-a">{</span><br>
+  &nbsp;&nbsp;<span class="jp-k">"event_type"</span>: <span class="jp-s">"sql_injection_attempt"</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"severity"</span>: <span class="jp-s">"critical"</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"source_id"</span>: <span class="jp-s">"security:cloudflare"</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"confidence"</span>: <span class="jp-n">0.92</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"entity_refs"</span>: <span class="jp-a">["security:cloudflare", "security:ip-1-2-3-4", "security:country-ru"]</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"payload"</span>: <span class="jp-a">{"ip": "1.2.3.4", "uri": "/api/users?id=1 OR 1=1", "country": "RU"}</span><br>
+  <span class="jp-a">}</span>`,
+
+  `<span class="jp-a">{</span><br>
+  &nbsp;&nbsp;<span class="jp-k">"event_type"</span>: <span class="jp-s">"service_health_restored"</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"severity"</span>: <span class="jp-s">"info"</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"source_id"</span>: <span class="jp-s">"svc:order-service"</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"confidence"</span>: <span class="jp-n">0.97</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"entity_refs"</span>: <span class="jp-a">["svc:order-service"]</span>,<br>
+  &nbsp;&nbsp;<span class="jp-k">"payload"</span>: <span class="jp-a">{"url": "http://order-service/health", "status_code": 200, "latency_ms": 42.1}</span><br>
+  <span class="jp-a">}</span>`
+];
+
+function selectMsg(row, i) {
+  document.querySelectorAll('.msg-row').forEach(r => r.classList.remove('selected'));
+  row.classList.add('selected');
+  document.getElementById('detail-box').innerHTML = msgDetails[i];
+}
+
+const consoleViews = { events: 'cv-events', failures: 'cv-failures', rawlogs: 'cv-rawlogs', groups: 'cv-groups' };
+function cswitch(view) {
+  Object.values(consoleViews).forEach(id => { const el = document.getElementById(id); if(el) el.style.display = 'none'; });
+  document.getElementById(consoleViews[view]).style.display = '';
+  document.querySelectorAll('.cs-item').forEach((el, i) => {
+    const views = ['events','failures','rawlogs','groups'];
+    el.classList.toggle('active', views[i] === view);
+  });
+}
+
+// simulate live message counter
+let msgCount = 1847;
+setInterval(() => {
+  if (Math.random() > 0.6) {
+    msgCount++;
+    const el = document.getElementById('msg-count');
+    if (el) el.textContent = msgCount.toLocaleString();
+  }
+}, 3000);
+</script>
+</body>
+</html>

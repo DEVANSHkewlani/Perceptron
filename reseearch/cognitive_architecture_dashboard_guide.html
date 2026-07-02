@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 12 — Dashboard Build Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111318;
+    --surface2: #181c24;
+    --border: #1f2533;
+    --border2: #2a3245;
+    --accent: #00e5ff;
+    --accent2: #7c3aed;
+    --accent3: #10b981;
+    --accent4: #f59e0b;
+    --accent5: #ef4444;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #4a5568;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 2.5rem 3rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(0,229,255,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .phase-badge {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--accent);
+    background: rgba(0,229,255,0.08);
+    border: 1px solid rgba(0,229,255,0.2);
+    padding: 0.35rem 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    margin-top: 0.5rem;
+  }
+  .header-content h1 {
+    font-size: 2.4rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--text);
+  }
+  .header-content h1 span { color: var(--accent); }
+  .header-content p {
+    margin-top: 0.75rem;
+    color: var(--text2);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    max-width: 700px;
+  }
+
+  /* ── LAYOUT ── */
+  .main {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: calc(100vh - 130px);
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    padding: 2rem 0;
+    position: sticky;
+    top: 0;
+    height: calc(100vh - 130px);
+    overflow-y: auto;
+  }
+  .sidebar-section {
+    padding: 0 1.5rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+  }
+  .sidebar-label {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 0.75rem;
+  }
+  .sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: 4px;
+    color: var(--text2);
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+    font-family: var(--mono);
+    margin-bottom: 0.15rem;
+  }
+  .sidebar-link:hover, .sidebar-link.active {
+    background: rgba(0,229,255,0.06);
+    color: var(--accent);
+  }
+  .sidebar-link .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border2);
+    flex-shrink: 0;
+  }
+  .sidebar-link.active .dot { background: var(--accent); }
+
+  /* ── CONTENT ── */
+  .content {
+    padding: 3rem;
+    max-width: 1100px;
+  }
+
+  /* ── SECTION ── */
+  .section {
+    margin-bottom: 4rem;
+    padding-bottom: 4rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section:last-child { border-bottom: none; }
+
+  .section-number {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .section-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+  }
+  .section-desc {
+    color: var(--text2);
+    font-size: 0.9rem;
+    max-width: 720px;
+    margin-bottom: 2rem;
+    line-height: 1.8;
+  }
+
+  /* ── CARDS ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1.4rem;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--border2); }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .card.cyan::before { background: var(--accent); }
+  .card.purple::before { background: var(--accent2); }
+  .card.green::before { background: var(--accent3); }
+  .card.amber::before { background: var(--accent4); }
+  .card.red::before { background: var(--accent5); }
+  .card.multi::before { background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3)); }
+
+  .card-icon {
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+  }
+  .card-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+  }
+  .card-desc {
+    font-size: 0.78rem;
+    color: var(--text2);
+    line-height: 1.7;
+    font-family: var(--mono);
+  }
+
+  /* ── FEATURE TABLE ── */
+  .feature-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    margin-bottom: 2rem;
+  }
+  .feature-table th {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .feature-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+    vertical-align: top;
+  }
+  .feature-table td:first-child {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 0.83rem;
+    white-space: nowrap;
+  }
+  .feature-table tr:hover td { background: var(--surface); }
+
+  /* ── BADGE ── */
+  .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+  .badge.cyan { color: var(--accent); border-color: rgba(0,229,255,0.3); background: rgba(0,229,255,0.06); }
+  .badge.purple { color: #a78bfa; border-color: rgba(124,58,237,0.4); background: rgba(124,58,237,0.08); }
+  .badge.green { color: var(--accent3); border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.06); }
+  .badge.amber { color: var(--accent4); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.06); }
+  .badge.red { color: var(--accent5); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.06); }
+
+  /* ── ARCHITECTURE FLOWCHART ── */
+  .arch-flow {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+  }
+  .arch-title {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 1.5rem;
+  }
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+  .flow-node {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+  .flow-node.perception { border-color: rgba(0,229,255,0.3); color: var(--accent); background: rgba(0,229,255,0.06); }
+  .flow-node.memory { border-color: rgba(124,58,237,0.4); color: #a78bfa; background: rgba(124,58,237,0.08); }
+  .flow-node.world { border-color: rgba(16,185,129,0.3); color: var(--accent3); background: rgba(16,185,129,0.06); }
+  .flow-node.reasoning { border-color: rgba(245,158,11,0.4); color: var(--accent4); background: rgba(245,158,11,0.07); }
+  .flow-node.planning { border-color: rgba(239,68,68,0.3); color: var(--accent5); background: rgba(239,68,68,0.06); }
+  .flow-node.exec { border-color: rgba(251,191,36,0.3); color: #fbbf24; background: rgba(251,191,36,0.06); }
+  .flow-node.agent { border-color: rgba(167,139,250,0.3); color: #c4b5fd; background: rgba(167,139,250,0.07); }
+  .flow-node.chaos { border-color: rgba(239,68,68,0.5); color: #fca5a5; background: rgba(239,68,68,0.1); }
+  .flow-arrow {
+    color: var(--text3);
+    font-size: 0.9rem;
+    padding: 0 0.2rem;
+    font-family: var(--mono);
+  }
+  .flow-section-label {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    width: 90px;
+    flex-shrink: 0;
+    text-align: right;
+    padding-right: 1rem;
+  }
+
+  /* ── PANEL MOCKUP ── */
+  .panel-mockup {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .panel-title {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+  .panel-status {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent3);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .panel-body {
+    padding: 1rem;
+  }
+  .mock-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.78rem;
+  }
+  .mock-row:last-child { border-bottom: none; }
+  .mock-label { color: var(--text2); font-family: var(--mono); font-size: 0.72rem; }
+  .mock-val { font-family: var(--mono); font-size: 0.72rem; }
+  .mock-bar {
+    height: 3px;
+    border-radius: 2px;
+    background: var(--border2);
+    flex: 1;
+    margin: 0 0.75rem;
+    overflow: hidden;
+  }
+  .mock-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--accent);
+  }
+
+  /* ── CODE BLOCK ── */
+  .code-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    line-height: 1.8;
+    color: var(--text2);
+    white-space: pre-wrap;
+    overflow-x: auto;
+  }
+  .code-block .kw { color: var(--accent); }
+  .code-block .str { color: var(--accent3); }
+  .code-block .cm { color: var(--text3); }
+
+  /* ── PROMPT BOX ── */
+  .prompt-box {
+    background: #0d1117;
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+  }
+  .prompt-box::before {
+    content: 'FRONTEND BUILD PROMPT';
+    position: absolute;
+    top: -1px; left: 1.5rem;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--accent2);
+    background: var(--accent2);
+    color: #fff;
+    padding: 0.2rem 0.75rem;
+    border-radius: 0 0 4px 4px;
+  }
+  .prompt-box p, .prompt-box li {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.9;
+    color: var(--text2);
+  }
+  .prompt-box h4 {
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 1.2rem 0 0.4rem;
+    letter-spacing: 0.02em;
+  }
+  .prompt-box ul { padding-left: 1.2rem; }
+  .prompt-box .hl { color: var(--text); }
+  .prompt-copy {
+    position: absolute;
+    top: 1rem; right: 1rem;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text3);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.3rem 0.7rem;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .prompt-copy:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ── CHECKLIST ── */
+  .checklist {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 1.5rem;
+  }
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.83rem;
+    color: var(--text2);
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .check-box {
+    width: 16px; height: 16px;
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    color: var(--accent3);
+  }
+  .checklist li strong { color: var(--text); }
+
+  /* ── CALLOUT ── */
+  .callout {
+    border-left: 3px solid;
+    padding: 1rem 1.2rem;
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 1.5rem;
+    font-size: 0.83rem;
+  }
+  .callout.info { border-color: var(--accent); background: rgba(0,229,255,0.04); color: var(--text2); }
+  .callout.warn { border-color: var(--accent4); background: rgba(245,158,11,0.05); color: var(--text2); }
+  .callout.tip { border-color: var(--accent3); background: rgba(16,185,129,0.05); color: var(--text2); }
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+  }
+  .callout.info .callout-label { color: var(--accent); }
+  .callout.warn .callout-label { color: var(--accent4); }
+  .callout.tip .callout-label { color: var(--accent3); }
+
+  /* ── DIVIDER ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .main { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .content { padding: 2rem 1.5rem; }
+    .header { padding: 1.5rem; flex-direction: column; gap: 0.75rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<div class="header">
+  <div class="phase-badge">Phase 12 · Pre-Chaos Lab</div>
+  <div class="header-content">
+    <h1>Cognitive Architecture<br><span>Dashboard</span> — Build Guide</h1>
+    <p>// Complete specification for the observability, monitoring, and control dashboard.<br>
+    // Every layer of the architecture. Every agent. Every byte in motion. All in one view.</p>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ═══════════════════════ SIDEBAR ═══════════════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-label">Guide Sections</div>
+    <a href="#overview" class="sidebar-link active"><span class="dot"></span>01 · Overview</a>
+    <a href="#architecture" class="sidebar-link"><span class="dot"></span>02 · Architecture Map</a>
+    <a href="#panels" class="sidebar-link"><span class="dot"></span>03 · Panel Inventory</a>
+    <a href="#dataflows" class="sidebar-link"><span class="dot"></span>04 · Data Flows</a>
+    <a href="#agents" class="sidebar-link"><span class="dot"></span>05 · Agent Console</a>
+    <a href="#chaos" class="sidebar-link"><span class="dot"></span>06 · Chaos Lab View</a>
+    <a href="#stack" class="sidebar-link"><span class="dot"></span>07 · Tech Stack</a>
+    <a href="#prompt" class="sidebar-link"><span class="dot"></span>08 · Build Prompt</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Dashboard Panels</div>
+    <a href="#panel-kafka" class="sidebar-link"><span class="dot"></span>Kafka / Event Bus</a>
+    <a href="#panel-perception" class="sidebar-link"><span class="dot"></span>Perception Layer</a>
+    <a href="#panel-memory" class="sidebar-link"><span class="dot"></span>Memory Systems</a>
+    <a href="#panel-worldmodel" class="sidebar-link"><span class="dot"></span>World Model</a>
+    <a href="#panel-reasoning" class="sidebar-link"><span class="dot"></span>Reasoning Engine</a>
+    <a href="#panel-agents" class="sidebar-link"><span class="dot"></span>Agent Fleet</a>
+    <a href="#panel-planning" class="sidebar-link"><span class="dot"></span>Planning / Execution</a>
+    <a href="#panel-temporal" class="sidebar-link"><span class="dot"></span>Temporal State</a>
+    <a href="#panel-predictions" class="sidebar-link"><span class="dot"></span>Predictions</a>
+    <a href="#panel-feedback" class="sidebar-link"><span class="dot"></span>Feedback Loop</a>
+    <a href="#panel-graph" class="sidebar-link"><span class="dot"></span>Knowledge Graph</a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════ CONTENT ═══════════════════════ -->
+<div class="content">
+
+  <!-- ── 01 OVERVIEW ── -->
+  <div class="section" id="overview">
+    <div class="section-number">01 / Overview</div>
+    <div class="section-title">What This Dashboard Is</div>
+    <p class="section-desc">
+      This dashboard is the complete observability surface for your cognitive architecture — a single-pane-of-glass view across all 11 phases you have built. 
+      It is not a metrics collector. It is a <em>live cognitive mirror</em>: you watch the architecture perceive, remember, reason, plan, and execute in real time.
+      When you connect the Chaos Lab (an external service or website under test), every signal it emits becomes visible here — from the raw Kafka event through 
+      memory storage, world model update, reasoning trace, agent action, and feedback closure.
+    </p>
+
+    <div class="card-grid">
+      <div class="card cyan">
+        <div class="card-icon">⚡</div>
+        <div class="card-title">Real-Time Event Stream</div>
+        <div class="card-desc">Live feed of every normalized event flowing through Kafka. Filterable by source, severity, event_type, and entity_ref.</div>
+      </div>
+      <div class="card purple">
+        <div class="card-icon">🧠</div>
+        <div class="card-title">Four-Layer Memory View</div>
+        <div class="card-desc">Working, episodic, semantic (graph), and procedural memory — current state, utilization, recent reads/writes, TTL expiry countdowns.</div>
+      </div>
+      <div class="card green">
+        <div class="card-icon">🌐</div>
+        <div class="card-title">Live World Model</div>
+        <div class="card-desc">The architecture's current belief about the environment: entity states, causal chains, anomaly registry, predictive state, and uncertainty map.</div>
+      </div>
+      <div class="card amber">
+        <div class="card-icon">🤖</div>
+        <div class="card-title">Agent Fleet Console</div>
+        <div class="card-desc">Every active agent — monitor, planner, executor, memory, prediction, specialist — with current task, status, and last action trace.</div>
+      </div>
+      <div class="card red">
+        <div class="card-icon">🔥</div>
+        <div class="card-title">Chaos Lab Panel</div>
+        <div class="card-desc">When connected to a target service/website, injects faults and visualizes exactly how the architecture detects, reasons, and responds.</div>
+      </div>
+      <div class="card multi">
+        <div class="card-icon">🔁</div>
+        <div class="card-title">Feedback Loop Tracker</div>
+        <div class="card-desc">Closed-loop trace from action execution → effect observation → memory update → world model delta → strategy reinforcement.</div>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <div class="callout-label">Design Principle</div>
+      The dashboard is read-only during normal operation — it observes and displays. The only writes it performs are: injecting chaos events (Chaos Lab) and issuing human approval/rejection for plans that require it. Everything else is pure observation.
+    </div>
+  </div>
+
+  <!-- ── 02 ARCHITECTURE MAP ── -->
+  <div class="section" id="architecture">
+    <div class="section-number">02 / Architecture Map</div>
+    <div class="section-title">Complete System Flowchart</div>
+    <p class="section-desc">
+      The dashboard renders this architecture as a live interactive flowchart — nodes pulse when active, edges animate data flow direction, 
+      and clicking any node deep-dives into that component's dedicated panel.
+    </p>
+
+    <div class="arch-flow">
+      <div class="arch-title">// ARCHITECTURE DATA FLOW — as rendered in the dashboard flowchart panel</div>
+
+      <div class="flow-row">
+        <div class="flow-section-label">INPUTS</div>
+        <div class="flow-node chaos">🔥 Chaos Lab / Target Service</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node chaos">External APIs / Logs / Metrics</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node chaos">Sensors / User Events</div>
+      </div>
+
+      <div class="flow-row" style="margin: 0.8rem 0; padding-left: 90px;">
+        <div style="color: var(--text3); font-family: var(--mono); font-size: 0.7rem;">↓ raw signals</div>
+      </div>
+
+      <div class="flow-row">
+        <div class="flow-section-label">PHASE 2</div>
+        <div class="flow-node perception">👁 Perception Layer</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node perception">Normalizers (per source)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node perception">Schema Validator (Pydantic)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node perception">Confidence Scorer</div>
+      </div>
+
+      <div class="flow-row" style="margin: 0.8rem 0; padding-left: 90px;">
+        <div style="color: var(--text3); font-family: var(--mono); font-size: 0.7rem;">↓ unified events</div>
+      </div>
+
+      <div class="flow-row">
+        <div class="flow-section-label">EVENT BUS</div>
+        <div class="flow-node cyan" style="border-color: rgba(0,229,255,0.5); background: rgba(0,229,255,0.1);">⚡ Apache Kafka / Redpanda</div>
+        <div class="flow-arrow">←→</div>
+        <div class="flow-node cyan" style="border-color: rgba(0,229,255,0.3);">Topics: events / actions / agent_events / chaos</div>
+      </div>
+
+      <div class="flow-row" style="margin: 0.8rem 0; padding-left: 90px;">
+        <div style="color: var(--text3); font-family: var(--mono); font-size: 0.7rem;">↓ memory router fans out to all memory layers simultaneously</div>
+      </div>
+
+      <div class="flow-row">
+        <div class="flow-section-label">PHASE 3–4</div>
+        <div class="flow-node memory">💾 Working Memory (Redis)</div>
+        <div class="flow-arrow">|</div>
+        <div class="flow-node memory">📚 Episodic (PG+TimescaleDB)</div>
+        <div class="flow-arrow">|</div>
+        <div class="flow-node memory">🕸 Semantic (Neo4j graph)</div>
+        <div class="flow-arrow">|</div>
+        <div class="flow-node memory">📋 Procedural (PG+Qdrant)</div>
+      </div>
+
+      <div class="flow-row" style="margin: 0.8rem 0; padding-left: 90px;">
+        <div style="color: var(--text3); font-family: var(--mono); font-size: 0.7rem;">↓ continuous synthesis</div>
+      </div>
+
+      <div class="flow-row">
+        <div class="flow-section-label">PHASE 5–6</div>
+        <div class="flow-node world">🌐 Temporal Engine (Phase 5)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node world">World Model Core (Phase 6)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node world">Situation Assessor</div>
+      </div>
+
+      <div class="flow-row" style="margin: 0.8rem 0; padding-left: 90px;">
+        <div style="color: var(--text3); font-family: var(--mono); font-size: 0.7rem;">↓ situation summary (compressed)</div>
+      </div>
+
+      <div class="flow-row">
+        <div class="flow-section-label">PHASE 7</div>
+        <div class="flow-node reasoning">🧩 Reasoning Engine</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node reasoning">LLM (Claude / GPT-4o)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node reasoning">Decision Object (Pydantic)</div>
+      </div>
+
+      <div class="flow-row" style="margin: 0.8rem 0; padding-left: 90px;">
+        <div style="color: var(--text3); font-family: var(--mono); font-size: 0.7rem;">↓ structured decision</div>
+      </div>
+
+      <div class="flow-row">
+        <div class="flow-section-label">PHASE 8–9</div>
+        <div class="flow-node planning">📋 Planning System</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node planning">Plan Graph (steps + deps)</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node exec">⚙️ Execution Layer</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node exec">Actions (API / File / Agent / Human)</div>
+      </div>
+
+      <div class="flow-row" style="margin: 0.8rem 0; padding-left: 90px;">
+        <div style="color: var(--text3); font-family: var(--mono); font-size: 0.7rem;">↓ action effects → perception layer closes the loop ↑</div>
+      </div>
+
+      <div class="flow-row">
+        <div class="flow-section-label">PHASE 10–11</div>
+        <div class="flow-node agent">🤖 Monitor Agent</div>
+        <div class="flow-arrow">|</div>
+        <div class="flow-node agent">Planner Agent</div>
+        <div class="flow-arrow">|</div>
+        <div class="flow-node agent">Executor Agent(s)</div>
+        <div class="flow-arrow">|</div>
+        <div class="flow-node agent">Memory Agent</div>
+        <div class="flow-arrow">|</div>
+        <div class="flow-node agent">Prediction Agent</div>
+        <div class="flow-arrow">|</div>
+        <div class="flow-node agent">Specialist Agents</div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <div class="callout-label">Dashboard Rendering</div>
+      The flowchart above is rendered as an interactive SVG in the dashboard. Each node is clickable — clicking opens the corresponding detail panel. 
+      Edges animate with directional arrows when events are actively flowing through them. Nodes glow or pulse when processing.
+    </div>
+  </div>
+
+  <!-- ── 03 PANEL INVENTORY ── -->
+  <div class="section" id="panels">
+    <div class="section-number">03 / Panel Inventory</div>
+    <div class="section-title">Every Panel in the Dashboard</div>
+    <p class="section-desc">
+      The dashboard is organized into a grid of resizable panels. The default layout has a top-level overview row, 
+      and below it the detailed per-layer panels. Each panel can be expanded to full-screen for deep inspection.
+    </p>
+
+    <!-- TOP BAR -->
+    <h3 style="font-size: 0.9rem; color: var(--text2); margin-bottom: 1rem; font-family: var(--mono); letter-spacing: 0.1em; text-transform: uppercase;">Top Status Bar (always visible)</h3>
+    <table class="feature-table">
+      <thead>
+        <tr><th>Element</th><th>What it shows</th><th>Update rate</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Architecture Health</td><td>Overall system status: NOMINAL / DEGRADED / INCIDENT. Composite of all layer states.</td><td>1s</td></tr>
+        <tr><td>Event Throughput</td><td>Events/sec currently flowing through Kafka. Sparkline of last 60s.</td><td>500ms</td></tr>
+        <tr><td>Active Agents</td><td>Count of live agents. Click to expand agent fleet panel.</td><td>2s</td></tr>
+        <tr><td>Reasoning Queue</td><td>Situations queued for LLM reasoning. Latency of last call (ms).</td><td>1s</td></tr>
+        <tr><td>Memory Pressure</td><td>Redis working memory utilization %. Warning at 80%, critical at 95%.</td><td>5s</td></tr>
+        <tr><td>Chaos Lab Status</td><td>Connected / Disconnected. Active fault injections count. Target URL.</td><td>1s</td></tr>
+        <tr><td>Time</td><td>Architecture uptime. Current time (UTC). Last feedback loop completion.</td><td>1s</td></tr>
+      </tbody>
+    </table>
+
+    <!-- PANEL LIST -->
+    <h3 style="font-size: 0.9rem; color: var(--text2); margin-bottom: 1rem; margin-top: 2rem; font-family: var(--mono); letter-spacing: 0.1em; text-transform: uppercase;" id="panel-kafka">Main Panels</h3>
+
+    <table class="feature-table">
+      <thead>
+        <tr><th>Panel</th><th>Key Contents</th><th>Tag</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td id="panel-kafka">⚡ Kafka / Event Bus</td>
+          <td>Topic list with partition counts, lag per consumer group, throughput per topic, offset progress bars, dead-letter queue size, replay controls (start from offset), producer/consumer connection counts, average message size, last 20 events in live feed with event_type color coding.</td>
+          <td><span class="badge cyan">live</span></td>
+        </tr>
+        <tr>
+          <td id="panel-perception">👁 Perception Layer</td>
+          <td>Active adapter list (log, metric, API, sensor, agent_event) with status indicators, events/min per adapter, schema validation pass/fail rate, confidence score distribution histogram, perception_failure event log, normalizer latency percentiles (p50 / p95 / p99), entity_ref extraction accuracy, source-type breakdown pie chart.</td>
+          <td><span class="badge cyan">live</span></td>
+        </tr>
+        <tr>
+          <td id="panel-memory">💾 Working Memory (Redis)</td>
+          <td>Current active keys count, memory used (MB), top 10 keys by size, TTL countdown for expiring entries, recent writes (last 20), read/write ops per second, hit/miss ratio, active goal list, current plan state, recent event window (last 5 min).</td>
+          <td><span class="badge purple">live</span></td>
+        </tr>
+        <tr>
+          <td>📚 Episodic Memory (TimescaleDB)</td>
+          <td>Total event count, events ingested today, storage size, query latency (recent 10 queries), most recent 20 events with full payload expandable, time-range query builder, event_type frequency chart (last 24h), similarity search results viewer (Qdrant), recent reasoning traces stored.</td>
+          <td><span class="badge purple">query</span></td>
+        </tr>
+        <tr>
+          <td id="panel-semantic">🕸 Semantic Memory (Neo4j)</td>
+          <td>Node count by type, edge count by relationship type, graph visualization (interactive, zoomable, filterable by entity type), recently created nodes, recently strengthened edges, recently pruned weak edges, top 10 most-connected nodes, Cypher query runner with results display.</td>
+          <td><span class="badge purple">interactive</span></td>
+        </tr>
+        <tr>
+          <td>📋 Procedural Memory</td>
+          <td>Playbook library (list with names, success rates, last used), most recently activated playbooks, strategy confidence scores sorted descending, top 5 most-used procedures this session, version history for modified playbooks, similarity search to find matching procedures.</td>
+          <td><span class="badge purple">live</span></td>
+        </tr>
+        <tr>
+          <td id="panel-worldmodel">🌐 World Model</td>
+          <td>Entity registry (searchable table: entity ID, type, health, last_seen, trend), active anomaly list (severity-sorted, with causal chain expand), open causal chains (A→B→C visual), current active event context (events still unfolding), uncertainty map (entities with low confidence scores highlighted), world model version counter (updates since start).</td>
+          <td><span class="badge green">live</span></td>
+        </tr>
+        <tr>
+          <td>🧩 Situation Assessor</td>
+          <td>Current situation summary text (live LLM input), situation severity score, anomaly ranking list (what went into the prompt), context compression ratio (full model size → summary size), last assessment timestamp, assessment history (scroll back through previous summaries).</td>
+          <td><span class="badge green">live</span></td>
+        </tr>
+        <tr>
+          <td id="panel-reasoning">🤖 Reasoning Engine</td>
+          <td>Last LLM call: full prompt (expandable), full response, parsed decision object (JSON), confidence score, reasoning trace steps, time-to-decision (ms), root cause hypothesis, recommended action, requires_human_approval flag, alternative actions. LLM cost meter (tokens used, estimated $). Fast-path rule hits vs LLM calls ratio (last 100).</td>
+          <td><span class="badge amber">live</span></td>
+        </tr>
+        <tr>
+          <td id="panel-agents">🤖 Agent Fleet</td>
+          <td>One card per agent (monitor / planner / executor / memory / prediction / specialist). Each card: agent ID, type, status (idle/active/waiting/error), current task description, last action taken, last action result, uptime, events processed count, task queue depth. Click to expand full agent trace log.</td>
+          <td><span class="badge amber">live</span></td>
+        </tr>
+        <tr>
+          <td id="panel-planning">📋 Planning System</td>
+          <td>Active plans list (goal, status, current step, steps remaining), plan graph visualizer (DAG with step dependencies, step status color-coded), approval gate queue (plans awaiting human OK — with approve/reject buttons), rollback history, plan success/failure rate, average plan execution time.</td>
+          <td><span class="badge red">interactive</span></td>
+        </tr>
+        <tr>
+          <td>⚙️ Execution Layer</td>
+          <td>Recent action log (action type, target entity, params, status, duration), action type breakdown (API / file / process / sub-agent / message / state mutation / human handoff), retry queue, failed action list with error details, execution feedback events sent back to Kafka.</td>
+          <td><span class="badge red">live</span></td>
+        </tr>
+        <tr>
+          <td id="panel-temporal">📅 Temporal State</td>
+          <td>Per-entity metric sparklines (current value, trend arrow, rate of change, deviation from baseline), detected pattern list (spike / drift / correlation / absence / recurrence), pattern confidence scores, time-series chart builder (select entity + metric + range), baseline overlays, anomaly markers on timeline.</td>
+          <td><span class="badge green">live</span></td>
+        </tr>
+        <tr>
+          <td id="panel-predictions">🔮 Predictions</td>
+          <td>Active predictions list (metric, predicted value, horizon, confidence, model: GNN vs Prophet), prediction accuracy scorecard (predictions made vs observed outcomes), 5-min / 15-min / 60-min horizon tabs, prediction error distribution, model performance over time.</td>
+          <td><span class="badge green">live</span></td>
+        </tr>
+        <tr>
+          <td id="panel-feedback">🔁 Feedback Loop</td>
+          <td>Recent feedback cycles (action → effect → world model delta → strategy update), outcome log (success / partial / failure with context), procedural memory update events (strategy confidence changes), knowledge graph update events (new RESOLVES edges), cumulative strategy improvement chart (rolling success rate per playbook type).</td>
+          <td><span class="badge cyan">live</span></td>
+        </tr>
+        <tr>
+          <td id="panel-graph">🕸 Knowledge Graph Explorer</td>
+          <td>Full interactive graph (Neo4j rendered via D3 or Sigma.js), filter by node type / relationship type / confidence threshold, highlight blast radius of selected node, highlight causal chains from selected event, entity profile sidebar (click any node), relationship edge properties on hover, graph diff view (what changed in last N minutes).</td>
+          <td><span class="badge purple">interactive</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── PANEL MOCKUPS ── -->
+  <div class="section" id="dataflows">
+    <div class="section-number">04 / Panel Mockups</div>
+    <div class="section-title">Representative Panel Designs</div>
+    <p class="section-desc">These mockups show the visual structure expected for key panels. Use these as reference for the frontend implementation.</p>
+
+    <!-- Kafka Panel Mock -->
+    <div class="panel-mockup">
+      <div class="panel-header">
+        <span class="panel-title">⚡ KAFKA / EVENT BUS · topic:events</span>
+        <div class="panel-status">
+          <div class="status-dot"></div>
+          <span style="font-family:var(--mono);font-size:0.65rem;color:var(--accent3)">LIVE</span>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="mock-row">
+          <span class="mock-label">events (main)</span>
+          <div class="mock-bar"><div class="mock-fill" style="width:72%;background:var(--accent)"></div></div>
+          <span class="mock-val" style="color:var(--accent)">847 msg/s</span>
+        </div>
+        <div class="mock-row">
+          <span class="mock-label">agent_events</span>
+          <div class="mock-bar"><div class="mock-fill" style="width:31%;background:var(--accent2)"></div></div>
+          <span class="mock-val" style="color:#a78bfa">143 msg/s</span>
+        </div>
+        <div class="mock-row">
+          <span class="mock-label">actions</span>
+          <div class="mock-bar"><div class="mock-fill" style="width:18%;background:var(--accent3)"></div></div>
+          <span class="mock-val" style="color:var(--accent3)">29 msg/s</span>
+        </div>
+        <div class="mock-row">
+          <span class="mock-label">chaos_injections</span>
+          <div class="mock-bar"><div class="mock-fill" style="width:8%;background:var(--accent5)"></div></div>
+          <span class="mock-val" style="color:var(--accent5)">3 active</span>
+        </div>
+        <div class="mock-row">
+          <span class="mock-label">consumer lag (memory-router)</span>
+          <div class="mock-bar"><div class="mock-fill" style="width:5%;background:var(--accent4)"></div></div>
+          <span class="mock-val" style="color:var(--accent4)">12 msgs</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Memory Panel Mock -->
+    <div class="panel-mockup">
+      <div class="panel-header">
+        <span class="panel-title">💾 MEMORY SYSTEM · four-layer state</span>
+        <div class="panel-status">
+          <div class="status-dot" style="background:var(--accent2)"></div>
+          <span style="font-family:var(--mono);font-size:0.65rem;color:var(--accent2)">NOMINAL</span>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="mock-row">
+          <span class="mock-label">working (Redis)</span>
+          <div class="mock-bar"><div class="mock-fill" style="width:43%;background:var(--accent)"></div></div>
+          <span class="mock-val" style="color:var(--text2)">43% · 214MB · 3,847 keys</span>
+        </div>
+        <div class="mock-row">
+          <span class="mock-label">episodic (PG+Timescale)</span>
+          <div class="mock-bar"><div class="mock-fill" style="width:67%;background:#a78bfa"></div></div>
+          <span class="mock-val" style="color:var(--text2)">67% · 4.2GB · 1.3M events</span>
+        </div>
+        <div class="mock-row">
+          <span class="mock-label">semantic (Neo4j)</span>
+          <div class="mock-bar"><div class="mock-fill" style="width:29%;background:var(--accent3)"></div></div>
+          <span class="mock-val" style="color:var(--text2)">29% · 847 nodes · 2,341 edges</span>
+        </div>
+        <div class="mock-row">
+          <span class="mock-label">procedural (PG+Qdrant)</span>
+          <div class="mock-bar"><div class="mock-fill" style="width:18%;background:var(--accent4)"></div></div>
+          <span class="mock-val" style="color:var(--text2)">18% · 47 playbooks · avg 0.76 conf</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- World Model Mock -->
+    <div class="panel-mockup">
+      <div class="panel-header">
+        <span class="panel-title">🌐 WORLD MODEL · entity registry + anomalies</span>
+        <div class="panel-status">
+          <div class="status-dot" style="background:var(--accent5);animation:none;opacity:1;"></div>
+          <span style="font-family:var(--mono);font-size:0.65rem;color:var(--accent5)">2 ANOMALIES</span>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="mock-row">
+          <span class="mock-label">auth-service</span>
+          <span class="badge red">DEGRADED</span>
+          <span class="mock-val" style="color:var(--text2);margin-left:auto">p95=890ms ↑ (+340%)</span>
+        </div>
+        <div class="mock-row">
+          <span class="mock-label">db:postgres-primary</span>
+          <span class="badge amber">STRESSED</span>
+          <span class="mock-val" style="color:var(--text2);margin-left:auto">pool=18/20 ↑</span>
+        </div>
+        <div class="mock-row">
+          <span class="mock-label">api-gateway</span>
+          <span class="badge green">NOMINAL</span>
+          <span class="mock-val" style="color:var(--text2);margin-left:auto">p95=43ms →</span>
+        </div>
+        <div class="mock-row">
+          <span class="mock-label">worker-pool</span>
+          <span class="badge green">NOMINAL</span>
+          <span class="mock-val" style="color:var(--text2);margin-left:auto">3/10 busy →</span>
+        </div>
+        <div class="mock-row">
+          <span class="mock-label">Causal chain active</span>
+          <span style="font-family:var(--mono);font-size:0.7rem;color:var(--accent4)">db:postgres-primary → svc:auth-service → user:login-flow</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 05 AGENT CONSOLE ── -->
+  <div class="section" id="agents">
+    <div class="section-number">05 / Agent Fleet Console</div>
+    <div class="section-title">Per-Agent Detail View</div>
+    <p class="section-desc">
+      Each agent gets a card in the agent fleet panel. Clicking a card opens its full trace log: every task it has received, 
+      every action it has taken, and the outcome of each.
+    </p>
+
+    <table class="feature-table">
+      <thead>
+        <tr><th>Agent</th><th>Card Shows</th><th>Expanded Trace Shows</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>👁 Monitor Agent</td>
+          <td>Events/min scanned, anomalies detected today, current watch state, false positive rate</td>
+          <td>Full anomaly detection log, threshold rules, event patterns matched, situations triggered</td>
+        </tr>
+        <tr>
+          <td>🧩 Planner Agent</td>
+          <td>Active plan ID, reasoning calls today, avg decision confidence, last decision summary</td>
+          <td>Full LLM prompt/response history, decision objects, fast-path vs LLM ratio, escalations</td>
+        </tr>
+        <tr>
+          <td>⚙️ Executor Agent(s)</td>
+          <td>Actions completed today, success/fail rate, current step executing, queue depth</td>
+          <td>Every action executed with params, result, duration, feedback event published</td>
+        </tr>
+        <tr>
+          <td>🗃 Memory Agent</td>
+          <td>Events consolidated today, graph updates made, playbooks updated, Qdrant index size</td>
+          <td>Consolidation decisions, graph writes, TTL expirations managed, semantic search reindexes</td>
+        </tr>
+        <tr>
+          <td>🔮 Prediction Agent</td>
+          <td>Active predictions count, accuracy last 24h, model type (Prophet/GNN), last prediction</td>
+          <td>Prediction history with outcomes, model performance metrics, forecast charts per entity</td>
+        </tr>
+        <tr>
+          <td>🎯 Specialist Agents</td>
+          <td>Spawned count today, active instances, domain (db/security/scheduling/etc.), task summary</td>
+          <td>Spawn triggers, specialized prompts used, results returned to planner, lifecycle events</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout warn">
+      <div class="callout-label">Multi-Agent Conflict Detection</div>
+      The dashboard highlights conflict states in red when two agents have active tasks targeting the same entity. 
+      The conflict resolution decision made by the planner agent is shown inline in both conflicting agent cards.
+    </div>
+  </div>
+
+  <!-- ── 06 CHAOS LAB ── -->
+  <div class="section" id="chaos">
+    <div class="section-number">06 / Chaos Lab Integration Panel</div>
+    <div class="section-title">Real-World Testing View</div>
+    <p class="section-desc">
+      When you connect the Chaos Lab (a real website, API, or service), the dashboard gains a dedicated Chaos Lab panel. 
+      This is how you watch the architecture respond to real faults — end to end, from signal to action.
+    </p>
+
+    <div class="card-grid">
+      <div class="card red">
+        <div class="card-icon">🎯</div>
+        <div class="card-title">Target Configuration</div>
+        <div class="card-desc">URL / service endpoint being tested. Active adapter list showing which perception adapters are pointed at it. Connection health indicator.</div>
+      </div>
+      <div class="card red">
+        <div class="card-icon">💥</div>
+        <div class="card-title">Fault Injection Controls</div>
+        <div class="card-desc">Inject: latency spike, HTTP 500 wave, connection timeout, memory pressure, CPU spike, dead queue, missing heartbeat, auth failure flood. Each has a duration slider and intensity control.</div>
+      </div>
+      <div class="card amber">
+        <div class="card-icon">⏱</div>
+        <div class="card-title">Detection Latency</div>
+        <div class="card-desc">Time from fault injection to: first Kafka event, world model anomaly flag, reasoning engine invocation, plan created, first action executed. Shows the full response latency chain.</div>
+      </div>
+      <div class="card green">
+        <div class="card-icon">🔬</div>
+        <div class="card-title">Full Response Trace</div>
+        <div class="card-desc">Step-by-step trace of the architecture's response to each injected fault: every event, memory write, world model delta, reasoning decision, plan step, and execution action — in chronological order with timestamps.</div>
+      </div>
+    </div>
+
+    <h3 style="font-size:0.9rem;color:var(--text2);margin-bottom:1rem;font-family:var(--mono);letter-spacing:0.1em;text-transform:uppercase;">Chaos Lab Scenario Replay</h3>
+    <p class="section-desc" style="margin-bottom:1.5rem;">
+      Every chaos scenario is recorded end-to-end and can be replayed. The dashboard can fast-forward or step through the replay, 
+      showing exactly what the architecture believed at each moment.
+    </p>
+
+    <table class="feature-table">
+      <thead>
+        <tr><th>Scenario</th><th>Faults Injected</th><th>What to Watch</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Database Timeout Cascade</td><td>Add 2000ms latency to postgres-primary</td><td>Connection pool exhaustion → auth-service degradation → causal chain in world model → planner scales replicas</td></tr>
+        <tr><td>Auth Service Crash</td><td>Kill auth-service process</td><td>Absence pattern detection → blast radius analysis → dependent services flagged → human handoff (high-risk action)</td></tr>
+        <tr><td>Silent Drift</td><td>Gradually increase error rate 0→5% over 20 min</td><td>Temporal drift detector fires → world model trend arrow changes → prediction agent forecasts crossing → proactive plan</td></tr>
+        <tr><td>Queue Flood</td><td>Pause consumers, flood queue to 50k depth</td><td>Queue depth event stream → memory spike → worker scaling plan → feedback confirms queue draining</td></tr>
+        <tr><td>Correlation Test</td><td>Spike CPU + introduce memory leak simultaneously</td><td>Correlation pattern detected between two metrics → knowledge graph adds HISTORICALLY_CORRELATED edge → reasoning identifies shared root cause</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── 07 TECH STACK ── -->
+  <div class="section" id="stack">
+    <div class="section-number">07 / Dashboard Tech Stack</div>
+    <div class="section-title">Recommended Implementation Stack</div>
+    <p class="section-desc">The dashboard backend aggregates from all architecture components. The frontend renders in real time via WebSocket.</p>
+
+    <table class="feature-table">
+      <thead>
+        <tr><th>Layer</th><th>Technology</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Frontend framework</td><td>React + TypeScript</td><td>Component model matches panel architecture. TypeScript catches schema mismatches early.</td></tr>
+        <tr><td>Real-time transport</td><td>WebSocket (native) or Socket.IO</td><td>Dashboard needs sub-second updates for live panels. REST polling is too slow for event stream.</td></tr>
+        <tr><td>Dashboard state</td><td>Zustand or Jotai</td><td>Lightweight atom-based state. Each panel subscribes to its slice — no unnecessary re-renders.</td></tr>
+        <tr><td>Graph visualization</td><td>Sigma.js or React Flow</td><td>Sigma.js handles large graphs (1000+ nodes) in WebGL. React Flow is better for architecture flowchart (smaller, interactive).</td></tr>
+        <tr><td>Time-series charts</td><td>Recharts or uPlot</td><td>uPlot is faster for dense data. Recharts is easier to style consistently.</td></tr>
+        <tr><td>Architecture diagram</td><td>React Flow</td><td>Node-edge graph with custom node types. Supports animated edges for data flow visualization.</td></tr>
+        <tr><td>Backend aggregator</td><td>FastAPI + asyncio</td><td>Async WebSocket server that fans out to Kafka consumer, Redis, PostgreSQL, Neo4j simultaneously.</td></tr>
+        <tr><td>Kafka consumer</td><td>aiokafka</td><td>Async Kafka consumer that pushes events to WebSocket subscribers in real time.</td></tr>
+        <tr><td>Styling</td><td>Tailwind CSS + CSS variables</td><td>Utility classes for layout, CSS variables for consistent color theming (dark mode first).</td></tr>
+        <tr><td>LLM trace viewer</td><td>Custom component</td><td>Expandable JSON viewer for prompt/response pairs. Syntax-highlighted. Diff view for consecutive decisions.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── 08 BUILD PROMPT ── -->
+  <div class="section" id="prompt">
+    <div class="section-number">08 / Frontend Build Prompt</div>
+    <div class="section-title">The Complete Prompt to Build the Dashboard</div>
+    <p class="section-desc">
+      Use this prompt directly with Claude, GPT-4o, or any capable code generation LLM. It contains the full specification 
+      for the dashboard frontend. Pair it with this guide as a reference document.
+    </p>
+
+    <div class="prompt-box">
+      <button class="prompt-copy" onclick="
+        const text = document.getElementById('prompt-text').innerText;
+        navigator.clipboard.writeText(text).then(()=>{
+          this.textContent='COPIED ✓';
+          setTimeout(()=>this.textContent='COPY',1500);
+        });
+      ">COPY</button>
+
+      <div id="prompt-text">
+<h4>SYSTEM CONTEXT</h4>
+<p>You are building the observability dashboard for a Cognitive Architecture system built through 11 phases:
+Perception Layer → Memory System (Working/Episodic/Semantic/Procedural) → Knowledge Graph → Temporal Engine →
+World Model → Reasoning Engine → Planning System → Execution Layer → Feedback Loop → Multi-Agent Coordination.
+The dashboard is the control surface that makes every internal state of this architecture visible in real time.</p>
+
+<h4>DESIGN AESTHETIC</h4>
+<p>Dark industrial-terminal aesthetic. Background: #0a0c0f. Primary accent: #00e5ff (cyan). Secondary: #7c3aed (purple).
+Success: #10b981. Warning: #f59e0b. Critical: #ef4444. Font stack: Space Mono for data/code, Syne or similar for labels.
+Minimal chrome. Maximum information density. Every element earns its pixel. No decorative gradients — function IS the design.
+Think: Bloomberg Terminal meets LCARS meets industrial SCADA. Panels have colored top-border accent strips per domain layer.</p>
+
+<h4>LAYOUT STRUCTURE</h4>
+<ul>
+  <li><span class="hl">Top status bar (fixed, 48px):</span> Architecture health badge (NOMINAL/DEGRADED/INCIDENT), event throughput sparkline (events/sec, last 60s), active agent count, reasoning queue depth, memory pressure %, Chaos Lab connection status, system uptime, current UTC time.</li>
+  <li><span class="hl">Left sidebar (200px, collapsible):</span> Navigation to each panel section. Layer health dots (green/amber/red) next to each. Collapse to icon-only mode.</li>
+  <li><span class="hl">Main content area:</span> Resizable panel grid. Default layout: 2-column on wide screens, single column on narrow. Each panel is independently scrollable with expand-to-fullscreen button.</li>
+  <li><span class="hl">Architecture flowchart (always-visible, collapsible):</span> At the top of main area — the full data flow from signal source → perception → event bus → memory layers → world model → reasoning → planning → execution → feedback, rendered as an interactive React Flow diagram. Each node pulses/glows when actively processing. Click any node to jump to that panel.</li>
+</ul>
+
+<h4>PANEL 1 — KAFKA / EVENT BUS</h4>
+<ul>
+  <li>Topic list: events, agent_events, actions, chaos_injections — each with messages/sec bar, consumer lag, partition count</li>
+  <li>Consumer group lag per group: memory-router, world-model, agent-monitor (show offset lag as number + color-coded bar)</li>
+  <li>Live event feed: scrolling list of last 50 events, each row shows: timestamp, source_id, event_type (color-coded by domain), severity badge, confidence score. Click to expand full JSON payload.</li>
+  <li>Dead-letter queue size + button to inspect DLQ contents</li>
+  <li>Replay controls: time range picker + "replay from here" button (calls backend endpoint)</li>
+  <li>Throughput chart: 5-minute sparkline of messages/sec across all topics, stacked by topic</li>
+</ul>
+
+<h4>PANEL 2 — PERCEPTION LAYER</h4>
+<ul>
+  <li>Adapter status table: one row per adapter (log-agent, metrics-bridge, api-poller, sensor-mqtt, agent-event-sdk, chaos-webhook). Columns: adapter name, source count, events/min, validation pass%, last event timestamp, status (LIVE/STALE/ERROR).</li>
+  <li>Confidence score distribution: histogram of confidence values across events in last 5 minutes (bins: 0.0-0.5, 0.5-0.7, 0.7-0.9, 0.9-1.0)</li>
+  <li>Perception failures log: list of recent schema validation failures — event_id, source, failure reason, raw payload snippet</li>
+  <li>Entity extraction quality: entities found per event (avg), new entities discovered today, entity namespace size</li>
+  <li>Normalizer latency: p50/p95/p99 per adapter type, shown as horizontal bar chart</li>
+</ul>
+
+<h4>PANEL 3 — MEMORY SYSTEM (four sub-panels, tabbed)</h4>
+<p><span class="hl">Tab: Working Memory (Redis)</span></p>
+<ul>
+  <li>Utilization gauge (used MB / max MB), ops/sec (reads + writes), hit/miss ratio</li>
+  <li>Key space browser: sortable table of active keys — key name, size, TTL countdown (color red when &lt;60s), type (hash/sorted_set/string)</li>
+  <li>Active goals list: each goal with status, created_at, priority</li>
+  <li>Current plan state: which plan is active, current step, steps remaining</li>
+  <li>Recent event window: last 15 events stored in working memory (name + timestamp + severity)</li>
+</ul>
+<p><span class="hl">Tab: Episodic Memory (TimescaleDB + Qdrant)</span></p>
+<ul>
+  <li>Stats: total event count, events today, storage size (GB), ingest rate (events/min)</li>
+  <li>Query latency: list of last 10 queries with duration and type (time-range / similarity / pattern)</li>
+  <li>Event timeline: zoomable timeline showing event frequency over last 24h, colored by severity. Click a spike to query that time range.</li>
+  <li>Event type frequency chart: bar chart of most common event_types in last 24h</li>
+  <li>Similarity search results viewer: shows last Qdrant query (what the reasoning engine searched for) + top 3 results with similarity scores</li>
+  <li>Reasoning trace store: last 10 reasoning traces saved to episodic — expandable to see full prompt/response</li>
+</ul>
+<p><span class="hl">Tab: Semantic Memory (Neo4j)</span></p>
+<ul>
+  <li>Graph stats: node counts by type (Service/Database/User/Agent/Task/Resource/Concept), edge counts by relationship type</li>
+  <li>Interactive graph: rendered with Sigma.js or D3 force layout. Node color by type. Edge thickness by weight. Zoom/pan/select. Click node for entity profile sidebar.</li>
+  <li>Entity profile sidebar: entity ID, type, properties table, connected entities list (with relationship type + weight), recent events referencing this entity</li>
+  <li>Recent graph mutations: list of last 20 node creates/updates and edge creates/updates with timestamp</li>
+  <li>Weak edges panel: edges with weight &lt;0.2 (pruning candidates) shown separately</li>
+  <li>Cypher query runner: text input for Cypher queries, results displayed as table or sub-graph</li>
+</ul>
+<p><span class="hl">Tab: Procedural Memory</span></p>
+<ul>
+  <li>Playbook library table: name, domain, success_rate (%), times_used, last_used, confidence_score. Sortable columns.</li>
+  <li>Top 5 active playbooks: larger cards showing name + most recent invocation context</li>
+  <li>Strategy confidence chart: bar chart of confidence scores for all playbooks, sorted descending</li>
+  <li>Recent reinforcements: log of strategies that were updated by the feedback loop this session</li>
+</ul>
+
+<h4>PANEL 4 — WORLD MODEL</h4>
+<ul>
+  <li>Entity registry: searchable/filterable table — entity_id, type, health_status (badge), last_seen (time ago), trend arrow (↑↓→), confidence score. Highlight degraded/stressed rows.</li>
+  <li>Active anomalies list: severity-sorted cards — each shows entity, anomaly type, deviation magnitude, duration, and expandable causal chain (A→B→C arrows)</li>
+  <li>Open causal chains: visual representation of currently active causal chains — nodes (entities) connected by directed arrows, each arrow labeled with relationship type</li>
+  <li>Active event context: events still "open" (consequences unfolding) — event_id, event_type, affected entities, age</li>
+  <li>Uncertainty map: entities where confidence &lt;0.7 highlighted. Shows what the world model is uncertain about.</li>
+  <li>World model update counter: total updates since start, updates in last minute, last update timestamp</li>
+  <li>Predictive state section: for each tracked metric — current value, predicted value at +5min / +15min / +60min, confidence of prediction, trend indicator</li>
+</ul>
+
+<h4>PANEL 5 — REASONING ENGINE</h4>
+<ul>
+  <li>Last LLM call card: shows situation summary input (collapsible), full prompt (collapsible), full response (collapsible), parsed decision object as syntax-highlighted JSON, time-to-decision in ms, token counts (prompt + completion), estimated cost</li>
+  <li>Decision object fields prominently displayed: situation_assessment text, root_cause_hypothesis + confidence, recommended_action + parameters, requires_human_approval (red badge if true), alternative_actions list</li>
+  <li>Reasoning history: scrollable list of last 20 reasoning cycles — timestamp, situation summary (truncated), decision made, outcome (if known). Click to expand any.</li>
+  <li>Fast-path stats: rules fired vs LLM calls ratio (donut chart), list of fast-path rule matches with matched rule name</li>
+  <li>LLM performance: rolling avg latency (ms), cost accumulator ($), calls today, error rate</li>
+</ul>
+
+<h4>PANEL 6 — AGENT FLEET</h4>
+<ul>
+  <li>Agent cards grid: one card per agent type (Monitor / Planner / Executor / Memory / Prediction / Specialist). Each card:
+    - Agent name + icon + type badge
+    - Status indicator: IDLE (gray) / ACTIVE (cyan pulse) / WAITING (amber) / ERROR (red)
+    - Current task: short description or "—" if idle
+    - Last action: name + result + timestamp
+    - Stats: tasks completed today, avg task duration, error count
+    - "View Trace" button → opens full trace log drawer
+  </li>
+  <li>Conflict detection panel: if two agents have tasks targeting same entity — show conflict card with both agent names, conflicting plans, and resolution decision by planner</li>
+  <li>Agent spawn log: when and why specialist agents were spawned, their domain, lifetime, result</li>
+  <li>Communication log: inter-agent messages via event bus — from, to, event_type, timestamp</li>
+</ul>
+
+<h4>PANEL 7 — PLANNING & EXECUTION</h4>
+<ul>
+  <li>Active plans list: each plan shows — goal text, status badge (RUNNING/PAUSED/COMPLETED/FAILED), progress bar (step N of M), current step name, time elapsed</li>
+  <li>Plan graph visualizer: DAG of the active plan's steps. Each step node: name, status color, duration. Edges show dependencies. Parallel branches shown side by side.</li>
+  <li>Approval gate queue: plans awaiting human approval. Each shows: plan goal, step requiring approval, risk assessment, recommended action, APPROVE and REJECT buttons. Approved/rejected decisions logged.</li>
+  <li>Execution action log: scrolling feed of actions executed — type (API/file/agent/message/human), target entity, params summary, status (SUCCESS/FAILED/RETRY), duration ms</li>
+  <li>Rollback history: plans that triggered rollback — what failed, what rollback steps ran, final state</li>
+  <li>Plan performance: success rate (last 100 plans), avg completion time by plan type, failure reason distribution</li>
+</ul>
+
+<h4>PANEL 8 — TEMPORAL STATE</h4>
+<ul>
+  <li>Entity metric sparklines: for each tracked entity+metric pair — small chart showing last 30 data points with current value, trend direction (↑↓→), rate of change (%/min), deviation from baseline (sigmas). Color: green if normal, amber if drifting, red if anomalous.</li>
+  <li>Detected patterns list: each pattern card shows — type (SPIKE/DRIFT/CORRELATION/ABSENCE/RECURRENCE), entities involved, confidence score, detected_at, age, status (ACTIVE/RESOLVED)</li>
+  <li>Timeline builder: dropdown select entity + metric, date range picker, renders full time-series chart with baseline overlay, anomaly markers, and detected pattern annotations</li>
+  <li>Correlation matrix: heatmap of correlation coefficients between tracked metrics (last 24h). Click a cell to see the time-series overlay of both metrics.</li>
+</ul>
+
+<h4>PANEL 9 — PREDICTIONS</h4>
+<ul>
+  <li>Active predictions table: metric_id, entity, horizon (5/15/60 min), predicted_value, confidence, model_type (Prophet/GNN/LLM), created_at</li>
+  <li>Prediction vs actual chart: for each completed prediction — scatter plot of predicted vs observed, with error bars. Hovering a point shows the context at prediction time.</li>
+  <li>Accuracy scorecard: MAE and MAPE per model type, per horizon. Rolling 7-day accuracy trend line.</li>
+  <li>GNN model status (if deployed): model version, training data size, last retrain date, inference latency, feature importance top-5</li>
+  <li>Upcoming predicted events: "In 12 minutes: auth-service p95 latency predicted to cross 500ms threshold (87% confidence)" — prioritized list</li>
+</ul>
+
+<h4>PANEL 10 — FEEDBACK LOOP</h4>
+<ul>
+  <li>Recent feedback cycles: each cycle card — plan goal, action taken, expected outcome, observed outcome, match (SUCCESS/PARTIAL/FAILURE), world model delta summary, strategy update made</li>
+  <li>Strategy improvement chart: for each playbook type — rolling success rate over time (line chart, last 30 days). Should show upward trend as system learns.</li>
+  <li>Knowledge graph reinforcements: recent RESOLVES edges added or strengthened — "action:scale_replicas RESOLVES situation:db_pool_exhaustion (conf: 0.82)"</li>
+  <li>Compounding effect tracker: total feedback cycles completed, overall strategy improvement (first-week avg success rate vs last-week avg success rate), learning velocity</li>
+  <li>Observability traces: link to OpenTelemetry trace for each reasoning→execution→feedback cycle (opens Jaeger/Tempo in new tab)</li>
+</ul>
+
+<h4>PANEL 11 — CHAOS LAB</h4>
+<ul>
+  <li>Target service configuration: URL input, connection test button, active adapter list showing which perception adapters are watching this target, connection health indicator</li>
+  <li>Fault injection controls: button grid for — latency_spike (slider: 100ms–10s), http_500_wave (slider: rate%), connection_timeout, memory_pressure, cpu_spike, queue_flood, dead_heartbeat, auth_failure_flood. Each fault has duration slider (10s–10min) and INJECT + STOP buttons.</li>
+  <li>Active faults display: currently injected faults as tags with remaining duration countdown and CANCEL button</li>
+  <li>Detection latency chain: for the most recent fault — timeline showing: fault_injected_at → first_kafka_event_at → world_model_anomaly_at → reasoning_invoked_at → plan_created_at → first_action_at. Shows each gap in milliseconds.</li>
+  <li>Full response trace: expandable step-by-step chronological log of the architecture's complete response to the fault — every event, memory write, world model update, reasoning decision, plan step, execution action, feedback event. Timestamps on each.</li>
+  <li>Scenario recorder: RECORD button to capture a complete fault→response scenario. REPLAY button to replay any saved scenario. Scenario library with saved replays.</li>
+  <li>Architecture grading: after each fault response — auto-grade: detection speed (A/B/C/F), correct root cause identification (Y/N), appropriate action selected (Y/N), execution success (Y/N), feedback loop closed (Y/N).</li>
+</ul>
+
+<h4>GLOBAL FEATURES (apply to all panels)</h4>
+<ul>
+  <li>Every panel has: expand to fullscreen button, collapse to minimal/header-only mode, refresh rate selector (live / 1s / 5s / manual), and a "last updated" timestamp.</li>
+  <li>Global time range selector (top bar): affects all historical/query panels simultaneously (1h / 6h / 24h / 7d / custom)</li>
+  <li>Global entity search: type an entity ID anywhere in the top bar → all panels highlight that entity's data and the knowledge graph centers on it</li>
+  <li>Event inspector drawer: clicking any event_id anywhere in the dashboard opens a right-side drawer with the full event object, its trace through the system (which memory layers stored it, what world model updates it triggered, if it caused a reasoning invocation), and links to related events</li>
+  <li>Dark mode only. No light mode. Color accessibility: all status colors also use shape/icon differentiation, not color alone.</li>
+  <li>WebSocket reconnection: graceful handling of backend disconnection with reconnecting... state and auto-reconnect. No stale data shown — panels show "last known state + age" when disconnected.</li>
+  <li>Keyboard shortcuts: / to focus entity search, G to open graph full screen, A for agent fleet, C for chaos lab, Escape to close any drawer/fullscreen</li>
+</ul>
+
+<h4>BACKEND API CONTRACT</h4>
+<p>The frontend connects to a FastAPI backend at http://localhost:8000. WebSocket endpoint: ws://localhost:8000/ws/dashboard. 
+REST endpoints for historical queries: /api/events?from=&to=&type=&entity= | /api/graph/query (POST, body: {cypher}) | /api/memory/working | 
+/api/agents | /api/plans/active | /api/predictions | /api/feedback/recent | /api/chaos/scenarios.
+WebSocket pushes: {type: "event", data: UnifiedEvent} | {type: "world_model_update", data: WorldModelDelta} | 
+{type: "agent_status", data: AgentStatus[]} | {type: "reasoning_result", data: DecisionObject} | {type: "plan_update", data: PlanState}</p>
+
+<h4>IMPLEMENTATION NOTES</h4>
+<ul>
+  <li>Start with a mock data layer that generates realistic synthetic events so the frontend can be built and tested without the full backend running.</li>
+  <li>Use CSS Grid for panel layout with configurable column spans. Store layout preferences in localStorage.</li>
+  <li>All charts must handle empty/loading/error states gracefully.</li>
+  <li>The knowledge graph visualization is the most complex component — build it as a standalone component with its own data fetching. Use WebGL renderer (Sigma.js) for performance with 500+ nodes.</li>
+  <li>The architecture flowchart uses React Flow. Define custom node types for each layer (perception/memory/worldmodel/reasoning/planning/execution/feedback/agent). Add animated edge variants that pulse when data is flowing.</li>
+  <li>Approval gate panel is the ONLY panel with write operations — implement optimistic UI with rollback on error.</li>
+</ul>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <div class="callout-label">Usage Tip</div>
+      Pair this prompt with the architecture guide PDF and the individual phase HTML guides as context documents. 
+      Ask the LLM to generate one panel at a time starting with the Kafka panel and the architecture flowchart. 
+      The mock data layer should be built first — it lets you develop all panels without needing the full backend.
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-label">Build Order Recommendation</div>
+      1. Layout shell + top status bar with mock data → 2. Architecture flowchart (React Flow) → 3. Kafka / Event Bus panel →
+      4. Memory system panel (4 tabs) → 5. World Model + anomaly view → 6. Agent Fleet console → 
+      7. Reasoning Engine trace viewer → 8. Chaos Lab panel → 9. All remaining panels → 10. WebSocket live data integration.
+    </div>
+  </div>
+
+  <!-- FINAL CHECKLIST -->
+  <div class="section">
+    <div class="section-number">09 / Completion Checklist</div>
+    <div class="section-title">Before Chaos Lab Testing</div>
+    <p class="section-desc">Verify these before running your first real chaos scenario.</p>
+
+    <ul class="checklist">
+      <li><div class="check-box">✓</div><div><strong>All 11 Kafka topics visible</strong> with real-time throughput in the Event Bus panel</div></li>
+      <li><div class="check-box">✓</div><div><strong>All 4 memory layers</strong> showing live utilization and recent write activity</div></li>
+      <li><div class="check-box">✓</div><div><strong>Knowledge graph</strong> has nodes for all your environment entities, visible in the graph explorer</div></li>
+      <li><div class="check-box">✓</div><div><strong>World model</strong> entity registry showing all entities with current health status</div></li>
+      <li><div class="check-box">✓</div><div><strong>All agents</strong> showing IDLE or ACTIVE status in the agent fleet console</div></li>
+      <li><div class="check-box">✓</div><div><strong>Reasoning engine</strong> has at least one completed reasoning trace visible</div></li>
+      <li><div class="check-box">✓</div><div><strong>Feedback loop</strong> shows at least one completed cycle (action → outcome → memory update)</div></li>
+      <li><div class="check-box">✓</div><div><strong>Approval gate</strong> tested: inject a high-risk plan, verify it stops for human approval, approve it, verify it continues</div></li>
+      <li><div class="check-box">✓</div><div><strong>Chaos Lab</strong> connected to target service, at least one fault injected and traced through all panels end-to-end</div></li>
+      <li><div class="check-box">✓</div><div><strong>Architecture flowchart</strong> nodes animate correctly when their layer is processing</div></li>
+      <li><div class="check-box">✓</div><div><strong>WebSocket reconnection</strong> tested — kill backend, verify dashboard shows disconnected state gracefully, reconnect, verify state restores</div></li>
+      <li><div class="check-box">✓</div><div><strong>Entity search</strong> works globally — search an entity ID and all panels highlight its data</div></li>
+    </ul>
+  </div>
+
+</div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+// Sidebar active link highlight on scroll
+const links = document.querySelectorAll('.sidebar-link');
+const sections = document.querySelectorAll('.section');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      links.forEach(l => {
+        l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+      });
+    }
+  });
+}, { threshold: 0.3 });
+
+sections.forEach(s => { if (s.id) observer.observe(s); });
+
+// Status dot animation stagger
+document.querySelectorAll('.status-dot').forEach((dot, i) => {
+  dot.style.animationDelay = (i * 0.3) + 's';
+});
+</script>
+</body>
+</html>

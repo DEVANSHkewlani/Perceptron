@@ -1,0 +1,296 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);color:var(--color-text-primary);font-size:13px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.tab{padding:6px 14px;font-size:12.5px;border:0.5px solid var(--color-border-secondary);border-radius:20px;background:var(--color-background-primary);color:var(--color-text-secondary);cursor:pointer;transition:all .15s;white-space:nowrap}
+.tab.on{background:var(--color-background-info);border-color:var(--color-border-info);color:var(--color-text-info);font-weight:500}
+.pane{display:none;animation:fi .2s ease}.pane.on{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.section{font-size:10px;font-weight:600;letter-spacing:.07em;color:var(--color-text-tertiary);text-transform:uppercase;margin:14px 0 6px}
+.desc{font-size:13px;color:var(--color-text-secondary);line-height:1.65;margin-bottom:10px}
+.code{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:11px 13px;font-family:var(--font-mono);font-size:12px;line-height:1.75;position:relative;margin-bottom:10px;white-space:pre-wrap;word-break:break-all}
+.cpbtn{position:absolute;top:7px;right:7px;font-size:11px;padding:3px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-secondary);cursor:pointer}
+.ok{border-left:2px solid var(--color-border-success);background:var(--color-background-success);border-radius:0 var(--border-radius-md) var(--border-radius-md) 0;padding:8px 11px;font-size:12.5px;color:var(--color-text-success);margin-bottom:10px;line-height:1.55}
+.info{border-left:2px solid var(--color-border-info);background:var(--color-background-info);border-radius:0 var(--border-radius-md) var(--border-radius-md) 0;padding:8px 11px;font-size:12.5px;color:var(--color-text-info);margin-bottom:10px;line-height:1.55}
+.warn{border-left:2px solid var(--color-border-warning);background:var(--color-background-warning);border-radius:0 var(--border-radius-md) var(--border-radius-md) 0;padding:8px 11px;font-size:12.5px;color:var(--color-text-warning);margin-bottom:10px;line-height:1.55}
+.flow{display:flex;align-items:center;gap:0;margin:10px 0 14px;flex-wrap:wrap}
+.fbox{background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:7px 11px;font-size:12px;text-align:center;min-width:90px}
+.fbox .fl{font-size:10px;color:var(--color-text-tertiary);margin-bottom:2px}
+.fbox .fv{font-weight:500}
+.farr{color:var(--color-text-tertiary);padding:0 6px;font-size:16px}
+.comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.comp{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 12px;cursor:pointer;transition:border-color .15s}
+.comp:hover,.comp.on{border-color:var(--color-border-info);background:var(--color-background-info)}
+.comp-name{font-size:12.5px;font-weight:500;margin-bottom:3px}
+.comp-sub{font-size:11px;color:var(--color-text-secondary)}
+.comp-detail{display:none}.comp-detail.on{display:block}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:4px 10px;margin-bottom:10px}
+.kv-k{font-size:11.5px;font-weight:500;color:var(--color-text-secondary);padding-top:1px}
+.kv-v{font-size:12px;color:var(--color-text-primary);line-height:1.5}
+.ep-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.ep-row{display:grid;grid-template-columns:220px 120px 1fr;gap:8px;padding:8px 11px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary);align-items:center}
+.ep-path{font-family:var(--font-mono);font-size:11.5px}
+.ep-norm{font-size:11.5px;color:var(--color-text-secondary)}
+.ep-who{font-size:11px;color:var(--color-text-tertiary)}
+.badge{font-size:10px;font-weight:500;padding:2px 7px;border-radius:10px;display:inline-block}
+.b-green{background:var(--color-background-success);color:var(--color-text-success)}
+.b-blue{background:var(--color-background-info);color:var(--color-text-info)}
+.b-red{background:var(--color-background-danger);color:var(--color-text-danger)}
+</style>
+
+<div class="tabs">
+  <div class="tab on" onclick="sw(0)">What is FastAPI here</div>
+  <div class="tab" onclick="sw(1)">Request lifecycle</div>
+  <div class="tab" onclick="sw(2)">Every component</div>
+  <div class="tab" onclick="sw(3)">All 6 endpoints</div>
+  <div class="tab" onclick="sw(4)">Why this design</div>
+</div>
+
+<!-- ══════════════ WHAT IS FASTAPI HERE -->
+<div class="pane on" id="p0">
+  <p class="desc">The perception layer has two kinds of adapters. <strong>Polling adapters</strong> (API, Log, Database, File, Sensor) go out and fetch data on a schedule. <strong>Push adapters</strong> sit and wait for external systems to call them.</p>
+  <p class="desc">FastAPI is the push adapter. It is a web server that external systems POST data to. The moment something happens — a Prometheus alert fires, a user rage-clicks, a WAF blocks an IP — that system immediately sends an HTTP POST to your FastAPI server. No waiting for a poll cycle.</p>
+
+  <div class="flow">
+    <div class="fbox"><div class="fl">external system</div><div class="fv">Alertmanager</div></div>
+    <div class="farr">→</div>
+    <div class="fbox"><div class="fl">HTTP POST</div><div class="fv">your server</div></div>
+    <div class="farr">→</div>
+    <div class="fbox"><div class="fl">normalizer</div><div class="fv">MetricNormalizer</div></div>
+    <div class="farr">→</div>
+    <div class="fbox"><div class="fl">kafka topic</div><div class="fv">cognitive.events</div></div>
+  </div>
+
+  <div class="info">Think of it this way: polling adapters are like you checking your email every 30 seconds. The FastAPI server is like someone calling you directly the moment something happens. Push is always faster and cheaper than polling for real-time signals.</div>
+
+  <div class="section">Which signals use push vs poll</div>
+  <div class="kv">
+    <div class="kv-k">Uses polling</div>
+    <div class="kv-v">API health checks, raw logs (via Kafka consumer), database queries, filesystem (inotify), IoT sensors</div>
+    <div class="kv-k">Uses push (FastAPI)</div>
+    <div class="kv-v">Prometheus alerts, browser JS errors, user clicks, WAF security events, agent decisions, deployment webhooks</div>
+  </div>
+  <div class="warn">The FastAPI server is not a replacement for the other adapters. It handles only the sources that are designed to push — Alertmanager, Cloudflare, GitHub, your browser SDK. Everything else still uses its dedicated adapter.</div>
+</div>
+
+<!-- ══════════════ REQUEST LIFECYCLE -->
+<div class="pane" id="p1">
+  <p class="desc">Every single endpoint in main.py follows the exact same four-step lifecycle. Understanding this once means you understand all six endpoints.</p>
+
+  <div class="section">Step 1 — receive and validate</div>
+  <div class="code">@app.post("/perception/security-events", status_code=202)
+async def receive_security_events(request: Request, bg: BackgroundTasks):
+    body = await request.json()   # parse the raw POST body into a dict
+    source = request.headers.get("X-Security-Source", "unknown")
+    bg.add_task(_process_security_event, body, source)  # hand off immediately
+    return {"accepted": True}    # return 202 RIGHT NOW — don't wait</div>
+  <div class="info">FastAPI reads the body and immediately schedules the real work as a BackgroundTask. The calling system (Cloudflare, Alertmanager etc) gets its 202 response in milliseconds. It does not wait for Kafka, does not wait for the normalizer.</div>
+
+  <div class="section">Step 2 — background task runs the normalizer</div>
+  <div class="code">async def _process_security_event(raw: dict, source: str):
+    source_id = f"security:{source}"         # build namespaced source_id
+    normalizer = SecurityEventNormalizer()   # instantiate normalizer
+    raw_copy = dict(raw)
+    raw_copy.setdefault("source_system", source)
+    result = normalizer.normalize(raw_copy, source_id)  # pure function call
+    await _publish(result)                   # send to Kafka</div>
+  <div class="info">This runs after the 202 is already sent. The normalizer is a pure function — it takes a dict and returns either a CognitiveEvent or a PerceptionFailure. No network calls, no I/O inside the normalizer itself.</div>
+
+  <div class="section">Step 3 — publish function routes to correct topic</div>
+  <div class="code">async def _publish(event: CognitiveEvent | PerceptionFailure):
+    payload = event.model_dump_json().encode("utf-8")
+    # CognitiveEvent → cognitive.events
+    # PerceptionFailure → cognitive.perception_failures
+    topic = FAILURE_TOPIC if isinstance(event, PerceptionFailure) else KAFKA_TOPIC
+    await producer.send_and_wait(topic, payload)</div>
+  <div class="info">One function handles both outcomes. A valid event goes to the main topic. A failed normalization goes to the failures topic. Nothing is ever dropped.</div>
+
+  <div class="section">Step 4 — Kafka holds it for downstream consumers</div>
+  <p class="desc">Once published to Kafka, the event is durable. The downstream reasoning engine, world model, and knowledge graph all consume from <code style="font-family:var(--font-mono);font-size:11.5px;background:var(--color-background-secondary);padding:1px 4px;border-radius:3px">cognitive.events</code> at their own pace. The perception layer's job is done.</p>
+
+  <div class="flow">
+    <div class="fbox"><div class="fl">1 · endpoint</div><div class="fv">receive + 202</div></div>
+    <div class="farr">→</div>
+    <div class="fbox"><div class="fl">2 · background</div><div class="fv">normalize</div></div>
+    <div class="farr">→</div>
+    <div class="fbox"><div class="fl">3 · publish</div><div class="fv">→ Kafka topic</div></div>
+    <div class="farr">→</div>
+    <div class="fbox"><div class="fl">4 · downstream</div><div class="fv">reasoning engine</div></div>
+  </div>
+</div>
+
+<!-- ══════════════ EVERY COMPONENT -->
+<div class="pane" id="p2">
+  <p class="desc">main.py has 7 distinct components. Click each one to understand what it does and why it exists.</p>
+
+  <div class="comp-grid">
+    <div class="comp on" onclick="co(0)"><div class="comp-name">AIOKafkaProducer</div><div class="comp-sub">The Kafka connection</div></div>
+    <div class="comp" onclick="co(1)"><div class="comp-name">Lifespan context</div><div class="comp-sub">Startup and shutdown</div></div>
+    <div class="comp" onclick="co(2)"><div class="comp-name">BackgroundTasks</div><div class="comp-sub">Non-blocking processing</div></div>
+    <div class="comp" onclick="co(3)"><div class="comp-name">Pydantic models</div><div class="comp-sub">Request validation</div></div>
+    <div class="comp" onclick="co(4)"><div class="comp-name">_publish function</div><div class="comp-sub">Topic routing</div></div>
+    <div class="comp" onclick="co(5)"><div class="comp-name">status_code=202</div><div class="comp-sub">Why not 200</div></div>
+    <div class="comp" onclick="co(6)"><div class="comp-name">/health endpoint</div><div class="comp-sub">Self-monitoring</div></div>
+    <div class="comp" onclick="co(7)"><div class="comp-name">Request headers</div><div class="comp-sub">Source identification</div></div>
+  </div>
+
+  <div class="comp-detail on" id="c0">
+    <div class="section">AIOKafkaProducer — the Kafka connection</div>
+    <div class="code">producer: AIOKafkaProducer | None = None
+
+@asynccontextmanager
+async def lifespan(app):
+    global producer
+    producer = AIOKafkaProducer(bootstrap_servers=KAFKA_BOOTSTRAP)
+    await producer.start()   # one connection, shared by ALL requests
+    yield
+    await producer.stop()</div>
+    <p class="desc">The producer is created once at startup and reused for every single request. This is critical — creating a new Kafka connection per request would add 200-500ms of overhead per event. A shared producer means publishing takes under 5ms. It's declared as a module-level global so all route handlers can access it.</p>
+    <div class="warn">If Kafka is not running when the server starts, producer stays None. The _publish function checks for this and logs a warning rather than crashing — the server still runs and normalizes, it just can't publish.</div>
+  </div>
+
+  <div class="comp-detail" id="c1">
+    <div class="section">Lifespan context — startup and shutdown</div>
+    <div class="code">@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Everything BEFORE yield runs on startup
+    producer = AIOKafkaProducer(...)
+    await producer.start()
+    yield   # ← server runs here, handling requests
+    # Everything AFTER yield runs on shutdown
+    await producer.stop()   # clean disconnect from Kafka
+
+app = FastAPI(lifespan=lifespan)</div>
+    <p class="desc">The lifespan pattern replaced the old <code style="font-family:var(--font-mono);font-size:11.5px;background:var(--color-background-secondary);padding:1px 4px;border-radius:3px">@app.on_event("startup")</code> in modern FastAPI. It guarantees the Kafka producer is cleanly disconnected when the server shuts down — no lost messages, no connection leaks. Without this, killing the server with Ctrl+C would leave a dangling TCP connection to Redpanda.</p>
+  </div>
+
+  <div class="comp-detail" id="c2">
+    <div class="section">BackgroundTasks — why requests return immediately</div>
+    <div class="code">@app.post("/perception/security-events", status_code=202)
+async def receive(request: Request, bg: BackgroundTasks):
+    body = await request.json()
+    bg.add_task(_process_security_event, body, source)  # schedule
+    return {"accepted": True}   # return NOW — task runs after this</div>
+    <p class="desc">BackgroundTasks is a FastAPI feature that runs a function after the HTTP response is already sent. This matters because Cloudflare, Alertmanager, and GitHub all have short webhook timeouts (typically 5-10 seconds). If normalization + Kafka publishing took 3 seconds, you'd risk timeout errors from the caller. With BackgroundTasks, the caller gets 202 in under 10ms and the work happens asynchronously.</p>
+    <div class="info">The background task runs in the same async event loop — it is not a thread or a separate process. It runs concurrently with other incoming requests, not after them.</div>
+  </div>
+
+  <div class="comp-detail" id="c3">
+    <div class="section">Pydantic models — request validation</div>
+    <div class="code">class UserEventBatch(BaseModel):
+    events: list[dict[str, Any]]
+    session_id: str
+    user_id: str | None = None
+
+@app.post("/perception/user-events", status_code=202)
+async def receive_user_events(batch: UserEventBatch, bg: BackgroundTasks):
+    ...</div>
+    <p class="desc">Only the user-events endpoint uses a typed Pydantic model for the request body. This means FastAPI automatically validates that <code style="font-family:var(--font-mono);font-size:11.5px;background:var(--color-background-secondary);padding:1px 4px;border-radius:3px">events</code> is a list and <code style="font-family:var(--font-mono);font-size:11.5px;background:var(--color-background-secondary);padding:1px 4px;border-radius:3px">session_id</code> is a string — and returns a 422 error automatically if not. The other endpoints use <code style="font-family:var(--font-mono);font-size:11.5px;background:var(--color-background-secondary);padding:1px 4px;border-radius:3px">request.json()</code> directly because their payload shapes are more variable (Alertmanager, GitHub webhooks all have complex nested schemas that are harder to model statically).</p>
+  </div>
+
+  <div class="comp-detail" id="c4">
+    <div class="section">_publish — topic routing</div>
+    <div class="code">KAFKA_TOPIC   = "cognitive.events"
+FAILURE_TOPIC = "cognitive.perception_failures"
+
+async def _publish(event: CognitiveEvent | PerceptionFailure):
+    if not producer:
+        print(f"Producer offline. Dropped: {type(event)}")
+        return
+    payload = event.model_dump_json().encode("utf-8")
+    topic = FAILURE_TOPIC if isinstance(event, PerceptionFailure) else KAFKA_TOPIC
+    await producer.send_and_wait(topic, payload)</div>
+    <p class="desc">One shared function used by every endpoint. It makes two decisions: which topic to publish to (based on type), and what to do if Kafka is offline (log and drop rather than crash). <code style="font-family:var(--font-mono);font-size:11.5px;background:var(--color-background-secondary);padding:1px 4px;border-radius:3px">send_and_wait</code> means it waits for Kafka to acknowledge receipt before returning — this guarantees at-least-once delivery.</p>
+  </div>
+
+  <div class="comp-detail" id="c5">
+    <div class="section">status_code=202 — why not 200</div>
+    <p class="desc"><strong>200 OK</strong> means "I processed your request and here is the result." <strong>202 Accepted</strong> means "I received your request and I will process it, but I haven't yet." This is the correct HTTP semantic for async processing — the work happens in a BackgroundTask after the response is sent, so saying 200 would be a lie. Alertmanager and Cloudflare both understand 202 and treat it as success. Returning 200 would also work in practice, but 202 is more honest and helps with debugging — if you see a 200 from a webhook endpoint that uses BackgroundTasks, something is wrong with the design.</p>
+  </div>
+
+  <div class="comp-detail" id="c6">
+    <div class="section">/health endpoint — self monitoring</div>
+    <div class="code">@app.get("/health")
+async def health():
+    return {
+        "status": "ok",
+        "kafka": "connected" if producer and producer._sender else "disconnected",
+    }</div>
+    <p class="desc">A lightweight endpoint that tells you whether the server is running AND whether its Kafka producer is connected. Your load balancer, Kubernetes liveness probe, or Prometheus scraper calls this. If Kafka goes down, <code style="font-family:var(--font-mono);font-size:11.5px;background:var(--color-background-secondary);padding:1px 4px;border-radius:3px">{"kafka": "disconnected"}</code> tells you events are being dropped without looking at logs.</p>
+  </div>
+
+  <div class="comp-detail" id="c7">
+    <div class="section">Request headers — source identification</div>
+    <div class="code"># Security events
+source = request.headers.get("X-Security-Source", "unknown")
+# → "cloudflare", "fail2ban", "custom-waf" etc
+# → becomes source_id: "security:cloudflare"
+
+# Deployment events
+event_type = request.headers.get("X-GitHub-Event",
+             request.headers.get("X-GitLab-Event", "deployment"))
+# → "deployment", "push", "release"
+# → determines which event_type to produce</div>
+    <p class="desc">Custom HTTP headers carry metadata that isn't in the body. Cloudflare, GitHub, and GitLab all set standard headers on their webhooks. The server reads these to figure out which system sent the event and what kind it is — without needing each sender to include that in their JSON body. This is why you pass <code style="font-family:var(--font-mono);font-size:11.5px;background:var(--color-background-secondary);padding:1px 4px;border-radius:3px">-H "X-Security-Source: cloudflare"</code> in the curl commands.</p>
+  </div>
+</div>
+
+<!-- ══════════════ ALL 6 ENDPOINTS -->
+<div class="pane" id="p3">
+  <p class="desc">The server has 6 push endpoints plus a health check. Each endpoint is a dedicated pipeline for one category of external system.</p>
+
+  <div class="ep-list">
+    <div style="display:grid;grid-template-columns:220px 160px 1fr;gap:8px;padding:6px 11px;font-size:10px;font-weight:600;letter-spacing:.06em;color:var(--color-text-tertiary);text-transform:uppercase">
+      <span>Endpoint</span><span>Normalizer used</span><span>Who calls it in production</span>
+    </div>
+    <div class="ep-row"><span class="ep-path">/perception/user-events</span><span class="ep-norm">UserBehaviorNormalizer</span><span class="ep-who">Your browser JS SDK (batched every 5s)</span></div>
+    <div class="ep-row"><span class="ep-path">/perception/browser-events</span><span class="ep-norm">BrowserEventNormalizer</span><span class="ep-who">Your browser JS SDK (immediate on error / Web Vital)</span></div>
+    <div class="ep-row"><span class="ep-path">/perception/prometheus-alerts</span><span class="ep-norm">MetricNormalizer</span><span class="ep-who">Alertmanager (auto-configured in alertmanager.yml)</span></div>
+    <div class="ep-row"><span class="ep-path">/perception/security-events</span><span class="ep-norm">SecurityEventNormalizer</span><span class="ep-who">Cloudflare WAF, Fail2ban, custom rate-limiters</span></div>
+    <div class="ep-row"><span class="ep-path">/perception/agent-events</span><span class="ep-norm">Direct CognitiveEvent</span><span class="ep-who">Your own cognitive sub-agents (reasoning engine)</span></div>
+    <div class="ep-row"><span class="ep-path">/perception/deployment-events</span><span class="ep-norm">Direct CognitiveEvent</span><span class="ep-who">GitHub / GitLab / ArgoCD webhook config</span></div>
+    <div class="ep-row"><span class="ep-path">/health</span><span class="ep-norm">none</span><span class="ep-who">Load balancer, Kubernetes, Prometheus scraper</span></div>
+  </div>
+
+  <div class="info">Notice: agent-events and deployment-events don't use a normalizer — they construct CognitiveEvent directly. This is because agent payloads are already fully structured (your own system produces them) and GitHub webhooks have a well-known schema that maps trivially to event types. No regex or classification logic needed.</div>
+
+  <div class="section">The difference between user-events and browser-events</div>
+  <p class="desc">These two are easy to confuse. <strong>user-events</strong> are intentional actions — clicks, form submits, checkout steps, search queries. They tell you what the user is trying to do. <strong>browser-events</strong> are environmental signals — JavaScript errors, Web Vitals scores, hydration failures. They tell you whether the browser environment is working correctly. A user can have a perfect session (all user-events look fine) while their browser is throwing hydration errors — these are separate concerns and separate normalizers.</p>
+</div>
+
+<!-- ══════════════ WHY THIS DESIGN -->
+<div class="pane" id="p4">
+  <div class="section">Why FastAPI and not Flask, Django, or Express?</div>
+  <p class="desc">FastAPI is built on ASGI (Async Server Gateway Interface) which means it handles concurrent requests in a single thread using async/await — the same model as the rest of the perception layer (aiokafka, asyncpg, httpx are all async). Flask and Django are WSGI — they block per request and need threads or processes for concurrency. Since the perception layer is entirely async, FastAPI fits naturally. The Kafka producer is async, the normalizers are async-compatible, and BackgroundTasks is an async construct. Mixing Flask (sync) into an async codebase would create the same blocking problem we fixed in the queue adapter.</p>
+
+  <div class="section">Why 202 and BackgroundTasks instead of just processing inline?</div>
+  <p class="desc">Alertmanager has a 10-second webhook timeout. If your normalization + Kafka publish takes longer than 10 seconds (e.g. Kafka is slow, normalizer hits a complex regex), Alertmanager marks the delivery as failed and retries — you get duplicate events. By returning 202 immediately and processing in the background, you decouple your processing time from the caller's timeout. The caller never knows or cares how long normalization takes.</p>
+
+  <div class="section">Why a shared producer instead of creating one per request?</div>
+  <p class="desc">A Kafka producer connection involves a TCP handshake, metadata fetch, and authentication — roughly 200-500ms of setup time. If you created a new producer for every POST, a server handling 100 requests/second would spend most of its time connecting to Kafka rather than processing events. One shared producer, started at boot, makes every publish under 5ms.</p>
+
+  <div class="section">Why does agent-events get confidence 1.0 while all other normalizers give lower scores?</div>
+  <p class="desc">Confidence represents how certain the perception layer is about its interpretation of the signal. Log lines are unstructured text matched with regex — lots of ambiguity, 0.75-0.85. Prometheus alerts are threshold crossings — deterministic math, 0.98. Agent events are produced by your own reasoning engine — it already knows exactly what it's reporting, there's no interpretation needed. Confidence 1.0 means "take this at face value, no uncertainty."</p>
+
+  <div class="section">Why are there two separate endpoints for user and browser events instead of one?</div>
+  <p class="desc">They have different delivery patterns. User events are batched — the browser SDK collects 5 seconds of clicks and sends them together, so the endpoint receives a list. Browser events (JS errors, Web Vitals) are immediate — the moment an error fires or LCP is measured, it's sent instantly as a single event. Merging them into one endpoint would force you to handle both batch and single-event patterns in the same handler and the same normalizer, making both more complex for no benefit.</p>
+</div>
+
+<script>
+function sw(i){
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('on',j===i));
+  document.querySelectorAll('.pane').forEach((p,j)=>p.classList.toggle('on',j===i));
+}
+function co(i){
+  document.querySelectorAll('.comp').forEach((c,j)=>c.classList.toggle('on',j===i));
+  document.querySelectorAll('.comp-detail').forEach((c,j)=>c.classList.toggle('on',j===i));
+}
+function cp(btn){
+  const t=btn.parentElement.childNodes[0].textContent.trim();
+  navigator.clipboard.writeText(t).then(()=>{
+    const o=btn.textContent;btn.textContent='Copied';
+    setTimeout(()=>btn.textContent=o,1500);
+  });
+}
+</script>

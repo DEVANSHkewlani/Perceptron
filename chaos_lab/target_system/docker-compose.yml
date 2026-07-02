@@ -1,0 +1,259 @@
+version: '3.9'
+
+networks:
+  shopcore:
+    name: target_system_shopcore
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  redpanda_data:
+
+services:
+
+  # ── INFRASTRUCTURE ─────────────────────────────────────────────────
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: shopcore-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: shopcore
+      POSTGRES_PASSWORD: shopcore
+      POSTGRES_DB: shopcore
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - shopcore
+    command: >
+      postgres
+      -c max_connections=100
+      -c shared_buffers=256MB
+      -c log_min_duration_statement=100
+      -c log_connections=on
+
+  redis:
+    image: redis:7-alpine
+    container_name: shopcore-redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --save 60 1
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - shopcore
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.2.8
+    container_name: shopcore-redpanda
+    restart: unless-stopped
+    command: >
+      redpanda start
+      --overprovisioned
+      --smp 1
+      --memory 512M
+      --reserve-memory 0M
+      --node-id 0
+      --check=false
+      --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:9094
+      --advertise-kafka-addr internal://redpanda:9092,external://localhost:9094
+    ports:
+      - "9094:9094"
+      - "9645:9644"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    networks:
+      - shopcore
+
+  # ── SHOPCORE SERVICES ───────────────────────────────────────────────
+
+  api-gateway:
+    build: ./api_gateway
+    container_name: shopcore-api-gateway
+    restart: on-failure
+    ports:
+      - "8010:8010"
+    environment:
+      PORT: "8010"
+      PRODUCT_SERVICE_URL: http://product-service:8011
+      ORDER_SERVICE_URL:   http://order-service:8012
+      USER_SERVICE_URL:    http://user-service:8013
+      CART_SERVICE_URL:    http://cart-service:8014
+      CHAOS_LATENCY_MS:    "0"
+      CHAOS_ERROR_RATE:    "0"
+      CHAOS_CIRCUIT_OPEN:  "false"
+    labels:
+      - "com.shopcore.service=api-gateway"
+    depends_on:
+      - product-service
+      - order-service
+      - user-service
+      - cart-service
+    networks:
+      - shopcore
+
+  product-service:
+    build: ./product_service
+    container_name: shopcore-product-service
+    restart: on-failure
+    ports:
+      - "8011:8011"
+    environment:
+      PORT: "8011"
+      DATABASE_URL: postgresql://shopcore:shopcore@postgres:5432/shopcore
+      CHAOS_SLOW_QUERY_MS:   "0"
+      CHAOS_POOL_EXHAUST:    "false"
+      CHAOS_DB_ERROR_RATE:   "0"
+    labels:
+      - "com.shopcore.service=product-service"
+    depends_on:
+      - postgres
+    networks:
+      - shopcore
+
+  order-service:
+    build: ./order_service
+    container_name: shopcore-order-service
+    restart: on-failure
+    ports:
+      - "8012:8012"
+    environment:
+      PORT: "8012"
+      DATABASE_URL: postgresql://shopcore:shopcore@postgres:5432/shopcore
+      KAFKA_BOOTSTRAP: redpanda:9092
+      CHAOS_ORDER_DELAY_MS:  "0"
+      CHAOS_KAFKA_BLOCK:     "false"
+      CHAOS_ORDER_FAIL_RATE: "0"
+    labels:
+      - "com.shopcore.service=order-service"
+    depends_on:
+      - postgres
+      - redpanda
+    networks:
+      - shopcore
+
+  user-service:
+    build: ./user_service
+    container_name: shopcore-user-service
+    restart: on-failure
+    ports:
+      - "8013:8013"
+    environment:
+      PORT: "8013"
+      DATABASE_URL: postgresql://shopcore:shopcore@postgres:5432/shopcore
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: shopcore-dev-secret-change-in-prod
+      JWT_EXPIRE_MINUTES: "60"
+      CHAOS_AUTH_FAIL_RATE: "0"
+    labels:
+      - "com.shopcore.service=user-service"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - shopcore
+
+  cart-service:
+    build: ./cart_service
+    container_name: shopcore-cart-service
+    restart: on-failure
+    ports:
+      - "8014:8014"
+    environment:
+      PORT: "8014"
+      REDIS_URL: redis://redis:6379
+      CART_TTL_SECONDS: "3600"
+      CHAOS_CACHE_MISS: "false"
+    labels:
+      - "com.shopcore.service=cart-service"
+    depends_on:
+      - redis
+    networks:
+      - shopcore
+
+  notification-service:
+    build: ./notification_service
+    container_name: shopcore-notification-service
+    restart: on-failure
+    ports:
+      - "8015:8015"
+    environment:
+      PORT: "8015"
+      KAFKA_BOOTSTRAP: redpanda:9092
+      CHAOS_NOTIFY_DELAY_MS: "0"
+    labels:
+      - "com.shopcore.service=notification-service"
+    depends_on:
+      - redpanda
+    networks:
+      - shopcore
+
+  frontend:
+    build: ./frontend
+    container_name: shopcore-frontend
+    restart: on-failure
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+    volumes:
+      - ../../files/nginx/conf.d:/etc/nginx/conf.d
+    networks:
+      - shopcore
+
+  chaos-engine:
+    build: ../chaos_engine
+    container_name: shopcore-chaos-engine
+    restart: on-failure
+    ports:
+      - "9091:9091"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      PORT: "9091"
+      DB_DSN: postgresql://shopcore:shopcore@postgres:5432/shopcore
+      KAFKA_BOOTSTRAP: redpanda:9092
+      REDIS_URL: redis://redis:6379
+    networks:
+      - shopcore
+    depends_on:
+      - postgres
+      - redis
+      - redpanda
+
+  chaos-dashboard:
+    image: nginx:alpine
+    container_name: shopcore-chaos-dashboard
+    restart: on-failure
+    ports:
+      - "9099:80"
+    volumes:
+      - ../chaos_dashboard/index.html:/usr/share/nginx/html/index.html
+    networks:
+      - shopcore
+    depends_on:
+      - chaos-engine
+
+  fluent-bit:
+    image: fluent/fluent-bit:latest
+    container_name: shopcore-fluent-bit
+    restart: unless-stopped
+    volumes:
+      - /var/lib/docker/containers:/var/log/containers:ro
+      - ./instrumentation/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+      - ./instrumentation/parsers.conf:/fluent-bit/etc/parsers.conf
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - shopcore
+    depends_on:
+      - api-gateway
+      - product-service
+      - order-service
+      - user-service
+      - cart-service
+

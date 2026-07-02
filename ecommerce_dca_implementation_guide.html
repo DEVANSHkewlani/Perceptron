@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCA × ShopCore — Complete Implementation Guide</title>
+<style>
+  :root {
+    --ink: #0e1117;
+    --ink2: #1a2236;
+    --ink3: #243044;
+    --wire: #2e3f5c;
+    --wire2: #3d5275;
+    --signal: #00e5b0;
+    --signal2: #0099ff;
+    --alert:  #ff4757;
+    --warn:   #ffa502;
+    --safe:   #2ed573;
+    --purple: #9b59b6;
+    --fg:     #dce8f5;
+    --fg2:    #8aa0c0;
+    --fg3:    #5a7299;
+    --mono:   'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    --sans:   'Inter', 'Segoe UI', system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--ink);
+    color: var(--fg);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  /* ── LAYOUT ──────────────────────────────────────────────── */
+  .shell { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  .nav {
+    background: var(--ink2);
+    border-right: 1px solid var(--wire);
+    padding: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .nav-logo {
+    padding: 20px 18px 16px;
+    border-bottom: 1px solid var(--wire);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--signal);
+  }
+  .nav-group-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--fg3);
+    padding: 16px 18px 4px;
+  }
+  .nav a {
+    display: block;
+    padding: 5px 18px;
+    color: var(--fg2);
+    text-decoration: none;
+    font-size: 12px;
+    border-left: 2px solid transparent;
+    transition: all 0.12s;
+  }
+  .nav a:hover { color: var(--signal); border-left-color: var(--signal); background: rgba(0,229,176,0.04); }
+
+  .content { padding: 48px 56px; max-width: 1060px; }
+
+  /* ── HERO ────────────────────────────────────────────────── */
+  .hero {
+    background: linear-gradient(135deg, var(--ink2) 0%, var(--ink3) 60%, #0d1e3a 100%);
+    border: 1px solid var(--wire);
+    border-radius: 12px;
+    padding: 40px 44px;
+    margin-bottom: 56px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 360px; height: 360px;
+    background: radial-gradient(circle, rgba(0,229,176,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--signal);
+    margin-bottom: 12px;
+  }
+  .hero h1 {
+    font-size: 30px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+  .hero h1 em { font-style: normal; color: var(--signal); }
+  .hero p { color: var(--fg2); font-size: 15px; max-width: 680px; }
+  .hero-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(0,229,176,0.08);
+    border: 1px solid rgba(0,229,176,0.2);
+    color: var(--signal);
+    font-family: var(--mono);
+  }
+  .tag.red { background: rgba(255,71,87,0.08); border-color: rgba(255,71,87,0.2); color: var(--alert); }
+  .tag.blue { background: rgba(0,153,255,0.08); border-color: rgba(0,153,255,0.2); color: var(--signal2); }
+  .tag.yellow { background: rgba(255,165,2,0.08); border-color: rgba(255,165,2,0.2); color: var(--warn); }
+  .tag.purple { background: rgba(155,89,182,0.08); border-color: rgba(155,89,182,0.2); color: var(--purple); }
+
+  /* ── SECTIONS ────────────────────────────────────────────── */
+  .section { margin-bottom: 64px; }
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--signal);
+    margin-bottom: 8px;
+  }
+  .section-label .num {
+    background: rgba(0,229,176,0.1);
+    border: 1px solid rgba(0,229,176,0.25);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 10px;
+  }
+  h2 { font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+  h3 { font-size: 16px; font-weight: 700; color: #fff; margin: 28px 0 10px; }
+  h4 { font-size: 13px; font-weight: 700; color: var(--signal); margin: 20px 0 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  p { color: var(--fg2); margin-bottom: 12px; }
+  strong { color: var(--fg); }
+  hr { border: none; border-top: 1px solid var(--wire); margin: 32px 0; }
+
+  /* ── CODE ────────────────────────────────────────────────── */
+  .code-wrap {
+    background: #080d14;
+    border: 1px solid var(--wire);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 12px 0 20px;
+  }
+  .code-header {
+    background: var(--ink3);
+    border-bottom: 1px solid var(--wire);
+    padding: 7px 16px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--fg3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .code-header span { color: var(--signal2); }
+  pre {
+    padding: 18px 20px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: #c9d8ee;
+  }
+  code { font-family: var(--mono); font-size: 12px; }
+  .inline-code {
+    background: rgba(0,153,255,0.1);
+    border: 1px solid rgba(0,153,255,0.2);
+    border-radius: 3px;
+    padding: 1px 6px;
+    color: var(--signal2);
+    font-family: var(--mono);
+  }
+  /* syntax */
+  .k { color: #c792ea; }
+  .s { color: #c3e88d; }
+  .n { color: #f78c6c; }
+  .c { color: #4a5c6e; font-style: italic; }
+  .f { color: #82aaff; }
+  .t { color: #ffcb6b; }
+  .p { color: #89ddff; }
+
+  /* ── CALLOUTS ────────────────────────────────────────────── */
+  .callout {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    display: flex;
+    gap: 12px;
+    font-size: 13px;
+  }
+  .callout-icon { font-size: 16px; flex-shrink: 0; padding-top: 1px; }
+  .callout-body { flex: 1; line-height: 1.6; }
+  .callout-title { font-weight: 700; margin-bottom: 3px; font-size: 13px; }
+  .callout.info { background: rgba(0,229,176,0.06); border: 1px solid rgba(0,229,176,0.15); color: var(--fg2); }
+  .callout.info .callout-title { color: var(--signal); }
+  .callout.warn { background: rgba(255,165,2,0.07); border: 1px solid rgba(255,165,2,0.2); color: var(--fg2); }
+  .callout.warn .callout-title { color: var(--warn); }
+  .callout.danger { background: rgba(255,71,87,0.07); border: 1px solid rgba(255,71,87,0.2); color: var(--fg2); }
+  .callout.danger .callout-title { color: var(--alert); }
+  .callout.ok { background: rgba(46,213,115,0.06); border: 1px solid rgba(46,213,115,0.2); color: var(--fg2); }
+  .callout.ok .callout-title { color: var(--safe); }
+
+  /* ── TABLES ──────────────────────────────────────────────── */
+  .tbl-wrap { overflow-x: auto; margin: 14px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  thead tr { background: var(--ink3); }
+  th { padding: 9px 14px; text-align: left; color: var(--fg); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--wire); white-space: nowrap; }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--wire); color: var(--fg2); vertical-align: top; }
+  tr:hover td { background: rgba(255,255,255,0.01); }
+  .sev-critical { color: var(--alert); font-weight: 700; }
+  .sev-high { color: var(--warn); font-weight: 700; }
+  .sev-medium { color: #f0d060; font-weight: 700; }
+  .sev-low { color: var(--safe); }
+
+  /* ── CARDS ───────────────────────────────────────────────── */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin: 14px 0; }
+  .card {
+    background: var(--ink2);
+    border: 1px solid var(--wire);
+    border-radius: 8px;
+    padding: 18px;
+    transition: border-color 0.15s;
+  }
+  .card:hover { border-color: var(--wire2); }
+  .card-head { font-weight: 700; color: #fff; font-size: 13px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .card-body { font-size: 12.5px; color: var(--fg2); line-height: 1.6; }
+
+  /* ── FLOW DIAGRAM ────────────────────────────────────────── */
+  .flow {
+    background: var(--ink2);
+    border: 1px solid var(--wire);
+    border-radius: 10px;
+    padding: 24px 28px;
+    margin: 16px 0;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fg2);
+    line-height: 2;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .flow .hl { color: var(--signal); font-weight: 700; }
+  .flow .hla { color: var(--signal2); }
+  .flow .hlr { color: var(--alert); }
+  .flow .hlw { color: var(--warn); }
+
+  /* ── STEP LIST ───────────────────────────────────────────── */
+  .steps { list-style: none; counter-reset: s; }
+  .steps li { counter-increment: s; display: flex; gap: 14px; margin-bottom: 16px; }
+  .steps li::before {
+    content: counter(s);
+    min-width: 26px; height: 26px;
+    background: rgba(0,229,176,0.08);
+    border: 1px solid rgba(0,229,176,0.2);
+    border-radius: 50%;
+    color: var(--signal);
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+  .steps li div { color: var(--fg2); font-size: 13px; }
+  .steps li div strong { color: #fff; display: block; margin-bottom: 2px; font-size: 13px; }
+
+  /* ── BADGE ───────────────────────────────────────────────── */
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-family: var(--mono); }
+  .badge.c { background: rgba(255,71,87,0.15); color: var(--alert); }
+  .badge.h { background: rgba(255,165,2,0.15); color: var(--warn); }
+  .badge.m { background: rgba(240,208,96,0.12); color: #f0d060; }
+  .badge.l { background: rgba(46,213,115,0.1); color: var(--safe); }
+  .badge.auto { background: rgba(0,229,176,0.1); color: var(--signal); }
+  .badge.approve { background: rgba(155,89,182,0.1); color: var(--purple); }
+
+  /* ── ACCESS MATRIX ───────────────────────────────────────── */
+  .access-pill {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+  .ap-r { background: rgba(0,229,176,0.1); color: var(--signal); }
+  .ap-w { background: rgba(255,165,2,0.1); color: var(--warn); }
+  .ap-x { background: rgba(255,71,87,0.1); color: var(--alert); }
+  .ap-a { background: rgba(0,153,255,0.1); color: var(--signal2); }
+
+  @media (max-width: 860px) {
+    .shell { grid-template-columns: 1fr; }
+    .nav { display: none; }
+    .content { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ── NAV ──────────────────────────────────────────────────── -->
+<nav class="nav">
+  <div class="nav-logo">DCA × ShopCore</div>
+  <div class="nav-group-label">Architecture</div>
+  <a href="#overview">System Overview</a>
+  <a href="#connections">Perception Connections</a>
+  <a href="#adapters">Adapter Build Guide</a>
+  <div class="nav-group-label">Agent Actions</div>
+  <a href="#action-vocabulary">Action Vocabulary</a>
+  <a href="#access-map">Platform Access Map</a>
+  <a href="#execution-flows">Multi-Step Execution Flows</a>
+  <div class="nav-group-label">Chaos Engineering</div>
+  <a href="#chaos-how">How to Inject Chaos</a>
+  <a href="#scenarios">All 18 Scenarios</a>
+  <a href="#scenario-flows">Scenario ↔ Response Flows</a>
+  <div class="nav-group-label">Autonomous Loop</div>
+  <a href="#detection">Detection Pipeline</a>
+  <a href="#reasoning">Reasoning + Planning</a>
+  <a href="#remediation">Remediation Execution</a>
+  <a href="#feedback">Feedback & Learning</a>
+  <div class="nav-group-label">Dashboard</div>
+  <a href="#dashboard">Dashboard Design</a>
+  <a href="#dashboard-impl">Implementation</a>
+</nav>
+
+<!-- ── CONTENT ───────────────────────────────────────────────── -->
+<main class="content">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">Phase 13 — Chaos Lab · Complete Implementation Guide</div>
+  <h1>DCA × <em>ShopCore</em><br>End-to-End Autonomous Healing</h1>
+  <p>How to wire every component of the Digital Cognitive Architecture into a real e-commerce microservices stack, give the agent the exact access it needs, inject controlled failures, and close the loop so the system detects, reasons, acts, and learns — fully autonomously.</p>
+  <div class="hero-tags">
+    <span class="tag">4 microservices</span>
+    <span class="tag">18 chaos scenarios</span>
+    <span class="tag red">11 remediation actions</span>
+    <span class="tag blue">7 DCA pillars</span>
+    <span class="tag yellow">5 platform integrations</span>
+    <span class="tag purple">1 feedback loop</span>
+  </div>
+</div>
+
+<!-- ── 1. OVERVIEW ────────────────────────────────────────────── -->
+<section class="section" id="overview">
+  <div class="section-label"><span class="num">01</span> Architecture Overview</div>
+  <h2>How DCA Wraps ShopCore</h2>
+  <p>ShopCore is a 4-service e-commerce backend: an <strong>API Gateway</strong> on port 8000, a <strong>Product Service</strong> on 8001, an <strong>Order Service</strong> on 8002, and a <strong>User Service</strong> on 8003, backed by PostgreSQL, Redis, and Redpanda (Kafka-compatible). The DCA sits entirely <em>outside</em> these services — it observes them through instrumentation hooks and acts on them through controlled API calls and Docker operations. ShopCore never imports any DCA code.</p>
+
+  <div class="flow"><span class="hl">ENVIRONMENT (ShopCore)                    DCA (Your Architecture)</span>
+  ┌─────────────────────────────┐           ┌───────────────────────────┐
+  │  api-gateway   :8000        │──logs──►  │  Fluent Bit               │
+  │  product-svc   :8001        │──metrics► │  Prometheus Bridge        │──► Kafka
+  │  order-svc     :8002        │──health─► │  API Health Poller        │    topic:
+  │  user-svc      :8003        │           │  DB Monitor               │    cognitive
+  │                             │           │  Queue Monitor            │    .events
+  │  PostgreSQL    :5432        │──queries► │  Redis Monitor            │
+  │  Redis         :6379        │           │  File Watchdog (inotify)  │
+  │  Redpanda      :9092        │           │  Browser SDK endpoint     │
+  └─────────────────────────────┘           └───────────┬───────────────┘
+                                                        │
+                                              ┌─────────▼──────────┐
+                                              │   Memory Router    │
+                                              │  Redis · PG+TS     │
+                                              │  Qdrant · Neo4j    │
+                                              └─────────┬──────────┘
+                                                        │
+                                              ┌─────────▼──────────┐
+                                              │   World Model      │
+                                              │   Situation        │
+                                              │   Assessor         │
+                                              └─────────┬──────────┘
+                                                        │
+                                              ┌─────────▼──────────┐
+                                              │  Reasoning Engine  │
+                                              │  (LLM + fast-path) │
+                                              └─────────┬──────────┘
+                                                        │
+                                              ┌─────────▼──────────┐
+                                              │  Planning System   │
+                                              └─────────┬──────────┘
+                                                        │
+  <span class="hlr">           ┌──────────────────────────────────────────┘
+             │  Executor Actions
+  ┌──────────▼──────────────────────────────────┐
+  │  Docker API · PostgreSQL · Redis · Kafka     │
+  │  Nginx Reload · Config Write · HTTP calls    │
+  └─────────────────────────────────────────────┘</span>
+             │
+             ▼  feedback event flows back into perception</div>
+</section>
+
+<!-- ── 2. CONNECTIONS ─────────────────────────────────────────── -->
+<section class="section" id="connections">
+  <div class="section-label"><span class="num">02</span> Perception Connections</div>
+  <h2>Wiring Every Signal Source</h2>
+  <p>The perception layer needs <strong>five distinct adapter types</strong> for ShopCore. Each one translates raw signals from a different infrastructure layer into <span class="inline-code">CognitiveEvent</span> objects on the <span class="inline-code">cognitive.events</span> Kafka topic. Here is exactly what to connect and how.</p>
+
+  <h3>Signal Source Map</h3>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th>Source</th><th>What It Emits</th><th>Adapter Type</th><th>Transport</th><th>Poll / Push</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Container stdout/stderr</strong></td><td>Structured JSON logs from all 4 services</td><td>LogAdapter (Fluent Bit)</td><td>Fluent Bit → Kafka topic <code>raw.logs</code></td><td>Push (tail)</td></tr>
+      <tr><td><strong>Prometheus /metrics</strong></td><td>HTTP counters, latency histograms, gauge values</td><td>MetricsBridge</td><td>Prometheus → alertmanager → bridge</td><td>Push on alert fire</td></tr>
+      <tr><td><strong>Service /health endpoints</strong></td><td>HTTP 200/503/timeout responses</td><td>APIHealthPoller</td><td>HTTP polling every 15s</td><td>Poll</td></tr>
+      <tr><td><strong>PostgreSQL pg_stat_*</strong></td><td>Query duration, pool size, locks, replication lag</td><td>DatabaseMonitor</td><td>Direct asyncpg every 15s</td><td>Poll</td></tr>
+      <tr><td><strong>Redis INFO</strong></td><td>Used memory, evicted_keys, hit ratio, connected_clients</td><td>RedisMonitor</td><td>redis-py every 15s</td><td>Poll</td></tr>
+      <tr><td><strong>Redpanda consumer groups</strong></td><td>Consumer lag per topic/group</td><td>KafkaLagMonitor</td><td>kafka-python admin client every 15s</td><td>Poll</td></tr>
+      <tr><td><strong>Nginx config files</strong></td><td>File create/modify/delete events</td><td>FileWatchdog</td><td>inotify (watchdog library)</td><td>Push (event-driven)</td></tr>
+      <tr><td><strong>React frontend</strong></td><td>Web Vitals, rage clicks, checkout errors, JS exceptions</td><td>BrowserSDK</td><td>HTTP POST to /perception/browser-events</td><td>Push</td></tr>
+      <tr><td><strong>Sub-agent actions</strong></td><td>Remediation results, plan completions, verification results</td><td>AgentEventAdapter</td><td>Direct Kafka publish by executor agents</td><td>Push</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>What to Change in sources.yaml</h3>
+  <p>Your existing <span class="inline-code">sources.yaml</span> gets these new entries appended — one block per signal source. Do not replace the file; merge these in.</p>
+  <div class="code-wrap">
+    <div class="code-header"><span>instrumentation/sources.yaml</span> — ShopCore additions</div>
+    <pre><span class="c"># ── SERVICE HEALTH POLLING (API adapter) ─────────────────────────</span>
+sources:
+  - id: svc:api-gateway
+    type: api
+    tags: [shopcore, gateway, critical]
+    url: http://localhost:8000/health
+    poll_interval_s: 15
+    timeout_s: 3.0
+    latency_warn_ms: 200
+    latency_high_ms: 1000
+
+  - id: svc:product-service
+    type: api
+    tags: [shopcore, products, critical]
+    url: http://localhost:8001/health
+    poll_interval_s: 15
+    timeout_s: 3.0
+
+  - id: svc:order-service
+    type: api
+    tags: [shopcore, orders, critical]
+    url: http://localhost:8002/health
+    poll_interval_s: 15
+    timeout_s: 3.0
+
+  - id: svc:user-service
+    type: api
+    tags: [shopcore, auth, critical]
+    url: http://localhost:8003/health
+    poll_interval_s: 15
+    timeout_s: 3.0
+
+<span class="c"># ── POSTGRESQL DIRECT MONITORING (database adapter) ──────────────</span>
+  - id: db:shopcore-postgres
+    type: database
+    tags: [shopcore, production, critical]
+    dsn: postgresql://shopcore:shopcore@localhost:5432/shopcore
+    slow_query_ms: 100.0
+    pool_warn_pct: 0.70
+    pool_critical_pct: 0.90
+    replication_lag_warn_s: 30.0
+    lock_wait_warn_s: 5.0
+    idle_in_transaction_warn_s: 60.0
+    poll_interval_s: 15
+
+<span class="c"># ── REDIS MONITORING (new adapter) ───────────────────────────────</span>
+  - id: cache:shopcore-redis
+    type: redis
+    tags: [shopcore, cache, sessions]
+    url: redis://localhost:6379
+    poll_interval_s: 15
+    eviction_warn_delta: 10        <span class="c"># >10 evictions/interval → warn</span>
+    memory_pct_warn: 0.75
+    memory_pct_critical: 0.90
+    hit_ratio_warn: 0.70
+
+<span class="c"># ── KAFKA CONSUMER LAG MONITORING (queue adapter) ─────────────────</span>
+  - id: queue:order-events
+    type: queue
+    tags: [shopcore, orders]
+    broker_type: kafka
+    queue_name: order-events
+    consumer_group: order-processor
+    poll_interval_s: 15
+    lag_warn: 100
+    lag_critical: 1000
+    kafka_bootstrap: localhost:9092
+
+<span class="c"># ── LOG SOURCES (mapped from Fluent Bit tags) ─────────────────────</span>
+  - id: svc:api-gateway
+    type: log
+    fluent_bit_tag: api-gateway
+    log_format: json
+    tags: [shopcore, gateway, critical]
+
+  - id: svc:product-service
+    type: log
+    fluent_bit_tag: product-service
+    log_format: json
+    tags: [shopcore, products]
+
+  - id: svc:order-service
+    type: log
+    fluent_bit_tag: order-service
+    log_format: json
+    tags: [shopcore, orders]
+
+  - id: svc:user-service
+    type: log
+    fluent_bit_tag: user-service
+    log_format: json
+    tags: [shopcore, auth]
+
+<span class="c"># ── FILE WATCHDOG (new adapter) ───────────────────────────────────</span>
+  - id: infra:nginx-config
+    type: filesystem
+    tags: [shopcore, nginx, config]
+    watch_paths:
+      - /etc/nginx/nginx.conf
+      - /etc/nginx/conf.d/
+    events: [created, modified, deleted]
+    hash_on_read: true             <span class="c"># store SHA256 to detect content changes</span>
+
+<span class="c"># ── BROWSER SDK RECEIVER (push endpoint) ─────────────────────────</span>
+  - id: frontend:shopcore-spa
+    type: browser_sdk
+    tags: [shopcore, frontend, ux]
+    endpoint_path: /perception/browser-events
+    vitals_thresholds:
+      lcp_ms: 2500
+      fid_ms: 100
+      cls: 0.10</pre>
+  </div>
+</section>
+
+<!-- ── 3. ADAPTERS ────────────────────────────────────────────── -->
+<section class="section" id="adapters">
+  <div class="section-label"><span class="num">03</span> Adapter Build Guide</div>
+  <h2>Building the New Adapters</h2>
+  <p>Four adapters already exist from Phases 1–11 (log, api, database, queue). You need to <strong>build three new ones</strong> for the ShopCore chaos lab and <strong>extend one existing one</strong>.</p>
+
+  <h3>New Adapter 1: RedisMonitor</h3>
+  <p>Polls <span class="inline-code">INFO all</span> from Redis every 15 seconds and emits events when memory, evictions, or hit ratio cross thresholds.</p>
+  <div class="code-wrap">
+    <div class="code-header"><span>instrumentation/adapters/redis_monitor.py</span></div>
+    <pre><span class="k">import</span> asyncio, logging, time
+<span class="k">from</span> datetime <span class="k">import</span> datetime, timezone
+<span class="k">import</span> redis.asyncio <span class="k">as</span> aioredis
+<span class="k">from</span> cognitive_perception.schema.event <span class="k">import</span> CognitiveEvent, Severity, SourceType
+
+<span class="k">class</span> <span class="t">RedisMonitor</span>:
+    <span class="k">def</span> <span class="f">__init__</span>(self, config: dict, producer):
+        self.url = config[<span class="s">"url"</span>]
+        self.config = config
+        self.producer = producer
+        self._prev_evictions = <span class="n">0</span>
+        self._prev_hits = self._prev_misses = <span class="n">0</span>
+
+    <span class="k">async def</span> <span class="f">run</span>(self):
+        r = <span class="k">await</span> aioredis.from_url(self.url)
+        <span class="k">while True</span>:
+            <span class="k">try</span>:
+                info = <span class="k">await</span> r.info(<span class="s">"all"</span>)
+                <span class="k">await</span> self.<span class="f">_check</span>(info)
+            <span class="k">except Exception as</span> e:
+                <span class="c"># Redis itself is unreachable — emit a service_unreachable event</span>
+                <span class="k">await</span> self.<span class="f">_emit</span>(<span class="s">"service_unreachable"</span>, Severity.CRITICAL,
+                    {<span class="s">"error"</span>: str(e)}, [<span class="s">"cache:shopcore-redis"</span>])
+            <span class="k">await</span> asyncio.sleep(self.config.get(<span class="s">"poll_interval_s"</span>, <span class="n">15</span>))
+
+    <span class="k">async def</span> <span class="f">_check</span>(self, info):
+        <span class="c"># 1. Memory pressure check</span>
+        maxmem = info.get(<span class="s">"maxmemory"</span>) <span class="k">or</span> info[<span class="s">"total_system_memory"</span>]
+        used = info[<span class="s">"used_memory"</span>]
+        pct = used / maxmem <span class="k">if</span> maxmem <span class="k">else</span> <span class="n">0</span>
+        <span class="k">if</span> pct >= self.config.get(<span class="s">"memory_pct_critical"</span>, <span class="n">0.90</span>):
+            <span class="k">await</span> self.<span class="f">_emit</span>(<span class="s">"cache_eviction_spike"</span>, Severity.CRITICAL, {
+                <span class="s">"used_bytes"</span>: used, <span class="s">"max_bytes"</span>: maxmem,
+                <span class="s">"used_pct"</span>: round(pct * <span class="n">100</span>, <span class="n">1</span>),
+            }, [<span class="s">"cache:shopcore-redis"</span>])
+
+        <span class="c"># 2. Eviction spike check</span>
+        curr_evictions = info.get(<span class="s">"evicted_keys"</span>, <span class="n">0</span>)
+        delta = curr_evictions - self._prev_evictions
+        warn_delta = self.config.get(<span class="s">"eviction_warn_delta"</span>, <span class="n">10</span>)
+        <span class="k">if</span> delta >= warn_delta:
+            <span class="k">await</span> self.<span class="f">_emit</span>(<span class="s">"cache_eviction_spike"</span>, Severity.HIGH, {
+                <span class="s">"evictions_this_interval"</span>: delta,
+                <span class="s">"total_evictions"</span>: curr_evictions,
+            }, [<span class="s">"cache:shopcore-redis"</span>])
+        self._prev_evictions = curr_evictions
+
+        <span class="c"># 3. Hit ratio check</span>
+        hits = info.get(<span class="s">"keyspace_hits"</span>, <span class="n">0</span>)
+        misses = info.get(<span class="s">"keyspace_misses"</span>, <span class="n">0</span>)
+        delta_hits = hits - self._prev_hits
+        delta_misses = misses - self._prev_misses
+        total = delta_hits + delta_misses
+        <span class="k">if</span> total > <span class="n">0</span>:
+            ratio = delta_hits / total
+            <span class="k">if</span> ratio < self.config.get(<span class="s">"hit_ratio_warn"</span>, <span class="n">0.70</span>):
+                <span class="k">await</span> self.<span class="f">_emit</span>(<span class="s">"cache_hit_ratio_dropped"</span>, Severity.HIGH, {
+                    <span class="s">"hit_ratio"</span>: round(ratio, <span class="n">3</span>),
+                    <span class="s">"hits"</span>: delta_hits, <span class="s">"misses"</span>: delta_misses,
+                }, [<span class="s">"cache:shopcore-redis"</span>])
+        self._prev_hits, self._prev_misses = hits, misses
+
+    <span class="k">async def</span> <span class="f">_emit</span>(self, event_type, severity, payload, entity_refs):
+        event = <span class="t">CognitiveEvent</span>(
+            timestamp=datetime.now(timezone.utc),
+            source_type=<span class="t">SourceType</span>.METRIC,
+            source_id=<span class="s">"cache:shopcore-redis"</span>,
+            event_type=event_type,
+            severity=severity,
+            payload=payload,
+            entity_refs=entity_refs,
+            confidence=<span class="n">0.97</span>,
+            tags=[<span class="s">"shopcore"</span>, <span class="s">"cache"</span>, <span class="s">"redis"</span>],
+        )
+        <span class="k">await</span> self.producer.send_and_wait(
+            <span class="s">"cognitive.events"</span>, event.model_dump_json().encode()
+        )</pre>
+  </div>
+
+  <h3>New Adapter 2: FileWatchdog</h3>
+  <p>Uses the <span class="inline-code">watchdog</span> library on Linux (backed by inotify) to detect any write to nginx config files within seconds.</p>
+  <div class="code-wrap">
+    <div class="code-header"><span>instrumentation/adapters/file_watchdog.py</span></div>
+    <pre><span class="k">import</span> asyncio, hashlib, logging
+<span class="k">from</span> pathlib <span class="k">import</span> Path
+<span class="k">from</span> watchdog.observers <span class="k">import</span> Observer
+<span class="k">from</span> watchdog.events <span class="k">import</span> FileSystemEventHandler, FileModifiedEvent
+<span class="k">from</span> cognitive_perception.schema.event <span class="k">import</span> CognitiveEvent, Severity, SourceType
+<span class="k">from</span> datetime <span class="k">import</span> datetime, timezone
+
+<span class="k">class</span> <span class="t">ConfigFileHandler</span>(<span class="t">FileSystemEventHandler</span>):
+    <span class="k">def</span> <span class="f">__init__</span>(self, source_id, producer, loop):
+        self.source_id = source_id
+        self.producer = producer
+        self.loop = loop
+        self._hashes: dict[str, str] = {}
+
+    <span class="k">def</span> <span class="f">on_modified</span>(self, ev):
+        <span class="k">if</span> ev.is_directory: <span class="k">return</span>
+        path = Path(ev.src_path)
+        <span class="k">try</span>:
+            content = path.read_bytes()
+            new_hash = hashlib.sha256(content).hexdigest()
+            old_hash = self._hashes.get(str(path), <span class="s">""</span>)
+            <span class="k">if</span> new_hash == old_hash: <span class="k">return</span>     <span class="c"># metadata touch, not real change</span>
+            self._hashes[str(path)] = new_hash
+        <span class="k">except</span>: <span class="k">return</span>
+
+        event = <span class="t">CognitiveEvent</span>(
+            timestamp=datetime.now(timezone.utc),
+            source_type=<span class="t">SourceType</span>.FILE,
+            source_id=self.source_id,
+            event_type=<span class="s">"config_file_modified"</span>,
+            severity=<span class="t">Severity</span>.MEDIUM,
+            payload={<span class="s">"file"</span>: str(path), <span class="s">"sha256"</span>: new_hash},
+            entity_refs=[self.source_id, <span class="s">"infra:nginx"</span>],
+            confidence=<span class="n">0.99</span>,
+            tags=[<span class="s">"shopcore"</span>, <span class="s">"config"</span>, <span class="s">"nginx"</span>],
+        )
+        asyncio.run_coroutine_threadsafe(
+            self.producer.send_and_wait(<span class="s">"cognitive.events"</span>, event.model_dump_json().encode()),
+            self.loop
+        )
+
+<span class="k">class</span> <span class="t">FileWatchdog</span>:
+    <span class="k">def</span> <span class="f">__init__</span>(self, config, producer, loop):
+        self.config = config
+        self.producer = producer
+        self.loop = loop
+
+    <span class="k">async def</span> <span class="f">run</span>(self):
+        handler = <span class="t">ConfigFileHandler</span>(self.config[<span class="s">"id"</span>], self.producer, asyncio.get_event_loop())
+        observer = <span class="t">Observer</span>()
+        <span class="k">for</span> path <span class="k">in</span> self.config.get(<span class="s">"watch_paths"</span>, []):
+            observer.schedule(handler, path, recursive=<span class="k">True</span>)
+        observer.start()
+        <span class="k">try</span>:
+            <span class="k">while True</span>: <span class="k">await</span> asyncio.sleep(<span class="n">1</span>)
+        <span class="k">finally</span>:
+            observer.stop()
+            observer.join()</pre>
+  </div>
+
+  <h3>New Adapter 3: BrowserSDK Receiver</h3>
+  <p>A FastAPI endpoint that receives POST requests from the React frontend's <span class="inline-code">cognitive_sdk.js</span> and normalizes them into <span class="inline-code">CognitiveEvent</span> objects.</p>
+  <div class="code-wrap">
+    <div class="code-header"><span>instrumentation/adapters/browser_sdk_endpoint.py</span> — mount on your existing FastAPI app</div>
+    <pre><span class="k">from</span> fastapi <span class="k">import</span> APIRouter, Request
+<span class="k">from</span> cognitive_perception.schema.event <span class="k">import</span> CognitiveEvent, Severity, SourceType
+<span class="k">from</span> datetime <span class="k">import</span> datetime, timezone
+
+browser_router = APIRouter(prefix=<span class="s">"/perception"</span>)
+
+VITAL_THRESHOLDS = {<span class="s">"lcp_ms"</span>: <span class="n">2500</span>, <span class="s">"fid_ms"</span>: <span class="n">100</span>, <span class="s">"cls"</span>: <span class="n">0.10</span>}
+
+@browser_router.post(<span class="s">"/browser-events"</span>)
+<span class="k">async def</span> <span class="f">ingest_browser_events</span>(request: Request):
+    producer = request.app.state.kafka_producer
+    body = <span class="k">await</span> request.json()
+
+    <span class="k">for</span> raw <span class="k">in</span> (body <span class="k">if isinstance</span>(body, list) <span class="k">else</span> [body]):
+        event_type, severity, payload = <span class="f">_normalize</span>(raw)
+        event = <span class="t">CognitiveEvent</span>(
+            timestamp=datetime.now(timezone.utc),
+            source_type=<span class="t">SourceType</span>.USER_EVENT,
+            source_id=<span class="s">"frontend:shopcore-spa"</span>,
+            event_type=event_type,
+            severity=severity,
+            payload=payload,
+            entity_refs=[<span class="s">"frontend:shopcore-spa"</span>],
+            confidence=<span class="n">0.90</span>,
+            tags=[<span class="s">"shopcore"</span>, <span class="s">"frontend"</span>, raw.get(<span class="s">"page"</span>, <span class="s">"unknown"</span>)],
+        )
+        <span class="k">await</span> producer.send_and_wait(<span class="s">"cognitive.events"</span>, event.model_dump_json().encode())
+    <span class="k">return</span> {<span class="s">"status"</span>: <span class="s">"accepted"</span>}
+
+<span class="k">def</span> <span class="f">_normalize</span>(raw):
+    kind = raw.get(<span class="s">"type"</span>, <span class="s">""</span>)
+    <span class="k">if</span> kind == <span class="s">"web_vital"</span>:
+        name = raw.get(<span class="s">"name"</span>); val = raw.get(<span class="s">"value"</span>, <span class="n">0</span>)
+        threshold = VITAL_THRESHOLDS.get(f<span class="s">"{name}_ms"</span>, VITAL_THRESHOLDS.get(name, <span class="n">99999</span>))
+        sev = <span class="t">Severity</span>.HIGH <span class="k">if</span> val > threshold * <span class="n">2</span> <span class="k">else</span> <span class="t">Severity</span>.MEDIUM
+        <span class="k">return</span> <span class="s">"web_vital_degraded"</span>, sev, raw
+    <span class="k">elif</span> kind == <span class="s">"rage_click"</span>:
+        <span class="k">return</span> <span class="s">"user_frustration_detected"</span>, <span class="t">Severity</span>.MEDIUM, raw
+    <span class="k">elif</span> kind == <span class="s">"checkout_error"</span>:
+        <span class="k">return</span> <span class="s">"checkout_failure"</span>, <span class="t">Severity</span>.HIGH, raw
+    <span class="k">elif</span> kind == <span class="s">"js_exception"</span>:
+        <span class="k">return</span> <span class="s">"frontend_exception"</span>, <span class="t">Severity</span>.HIGH, raw
+    <span class="k">return</span> <span class="s">"browser_event"</span>, <span class="t">Severity</span>.INFO, raw</pre>
+  </div>
+
+  <h3>Extended: DatabaseMonitor — add idle-in-transaction + lock detection</h3>
+  <p>Your existing DatabaseMonitor needs two new queries added to its poll loop:</p>
+  <div class="code-wrap">
+    <div class="code-header"><span>additions to existing DatabaseMonitor._poll()</span></div>
+    <pre><span class="c"># ADD to your DatabaseMonitor poll loop alongside slow query detection:</span>
+
+<span class="c"># ── Idle-in-transaction connections ──────────────────────────────</span>
+idle_result = <span class="k">await</span> conn.fetch(<span class="s">"""
+    SELECT pid, usename, application_name,
+           EXTRACT(EPOCH FROM now() - query_start) AS idle_s
+    FROM pg_stat_activity
+    WHERE state = 'idle in transaction'
+      AND pid != pg_backend_pid()
+"""</span>)
+<span class="k">for</span> row <span class="k">in</span> idle_result:
+    <span class="k">if</span> row[<span class="s">"idle_s"</span>] > config.get(<span class="s">"idle_in_transaction_warn_s"</span>, <span class="n">60</span>):
+        <span class="k">await</span> emit(<span class="s">"connection_leak_detected"</span>, Severity.MEDIUM, {
+            <span class="s">"pid"</span>: row[<span class="s">"pid"</span>], <span class="s">"idle_s"</span>: row[<span class="s">"idle_s"</span>],
+            <span class="s">"application"</span>: row[<span class="s">"application_name"</span>],
+        })
+
+<span class="c"># ── Lock waits ────────────────────────────────────────────────────</span>
+lock_result = <span class="k">await</span> conn.fetch(<span class="s">"""
+    SELECT blocked.pid AS blocked_pid,
+           blocking.pid AS blocking_pid,
+           EXTRACT(EPOCH FROM now() - blocked_activity.query_start) AS wait_s,
+           blocked_activity.query AS blocked_query
+    FROM pg_locks blocked
+    JOIN pg_locks blocking ON blocking.transactionid = blocked.transactionid
+      AND blocking.pid != blocked.pid
+    JOIN pg_stat_activity blocked_activity ON blocked.pid = blocked_activity.pid
+    WHERE NOT blocked.granted
+"""</span>)
+<span class="k">for</span> row <span class="k">in</span> lock_result:
+    <span class="k">if</span> row[<span class="s">"wait_s"</span>] > config.get(<span class="s">"lock_wait_warn_s"</span>, <span class="n">5</span>):
+        <span class="k">await</span> emit(<span class="s">"lock_wait_timeout"</span>, Severity.MEDIUM, {
+            <span class="s">"blocked_pid"</span>: row[<span class="s">"blocked_pid"</span>],
+            <span class="s">"blocking_pid"</span>: row[<span class="s">"blocking_pid"</span>],
+            <span class="s">"wait_s"</span>: row[<span class="s">"wait_s"</span>],
+            <span class="s">"query_preview"</span>: row[<span class="s">"blocked_query"</span>][:200],
+        })</pre>
+  </div>
+</section>
+
+<!-- ── 4. ACTION VOCABULARY ───────────────────────────────────── -->
+<section class="section" id="action-vocabulary">
+  <div class="section-label"><span class="num">04</span> Agent Action Vocabulary</div>
+  <h2>Every Action the Agent Can Take</h2>
+  <p>The agent's action vocabulary is the complete set of things the executor layer is permitted to do. Every action must be <strong>observable</strong> (perception sees its effect), <strong>traceable</strong> (logged to episodic memory), and where possible <strong>reversible</strong> (a rollback exists). Below is the full vocabulary organized by handler.</p>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th>Action ID</th><th>Handler</th><th>What It Does</th><th>Reversible?</th><th>Approval?</th></tr></thead>
+    <tbody>
+      <tr><td><code>restart_container</code></td><td>ServiceHandler</td><td>Docker API: stop then start the named container. Waits for /health 200 before marking done.</td><td>N/A (idempotent)</td><td><span class="badge auto">auto</span></td></tr>
+      <tr><td><code>health_gate</code></td><td>ServiceHandler</td><td>Poll /health every 5s for up to 2 min. If it stays unhealthy, escalate to restart_container.</td><td>—</td><td><span class="badge auto">auto</span></td></tr>
+      <tr><td><code>scale_replicas</code></td><td>ServiceHandler</td><td>Docker Compose scale: increase replica count for a service. Currently +1 replica up to a cap.</td><td>Yes: scale_down</td><td><span class="badge auto">auto</span></td></tr>
+      <tr><td><code>scale_down</code></td><td>ServiceHandler</td><td>Docker Compose scale: reduce replica count back to baseline after scale_replicas.</td><td>Yes: scale_replicas</td><td><span class="badge auto">auto</span></td></tr>
+      <tr><td><code>reload_nginx</code></td><td>ServiceHandler</td><td>Run <code>nginx -t</code> (validate config), then <code>nginx -s reload</code>. Rolls back if validation fails.</td><td>Yes: restore config</td><td><span class="badge auto">auto</span></td></tr>
+      <tr><td><code>kill_slow_queries</code></td><td>DatabaseHandler</td><td>SELECT pg_terminate_backend() for all queries with duration_s > threshold (default 10s).</td><td>No (destructive)</td><td><span class="badge auto">auto</span></td></tr>
+      <tr><td><code>terminate_idle_connections</code></td><td>DatabaseHandler</td><td>Kill idle-in-transaction connections older than 60s to free pool slots.</td><td>No</td><td><span class="badge auto">auto</span></td></tr>
+      <tr><td><code>kill_blocking_query</code></td><td>DatabaseHandler</td><td>Kill the specific PID identified as blocking in a lock_wait_timeout event payload.</td><td>No (destructive)</td><td><span class="badge approve">approve</span></td></tr>
+      <tr><td><code>reset_pg_pool</code></td><td>DatabaseHandler</td><td>Restart product-service container to force asyncpg pool re-initialization.</td><td>—</td><td><span class="badge auto">auto</span></td></tr>
+      <tr><td><code>increase_redis_maxmemory</code></td><td>CacheHandler</td><td>Redis CONFIG SET maxmemory to 2× current value (cap: 80% system RAM).</td><td>Yes: restore_maxmemory</td><td><span class="badge auto">auto</span></td></tr>
+      <tr><td><code>warm_cache</code></td><td>CacheHandler</td><td>Fetch all products from PostgreSQL and SETEX them in Redis with a 300s TTL.</td><td>—</td><td><span class="badge auto">auto</span></td></tr>
+      <tr><td><code>flush_cache_namespace</code></td><td>CacheHandler</td><td>SCAN + DEL all keys matching a prefix (e.g. <code>product:*</code>). Forces fresh DB reads.</td><td>Partial: warm_cache</td><td><span class="badge approve">approve</span></td></tr>
+      <tr><td><code>restart_kafka_consumer</code></td><td>QueueHandler</td><td>Restart order-service container to reset the Kafka consumer connection and resume lag drain.</td><td>—</td><td><span class="badge auto">auto</span></td></tr>
+      <tr><td><code>reset_consumer_offset</code></td><td>QueueHandler</td><td>kafka-python admin: reset offset for order-processor group to latest. Skips backed-up messages.</td><td>No (messages skipped)</td><td><span class="badge approve">approve</span></td></tr>
+      <tr><td><code>drain_dlq</code></td><td>QueueHandler</td><td>Consume dead-letter queue messages one by one with extended processing timeout. Reprocesses them.</td><td>—</td><td><span class="badge auto">auto</span></td></tr>
+      <tr><td><code>validate_and_reload_config</code></td><td>ConfigHandler</td><td>Read modified config, validate syntax, back up original, reload service. Rolls back on failure.</td><td>Yes: restore from backup</td><td><span class="badge auto">auto</span></td></tr>
+      <tr><td><code>restore_config_from_backup</code></td><td>ConfigHandler</td><td>Restore the last known-good config file from backup and reload the service.</td><td>—</td><td><span class="badge auto">auto</span></td></tr>
+      <tr><td><code>send_alert</code></td><td>NotifyHandler</td><td>POST to Slack webhook / PagerDuty API with structured incident summary from the world model.</td><td>—</td><td><span class="badge auto">auto</span></td></tr>
+      <tr><td><code>request_human_approval</code></td><td>NotifyHandler</td><td>Pause plan execution, post approval request to Slack with action details. Resume on approval webhook.</td><td>—</td><td><span class="badge approve">approve</span></td></tr>
+      <tr><td><code>publish_chaos_deactivate</code></td><td>ChaosHandler</td><td>Chaos Lab only: POST to Chaos API /deactivate after successful remediation to formally close the scenario.</td><td>—</td><td><span class="badge auto">auto</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-body">
+      <div class="callout-title">Actions requiring approval are blocked by default</div>
+      <span><code>kill_blocking_query</code>, <code>reset_consumer_offset</code>, and <code>flush_cache_namespace</code> are marked <code>requires_approval: True</code> in the action registry. The plan pauses at these steps and posts to the notification channel. Auto-approval can be toggled per action once trust is established through testing.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── 5. ACCESS MAP ──────────────────────────────────────────── -->
+<section class="section" id="access-map">
+  <div class="section-label"><span class="num">05</span> Platform Access Map</div>
+  <h2>What Access the Agent Needs and How to Grant It</h2>
+  <p>The executor agent needs credentials for six distinct subsystems. Each is scoped to minimum required permissions — the agent should never have broader access than the narrowest set of actions it actually performs.</p>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th>Platform</th><th>Access Method</th><th>Permissions Required</th><th>How to Grant</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Docker daemon</strong></td>
+        <td>Docker SDK for Python (<code>docker</code> package)</td>
+        <td>
+          <span class="access-pill ap-r">containers.read</span>
+          <span class="access-pill ap-x">containers.restart</span>
+          <span class="access-pill ap-x">containers.start/stop</span>
+          <span class="access-pill ap-w">env vars: update</span>
+        </td>
+        <td>Add DCA container to the <code>docker</code> group, or mount <code>/var/run/docker.sock</code> into the DCA executor container. Set <code>DOCKER_HOST=unix:///var/run/docker.sock</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>PostgreSQL</strong></td>
+        <td>asyncpg direct connection</td>
+        <td>
+          <span class="access-pill ap-r">SELECT on pg_stat_*</span>
+          <span class="access-pill ap-x">pg_terminate_backend()</span>
+          <span class="access-pill ap-x">pg_cancel_backend()</span>
+        </td>
+        <td>Create a dedicated <code>dca_agent</code> role: <code>GRANT pg_monitor TO dca_agent;</code> and <code>GRANT EXECUTE ON FUNCTION pg_terminate_backend(integer) TO dca_agent;</code>. Store DSN in env var <code>DCA_PG_DSN</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Redis</strong></td>
+        <td>redis.asyncio client</td>
+        <td>
+          <span class="access-pill ap-r">INFO, SCAN, GET</span>
+          <span class="access-pill ap-w">CONFIG SET maxmemory</span>
+          <span class="access-pill ap-x">DEL (namespaced)</span>
+          <span class="access-pill ap-w">SET, SETEX (cache warm)</span>
+        </td>
+        <td>If Redis AUTH is enabled, create a user with ACL: <code>ACL SETUSER dca_agent &gt;password ~product:* ~session:* +info +config|set +scan +get +set +del +setex</code>. Store credentials in <code>DCA_REDIS_URL</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Kafka / Redpanda</strong></td>
+        <td>aiokafka + kafka-python admin</td>
+        <td>
+          <span class="access-pill ap-r">consumer group describe</span>
+          <span class="access-pill ap-r">topic metadata read</span>
+          <span class="access-pill ap-w">consumer group offset reset</span>
+          <span class="access-pill ap-w">DLQ topic produce/consume</span>
+        </td>
+        <td>Redpanda ACLs: <code>rpk acl create --allow-principal User:dca_agent --operation describe,read,write --topic order-events,order-events-dlq --group order-processor</code>. Store in <code>DCA_KAFKA_BOOTSTRAP</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Nginx config filesystem</strong></td>
+        <td>Python file I/O + subprocess</td>
+        <td>
+          <span class="access-pill ap-r">read /etc/nginx/</span>
+          <span class="access-pill ap-w">write /etc/nginx/conf.d/</span>
+          <span class="access-pill ap-x">nginx -t (validate)</span>
+          <span class="access-pill ap-x">nginx -s reload</span>
+        </td>
+        <td>DCA executor runs as a user with write access to <code>/etc/nginx/conf.d/</code>. Alternatively, use a sudo rule: <code>dca_agent ALL=(root) NOPASSWD: /usr/sbin/nginx -t, /usr/sbin/nginx -s reload</code>. Mount the config volume shared with the Nginx container.</td>
+      </tr>
+      <tr>
+        <td><strong>Slack / PagerDuty</strong></td>
+        <td>HTTPS webhooks</td>
+        <td>
+          <span class="access-pill ap-w">post messages to #incidents channel</span>
+          <span class="access-pill ap-w">create PagerDuty incidents</span>
+          <span class="access-pill ap-a">receive approval callbacks</span>
+        </td>
+        <td>Create a Slack app with <code>chat:write</code> permission. Store webhook URL in <code>DCA_SLACK_WEBHOOK</code>. For approvals: create a Slash command or button interaction endpoint on the DCA's FastAPI app at <code>/approvals/respond</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Chaos API (test only)</strong></td>
+        <td>HTTP (localhost:9090)</td>
+        <td>
+          <span class="access-pill ap-r">GET /scenarios</span>
+          <span class="access-pill ap-x">POST /scenarios/{name}/deactivate</span>
+        </td>
+        <td>No auth in the lab. In production, protect with API key in header. Only accessible within the same Docker network.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout info">
+    <div class="callout-icon">🔑</div>
+    <div class="callout-body">
+      <div class="callout-title">Store all credentials in a .env file, never in code</div>
+      <span>Create <code>dca/.env</code> with all credentials. Load with <code>python-dotenv</code> at startup. Add <code>.env</code> to <code>.gitignore</code>. In Docker Compose, use <code>env_file: [dca/.env]</code> on the executor container.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── 6. MULTI-STEP EXECUTION FLOWS ──────────────────────────── -->
+<section class="section" id="execution-flows">
+  <div class="section-label"><span class="num">06</span> Multi-Step Execution Flows</div>
+  <h2>How the Agent Executes Complex Remediations</h2>
+  <p>Fixing a real anomaly is never one action. It's a sequence with verification steps, fallbacks, and feedback at each stage. Below are the exact multi-step plans for the most complex scenarios.</p>
+
+  <h3>Flow A: DB Pool Exhaustion → Full Recovery</h3>
+  <div class="flow"><span class="hl">TRIGGER:</span> event_type=connection_pool_exhausted  severity=CRITICAL
+  entity_refs=[svc:product-service, db:shopcore-postgres]
+
+<span class="hl">PLAN:</span>
+  Step 1 — TERMINATE_IDLE_CONNECTIONS (DatabaseHandler)
+  ├─ Execute: pg_terminate_backend() for all idle-in-transaction > 30s
+  ├─ Verify: SELECT count(*) FROM pg_stat_activity WHERE state='idle in transaction'
+  │          → expect count < 5 within 10s
+  ├─ Timeout: 15s
+  └─ on_failure → escalate to Step 3 immediately
+
+  Step 2 — VERIFY_POOL_RECOVERY (observation, no action)
+  ├─ Wait up to 30s for pool_usage to drop below 70% in world model
+  ├─ Success condition: db:shopcore-postgres.pool_used_pct < 0.70
+  └─ on_failure → proceed to Step 3
+
+  Step 3 — RESTART_CONTAINER [product-service] (ServiceHandler)
+  ├─ Execute: docker.containers.get("product-service").restart()
+  ├─ Verify: GET http://localhost:8001/health → 200 OK within 45s
+  ├─ Timeout: 60s
+  └─ on_failure → send_alert + request_human_approval
+
+  Step 4 — FEEDBACK_PUBLISH (AgentEventAdapter)
+  └─ Publish action_completed event to cognitive.events with:
+     - steps_executed, elapsed_total_s, final_pool_pct
+     - outcome: success | partial | escalated
+
+<span class="hla">EXPECTED TOTAL DURATION: 30–90s</span>
+<span class="hlr">ROLLBACK: None needed — connection termination is safe, restart is idempotent</span></div>
+
+  <h3>Flow B: Kafka Consumer Lag → Unblock + Drain</h3>
+  <div class="flow"><span class="hl">TRIGGER:</span> event_type=consumer_lag_high  payload.consumer_lag > 100
+  entity_refs=[queue:order-events, svc:order-service]
+
+<span class="hl">PLAN:</span>
+  Step 1 — RESTART_KAFKA_CONSUMER (QueueHandler)
+  ├─ Execute: docker.containers.get("order-service").restart()
+  ├─ Verify: GET http://localhost:8002/health → 200 OK within 30s
+  ├─ Timeout: 45s
+  └─ on_failure → skip to Step 3
+
+  Step 2 — MONITOR_LAG_DRAIN (observation)
+  ├─ Poll consumer lag every 15s for up to 5 minutes
+  ├─ Success condition: lag < 10 (fully drained)
+  ├─ Acceptable: lag decreasing at rate > 5/poll
+  └─ on_failure (lag not decreasing after 3 polls) → Step 3
+
+  Step 3 — SCALE_ORDER_SERVICE (ServiceHandler) [if lag still > 500]
+  ├─ Execute: docker-compose scale order-service=2
+  ├─ Verify: two order-service containers healthy
+  ├─ Timeout: 60s
+  └─ Schedule scale_down after 15 minutes or lag=0
+
+  Step 4 — RESET_CONSUMER_OFFSET [requires_approval] (QueueHandler)
+  ├─ Only reached if lag > 1000 and not decreasing after 10min
+  ├─ POST approval request to Slack with: current lag, messages that will be skipped
+  ├─ On approval: kafka-python AdminClient.alter_consumer_group_offsets(to=latest)
+  └─ on_no_approval after 15min → escalate_to_human_incident
+
+<span class="hla">EXPECTED TOTAL DURATION: 2–15 minutes depending on lag depth</span></div>
+
+  <h3>Flow C: Config File Tamper → Validate and Heal</h3>
+  <div class="flow"><span class="hl">TRIGGER:</span> event_type=config_file_modified  entity_refs=[infra:nginx-config]
+
+<span class="hl">PLAN:</span>
+  Step 1 — BACKUP_CURRENT_CONFIG (ConfigHandler)
+  ├─ cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak.{timestamp}
+  └─ Store backup path in plan context for rollback
+
+  Step 2 — VALIDATE_CONFIG (ConfigHandler)
+  ├─ Execute: subprocess.run(["nginx", "-t"])
+  ├─ If validation PASSES → Step 3a (reload)
+  └─ If validation FAILS  → Step 3b (restore)
+
+  Step 3a — RELOAD_NGINX [on valid config] (ConfigHandler)
+  ├─ Execute: nginx -s reload
+  ├─ Verify: GET http://localhost:8000/health → 200 within 10s
+  └─ Publish: config_file_reloaded event
+
+  Step 3b — RESTORE_FROM_BACKUP [on invalid config] (ConfigHandler)
+  ├─ cp /etc/nginx/nginx.conf.bak.{timestamp} /etc/nginx/nginx.conf
+  ├─ Execute: nginx -s reload
+  ├─ Verify: GET http://localhost:8000/health → 200 within 10s
+  └─ Publish: config_file_restored event + send_alert
+
+<span class="hla">EXPECTED TOTAL DURATION: 5–15s</span>
+<span class="hlr">NOTE: This is the fastest remediation — inotify fires within 1s of file change</span></div>
+
+  <h3>Flow D: Redis Memory Full → Expand and Warm</h3>
+  <div class="flow"><span class="hl">TRIGGER:</span> event_type=cache_eviction_spike  severity=CRITICAL
+  payload.used_pct > 90
+
+<span class="hl">PLAN:</span>
+  Step 1 — INCREASE_REDIS_MAXMEMORY (CacheHandler)
+  ├─ Execute: redis-cli CONFIG SET maxmemory {current * 2}
+  ├─ Cap: maxmemory ≤ 0.80 × system_ram (from world model entity state)
+  ├─ Verify: INFO memory → used_memory / maxmemory < 0.75
+  └─ on_failure (already at cap) → skip to Step 2b
+
+  Step 2a — WARM_CACHE [if evictions were product catalog] (CacheHandler)
+  ├─ SELECT id, name, price, stock FROM products (PostgreSQL)
+  ├─ For each: SETEX product:{id} 300 {json}
+  └─ Verify: hit ratio improves > 0.70 in next monitor cycle
+
+  Step 2b — SEND_ALERT [if at memory cap] (NotifyHandler)
+  └─ Notify: Redis is at memory ceiling. Manual capacity planning needed.
+
+<span class="hla">EXPECTED TOTAL DURATION: 10–30s for expand; 30–60s if warming catalog</span></div>
+</section>
+
+<!-- ── 7. HOW TO INJECT CHAOS ─────────────────────────────────── -->
+<section class="section" id="chaos-how">
+  <div class="section-label"><span class="num">07</span> Chaos Engineering</div>
+  <h2>How to Create Anomalies and Degrade the System</h2>
+  <p>ShopCore has two layers of chaos injection: <strong>environment variable hooks</strong> (services read chaos vars at request time — no restart needed) and <strong>infrastructure-level injection</strong> (Docker network rules, PostgreSQL direct manipulation, Redis config changes). The Chaos Engine API at <span class="inline-code">localhost:9090</span> is the control plane for both.</p>
+
+  <h3>Mechanism 1: Env-Var Chaos Hooks (in-process, no restart)</h3>
+  <p>Each ShopCore service reads specific environment variables on every request. The ChaosController calls the Docker SDK to set these on the running container — the change takes effect on the next request with no container restart.</p>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th>Service</th><th>Env Variable</th><th>Effect</th><th>Deactivate</th></tr></thead>
+    <tbody>
+      <tr><td>api-gateway</td><td><code>CHAOS_LATENCY_MS=3000</code></td><td>Adds 3s asyncio.sleep before proxying every request</td><td>Set to <code>0</code></td></tr>
+      <tr><td>api-gateway</td><td><code>CHAOS_ERROR_RATE=0.30</code></td><td>30% of requests return HTTP 500</td><td>Set to <code>0</code></td></tr>
+      <tr><td>api-gateway</td><td><code>CHAOS_CIRCUIT_OPEN=true</code></td><td>All upstream calls return 503 immediately</td><td>Set to <code>false</code></td></tr>
+      <tr><td>product-service</td><td><code>CHAOS_SLOW_QUERY_MS=2000</code></td><td>Appends <code>pg_sleep(2)</code> to every SELECT query</td><td>Set to <code>0</code></td></tr>
+      <tr><td>product-service</td><td><code>CHAOS_POOL_EXHAUST=true</code></td><td>Holds connections open without releasing, draining the pool</td><td>Set to <code>false</code></td></tr>
+      <tr><td>product-service</td><td><code>CHAOS_DB_ERROR_RATE=0.20</code></td><td>20% of DB queries raise an asyncpg exception</td><td>Set to <code>0</code></td></tr>
+      <tr><td>order-service</td><td><code>CHAOS_KAFKA_BLOCK=true</code></td><td>Stops publishing to Kafka topic; orders accepted but not processed</td><td>Set to <code>false</code></td></tr>
+      <tr><td>order-service</td><td><code>CHAOS_ORDER_DELAY_S=5</code></td><td>Adds 5s artificial delay per order (simulates slow processing)</td><td>Set to <code>0</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Mechanism 2: Infrastructure-Level Injection</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span>chaos_engine/scenarios/infrastructure.py</span> — examples</div>
+    <pre><span class="c"># ── 1. Stop a container entirely (simulates crash) ─────────────</span>
+docker_client.containers.get(<span class="s">"product-service"</span>).stop()
+<span class="c"># Deactivate:</span>
+docker_client.containers.get(<span class="s">"product-service"</span>).start()
+
+<span class="c"># ── 2. Redis memory cap (forces evictions immediately) ─────────</span>
+redis_client.config_set(<span class="s">"maxmemory"</span>, <span class="s">"1mb"</span>)
+<span class="c"># Deactivate:</span>
+redis_client.config_set(<span class="s">"maxmemory"</span>, <span class="s">"512mb"</span>)
+
+<span class="c"># ── 3. PostgreSQL lock contention ──────────────────────────────</span>
+<span class="c"># In a separate async task, hold a transaction for 60 seconds:</span>
+<span class="k">async with</span> pool.acquire() <span class="k">as</span> conn:
+    <span class="k">await</span> conn.execute(<span class="s">"BEGIN"</span>)
+    <span class="k">await</span> conn.execute(<span class="s">"SELECT * FROM products FOR UPDATE"</span>)
+    <span class="k">await</span> asyncio.sleep(<span class="n">60</span>)    <span class="c"># holds the lock for 60s</span>
+    <span class="k">await</span> conn.execute(<span class="s">"ROLLBACK"</span>)
+
+<span class="c"># ── 4. Network packet loss (requires tc + NET_ADMIN capability) ─</span>
+subprocess.run([<span class="s">"docker"</span>, <span class="s">"exec"</span>, <span class="s">"product-service"</span>,
+    <span class="s">"tc"</span>, <span class="s">"qdisc"</span>, <span class="s">"add"</span>, <span class="s">"dev"</span>, <span class="s">"eth0"</span>,
+    <span class="s">"root"</span>, <span class="s">"netem"</span>, <span class="s">"loss"</span>, <span class="s">"20%"</span>])
+<span class="c"># Deactivate:</span>
+subprocess.run([<span class="s">"docker"</span>, <span class="s">"exec"</span>, <span class="s">"product-service"</span>,
+    <span class="s">"tc"</span>, <span class="s">"qdisc"</span>, <span class="s">"del"</span>, <span class="s">"dev"</span>, <span class="s">"eth0"</span>, <span class="s">"root"</span>])
+
+<span class="c"># ── 5. SSL cert near expiry ─────────────────────────────────────</span>
+<span class="c"># Replace live cert with an openssl-generated cert expiring in 3 days:</span>
+subprocess.run([<span class="s">"openssl"</span>, <span class="s">"req"</span>, <span class="s">"-x509"</span>, <span class="s">"-newkey"</span>, <span class="s">"rsa:2048"</span>,
+    <span class="s">"-keyout"</span>, <span class="s">"/etc/nginx/ssl/server.key"</span>,
+    <span class="s">"-out"</span>,    <span class="s">"/etc/nginx/ssl/server.crt"</span>,
+    <span class="s">"-days"</span>,   <span class="s">"3"</span>, <span class="s">"-nodes"</span>, <span class="s">"-subj"</span>, <span class="s">"/CN=localhost"</span>])</pre>
+  </div>
+
+  <h3>Triggering via the Chaos API</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span>bash — manual chaos injection</span></div>
+    <pre><span class="c"># List all 18 scenarios</span>
+curl http://localhost:9090/scenarios | python -m json.tool
+
+<span class="c"># Inject a slow query</span>
+curl -X POST http://localhost:9090/scenarios/slow_database_query/activate \
+  -H "Content-Type: application/json" \
+  -d '{"params": {"slow_ms": 2000}}'
+
+<span class="c"># Watch the DCA detect it on cognitive.events</span>
+kcat -b localhost:9092 -t cognitive.events -C -f '%s\n' | python -m json.tool
+
+<span class="c"># After DCA remediates: deactivate manually (or let the DCA call publish_chaos_deactivate)</span>
+curl -X POST http://localhost:9090/scenarios/slow_database_query/deactivate
+
+<span class="c"># Emergency: reset ALL active chaos</span>
+curl -X POST http://localhost:9090/reset</pre>
+  </div>
+</section>
+
+<!-- ── 8. ALL 18 SCENARIOS ────────────────────────────────────── -->
+<section class="section" id="scenarios">
+  <div class="section-label"><span class="num">08</span> All 18 Chaos Scenarios</div>
+  <h2>Complete Scenario Reference</h2>
+
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th>#</th><th>Name</th><th>Sev</th><th>Injection</th><th>Expected Event</th><th>Detection SLO</th><th>Remediation Action</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><strong>product_service_crash</strong></td><td class="sev-critical">Critical</td><td>Stop Docker container</td><td><code>service_unreachable</code></td><td>&lt;30s</td><td>restart_container</td></tr>
+      <tr><td>2</td><td><strong>order_service_crash</strong></td><td class="sev-critical">Critical</td><td>Stop Docker container</td><td><code>service_unreachable</code></td><td>&lt;30s</td><td>restart_container</td></tr>
+      <tr><td>3</td><td><strong>db_pool_exhaustion</strong></td><td class="sev-critical">Critical</td><td>CHAOS_POOL_EXHAUST=true</td><td><code>connection_pool_exhausted</code></td><td>&lt;30s</td><td>terminate_idle_connections → restart_container</td></tr>
+      <tr><td>4</td><td><strong>redis_memory_full</strong></td><td class="sev-critical">Critical</td><td>Redis maxmemory=1mb</td><td><code>cache_eviction_spike</code></td><td>&lt;45s</td><td>increase_redis_maxmemory → warm_cache</td></tr>
+      <tr><td>5</td><td><strong>slow_database_query</strong></td><td class="sev-high">High</td><td>CHAOS_SLOW_QUERY_MS=2000</td><td><code>slow_query_detected</code></td><td>&lt;45s</td><td>kill_slow_queries</td></tr>
+      <tr><td>6</td><td><strong>api_latency_spike</strong></td><td class="sev-high">High</td><td>CHAOS_LATENCY_MS=3000</td><td><code>api_latency_spike</code></td><td>&lt;45s</td><td>health_gate → restart if persists</td></tr>
+      <tr><td>7</td><td><strong>kafka_consumer_lag</strong></td><td class="sev-high">High</td><td>CHAOS_KAFKA_BLOCK=true + flood</td><td><code>consumer_lag_high</code></td><td>&lt;30s</td><td>restart_kafka_consumer → scale_replicas</td></tr>
+      <tr><td>8</td><td><strong>gateway_error_rate</strong></td><td class="sev-high">High</td><td>CHAOS_ERROR_RATE=0.30</td><td><code>service_health_degraded</code></td><td>&lt;60s</td><td>health_gate (env var reset via chaos deactivate)</td></tr>
+      <tr><td>9</td><td><strong>replication_lag</strong></td><td class="sev-high">High</td><td>Pause WAL sender</td><td><code>replication_lag_high</code></td><td>&lt;45s</td><td>send_alert (DBA action required) + health_gate</td></tr>
+      <tr><td>10</td><td><strong>memory_pressure</strong></td><td class="sev-high">High</td><td>stress-ng in container</td><td><code>memory_pressure_high</code></td><td>&lt;60s</td><td>restart_container (terminates stress-ng)</td></tr>
+      <tr><td>11</td><td><strong>network_packet_loss</strong></td><td class="sev-high">High</td><td>tc netem loss 20%</td><td><code>packet_loss_detected</code></td><td>&lt;60s</td><td>send_alert + health_gate (network recovery required)</td></tr>
+      <tr><td>12</td><td><strong>lock_contention</strong></td><td class="sev-medium">Medium</td><td>SELECT FOR UPDATE held 60s</td><td><code>lock_wait_timeout</code></td><td>&lt;45s</td><td>kill_blocking_query [approval]</td></tr>
+      <tr><td>13</td><td><strong>idle_in_transaction</strong></td><td class="sev-medium">Medium</td><td>Hold transaction 120s</td><td><code>connection_leak_detected</code></td><td>&lt;60s</td><td>terminate_idle_connections</td></tr>
+      <tr><td>14</td><td><strong>cpu_spike</strong></td><td class="sev-medium">Medium</td><td>stress-ng --cpu 4</td><td><code>cpu_spike</code></td><td>&lt;60s</td><td>health_gate, restart_container if persists 5min</td></tr>
+      <tr><td>15</td><td><strong>config_file_tamper</strong></td><td class="sev-medium">Medium</td><td>Write to nginx.conf</td><td><code>config_file_modified</code></td><td>&lt;5s</td><td>validate_and_reload_config → restore if invalid</td></tr>
+      <tr><td>16</td><td><strong>ssl_cert_near_expiry</strong></td><td class="sev-medium">Medium</td><td>Replace cert (expires 3 days)</td><td><code>certificate_expiry_warning</code></td><td>&lt;120s</td><td>send_alert (cert renewal is human task)</td></tr>
+      <tr><td>17</td><td><strong>order_processing_delay</strong></td><td class="sev-medium">Medium</td><td>CHAOS_ORDER_DELAY_S=5</td><td><code>slow_query_detected</code></td><td>&lt;60s</td><td>health_gate + scale_replicas</td></tr>
+      <tr><td>18</td><td><strong>circuit_breaker_open</strong></td><td class="sev-high">High</td><td>CHAOS_CIRCUIT_OPEN=true</td><td><code>service_unreachable</code></td><td>&lt;30s</td><td>restart_container (clears env var)</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ── 9. DETECTION PIPELINE ─────────────────────────────────── -->
+<section class="section" id="detection">
+  <div class="section-label"><span class="num">09</span> Detection Pipeline</div>
+  <h2>From Raw Signal to CognitiveEvent</h2>
+  <p>Detection is the first pillar. The full pipeline from raw signal to a routed event in memory takes under 2 seconds for push-based sources and under 15 seconds for polled sources. Here is every step.</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-head">Step 1 · Raw Signal</div>
+      <div class="card-body">A container emits a log line, Prometheus fires an alert, a health poll times out, a Redis INFO value crosses a threshold, a file changes on disk, or the frontend SDK POSTs a web vital.</div>
+    </div>
+    <div class="card">
+      <div class="card-head">Step 2 · Adapter Ingestion</div>
+      <div class="card-body">The appropriate adapter receives the raw signal. Fluent Bit tails container logs and writes to the <code>raw.logs</code> Kafka topic. Pollers run on asyncio task timers. File watchdog uses inotify callbacks.</div>
+    </div>
+    <div class="card">
+      <div class="card-head">Step 3 · Normalizer</div>
+      <div class="card-body">Each adapter has a normalizer function: raw input → validated CognitiveEvent. Extracts <code>event_type</code>, <code>entity_refs</code>, <code>severity</code>, and assigns a <code>confidence</code> score (0.55–0.99 depending on signal quality).</div>
+    </div>
+    <div class="card">
+      <div class="card-head">Step 4 · Schema Validation</div>
+      <div class="card-body">Pydantic validates the CognitiveEvent. Invalid events go to <code>cognitive.perception_failures</code> for retry. Valid events go to <code>cognitive.events</code>. Zero silent drops — every failure is itself an event.</div>
+    </div>
+    <div class="card">
+      <div class="card-head">Step 5 · Memory Router</div>
+      <div class="card-body">Reads from <code>cognitive.events</code>. Routes: all events → episodic (TimescaleDB); entity_refs → Neo4j graph update; severity HIGH+ → working memory (Redis); known trigger patterns → procedural memory activation.</div>
+    </div>
+    <div class="card">
+      <div class="card-head">Step 6 · World Model Update</div>
+      <div class="card-body">The world model's background loop reads new events from the bus and updates entity states, temporal profiles, causal chains, and anomaly registry. The situation assessor re-ranks active anomalies.</div>
+    </div>
+    <div class="card">
+      <div class="card-head">Step 7 · Monitor Agent Trigger</div>
+      <div class="card-body">The monitor agent subscribes to working memory updates. When severity CRITICAL or HIGH events land, it triggers the reasoning engine with a fresh situation summary. Medium events are batched every 60s.</div>
+    </div>
+    <div class="card">
+      <div class="card-head">Step 8 · Fast-Path Check</div>
+      <div class="card-body">Before calling the LLM, the reasoning engine checks the rule engine: does this event_type exactly match a known playbook with confidence ≥ 0.80? If yes, skip LLM and go straight to planning. Typically covers 60–70% of scenarios after 3+ successful runs.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 10. REASONING + PLANNING ───────────────────────────────── -->
+<section class="section" id="reasoning">
+  <div class="section-label"><span class="num">10</span> Reasoning & Planning</div>
+  <h2>What the LLM Receives and What It Produces</h2>
+  <p>The LLM only reasons when the fast-path doesn't match. When it fires, it receives a carefully compressed <strong>situation summary</strong> from the situation assessor and must return a structured <span class="inline-code">DecisionObject</span> — not free text.</p>
+
+  <h3>Situation Summary Shape (LLM Input)</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span>Example situation_summary passed to LLM</span></div>
+    <pre>{
+  <span class="s">"timestamp"</span>: <span class="s">"2024-01-15T14:23:11Z"</span>,
+  <span class="s">"active_anomalies"</span>: [
+    {
+      <span class="s">"event_type"</span>: <span class="s">"connection_pool_exhausted"</span>,
+      <span class="s">"severity"</span>: <span class="s">"critical"</span>,
+      <span class="s">"entity"</span>: <span class="s">"db:shopcore-postgres"</span>,
+      <span class="s">"first_seen"</span>: <span class="s">"2024-01-15T14:22:58Z"</span>,
+      <span class="s">"affected_services"</span>: [<span class="s">"svc:product-service"</span>, <span class="s">"svc:order-service"</span>],
+      <span class="s">"payload"</span>: {<span class="s">"pool_size"</span>: <span class="n">20</span>, <span class="s">"waiting_connections"</span>: <span class="n">47</span>, <span class="s">"used_pct"</span>: <span class="n">0.98</span>}
+    }
+  ],
+  <span class="s">"related_events_last_5min"</span>: [
+    {<span class="s">"event_type"</span>: <span class="s">"slow_query_detected"</span>, <span class="s">"count"</span>: <span class="n">12</span>, <span class="s">"avg_duration_s"</span>: <span class="n">8.4</span>},
+    {<span class="s">"event_type"</span>: <span class="s">"api_latency_spike"</span>, <span class="s">"count"</span>: <span class="n">3</span>}
+  ],
+  <span class="s">"blast_radius"</span>: {
+    <span class="s">"directly_affected"</span>: [<span class="s">"svc:product-service"</span>, <span class="s">"svc:order-service"</span>],
+    <span class="s">"customer_facing"</span>: <span class="k">true</span>,
+    <span class="s">"downstream_count"</span>: <span class="n">2</span>
+  },
+  <span class="s">"similar_past_incidents"</span>: [
+    {
+      <span class="s">"date"</span>: <span class="s">"2024-01-09T09:15Z"</span>,
+      <span class="s">"situation"</span>: <span class="s">"connection_pool_exhausted on same entity"</span>,
+      <span class="s">"action_taken"</span>: <span class="s">"terminate_idle_connections"</span>,
+      <span class="s">"outcome"</span>: <span class="s">"success"</span>,
+      <span class="s">"recovery_time_s"</span>: <span class="n">42</span>
+    }
+  ],
+  <span class="s">"available_actions"</span>: [
+    <span class="s">"terminate_idle_connections"</span>, <span class="s">"restart_container"</span>,
+    <span class="s">"kill_slow_queries"</span>, <span class="s">"send_alert"</span>, <span class="s">"request_human_approval"</span>
+  ]
+}</pre>
+  </div>
+
+  <h3>LLM Output — Required DecisionObject</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span>LLM must return this exact structure (Pydantic-validated)</span></div>
+    <pre>{
+  <span class="s">"situation_assessment"</span>: <span class="s">"The PostgreSQL connection pool is 98% full with 47 connections waiting. Slow queries (avg 8.4s) are holding connections open and blocking new ones. Product and order services are degraded. Two customer-facing services are affected."</span>,
+  <span class="s">"root_cause_hypothesis"</span>: {
+    <span class="s">"cause"</span>: <span class="s">"Long-running queries are holding DB connections open, exhausting the pool"</span>,
+    <span class="s">"confidence"</span>: <span class="n">0.92</span>
+  },
+  <span class="s">"recommended_action"</span>: <span class="s">"terminate_idle_connections"</span>,
+  <span class="s">"action_parameters"</span>: {
+    <span class="s">"target_entity"</span>: <span class="s">"db:shopcore-postgres"</span>,
+    <span class="s">"idle_threshold_s"</span>: <span class="n">30</span>
+  },
+  <span class="s">"confidence"</span>: <span class="n">0.91</span>,
+  <span class="s">"requires_human_approval"</span>: <span class="k">false</span>,
+  <span class="s">"alternative_actions"</span>: [<span class="s">"kill_slow_queries"</span>, <span class="s">"restart_container"</span>],
+  <span class="s">"reasoning_trace"</span>: <span class="s">"Similar incident on 2024-01-09 resolved successfully with terminate_idle_connections in 42s. Slow queries are the likely cause — terminating idle connections will free slots and allow the query queue to drain. Killing slow queries is the secondary action if pool doesn't recover within 30s."</span>
+}</pre>
+  </div>
+
+  <div class="callout info">
+    <div class="callout-icon">💡</div>
+    <div class="callout-body">
+      <div class="callout-title">The fast-path rule engine handles known scenarios without the LLM</div>
+      After three successful remediations of any scenario, the procedural memory's confidence for that event_type → action mapping rises above 0.80. The rule engine checks this first: if a known playbook covers the event_type with confidence ≥ 0.80, it generates the plan directly without any LLM call. This reduces median remediation time from ~8 seconds to under 1 second for learned scenarios.
+    </div>
+  </div>
+</section>
+
+<!-- ── 11. REMEDIATION EXECUTION ─────────────────────────────── -->
+<section class="section" id="remediation">
+  <div class="section-label"><span class="num">11</span> Remediation Execution</div>
+  <h2>The Executor in Detail</h2>
+  <p>The executor receives a <strong>Plan</strong> from the planning system — a structured sequence of steps with preconditions, timeouts, and on_failure branches. It executes each step, verifies its outcome against the world model, and advances or rolls back.</p>
+
+  <h3>PlanRunner Implementation</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span>remediation/plan_runner.py</span></div>
+    <pre><span class="k">import</span> asyncio, logging, time
+<span class="k">from</span> datetime <span class="k">import</span> datetime, timezone
+<span class="k">from</span> .action_registry <span class="k">import</span> ActionRegistry
+
+<span class="k">class</span> <span class="t">PlanRunner</span>:
+    <span class="k">def</span> <span class="f">__init__</span>(self, registry: <span class="t">ActionRegistry</span>, world_model, producer):
+        self.registry = registry
+        self.world_model = world_model
+        self.producer = producer
+
+    <span class="k">async def</span> <span class="f">execute</span>(self, plan: dict, trigger_event) -> dict:
+        context = {<span class="s">"plan_id"</span>: plan[<span class="s">"id"</span>], <span class="s">"results"</span>: [], <span class="s">"start_time"</span>: time.monotonic()}
+        <span class="k">for</span> step <span class="k">in</span> plan[<span class="s">"steps"</span>]:
+            <span class="c"># Check preconditions</span>
+            <span class="k">if</span> step.get(<span class="s">"precondition"</span>) <span class="k">and not</span> <span class="k">await</span> self.<span class="f">_check</span>(step[<span class="s">"precondition"</span>]):
+                context[<span class="s">"results"</span>].append({<span class="s">"step"</span>: step[<span class="s">"id"</span>], <span class="s">"skipped"</span>: <span class="k">True</span>, <span class="s">"reason"</span>: <span class="s">"precondition_not_met"</span>})
+                <span class="k">continue</span>
+
+            <span class="c"># Handle approval gates</span>
+            <span class="k">if</span> self.registry.requires_approval(step[<span class="s">"action"</span>]):
+                approved = <span class="k">await</span> self.<span class="f">_request_approval</span>(step, trigger_event)
+                <span class="k">if not</span> approved:
+                    context[<span class="s">"results"</span>].append({<span class="s">"step"</span>: step[<span class="s">"id"</span>], <span class="s">"skipped"</span>: <span class="k">True</span>, <span class="s">"reason"</span>: <span class="s">"approval_denied"</span>})
+                    <span class="k">continue</span>
+
+            <span class="c"># Execute the action</span>
+            handler, params = self.registry.get_handler_for_event(step[<span class="s">"action"</span>]) <span class="k">or</span> (None, {})
+            <span class="k">if not</span> handler:
+                <span class="k">continue</span>
+            t0 = time.monotonic()
+            <span class="k">try</span>:
+                result = <span class="k">await</span> asyncio.wait_for(
+                    handler.execute(step[<span class="s">"action"</span>], {**params, **step.get(<span class="s">"params"</span>, {}), <span class="s">"event"</span>: trigger_event}),
+                    timeout=step.get(<span class="s">"timeout_s"</span>, <span class="n">60</span>)
+                )
+            <span class="k">except</span> asyncio.TimeoutError:
+                result = {<span class="s">"success"</span>: <span class="k">False</span>, <span class="s">"reason"</span>: <span class="s">"timeout"</span>}
+            <span class="k">except</span> Exception <span class="k">as</span> e:
+                result = {<span class="s">"success"</span>: <span class="k">False</span>, <span class="s">"reason"</span>: str(e)}
+
+            elapsed = time.monotonic() - t0
+            context[<span class="s">"results"</span>].append({<span class="s">"step"</span>: step[<span class="s">"id"</span>], <span class="s">"result"</span>: result, <span class="s">"elapsed_s"</span>: round(elapsed, <span class="n">2</span>)})
+
+            <span class="c"># Verify success condition</span>
+            <span class="k">if</span> step.get(<span class="s">"success_condition"</span>) <span class="k">and not await</span> self.<span class="f">_verify</span>(step[<span class="s">"success_condition"</span>]):
+                <span class="k">if</span> step.get(<span class="s">"on_failure"</span>) == <span class="s">"escalate"</span>:
+                    context[<span class="s">"escalated"</span>] = <span class="k">True</span>
+                    <span class="k">break</span>
+                <span class="k">elif</span> step.get(<span class="s">"on_failure"</span>) == <span class="s">"rollback"</span>:
+                    <span class="k">await</span> self.<span class="f">_rollback</span>(plan, context)
+                    <span class="k">break</span>
+
+        context[<span class="s">"total_elapsed_s"</span>] = round(time.monotonic() - context[<span class="s">"start_time"</span>], <span class="n">2</span>)
+        <span class="k">await</span> self.<span class="f">_publish_feedback</span>(plan, trigger_event, context)
+        <span class="k">return</span> context
+
+    <span class="k">async def</span> <span class="f">_verify</span>(self, condition: dict) -> bool:
+        <span class="c"># Query world model for current state, check condition</span>
+        entity_state = <span class="k">await</span> self.world_model.get_entity_state(condition[<span class="s">"entity"</span>])
+        metric = entity_state.get(condition[<span class="s">"metric"</span>])
+        op = condition[<span class="s">"op"</span>]  <span class="c"># lt, gt, eq</span>
+        threshold = condition[<span class="s">"value"</span>]
+        <span class="k">if</span> op == <span class="s">"lt"</span>: <span class="k">return</span> metric <span class="k">is not None and</span> metric < threshold
+        <span class="k">if</span> op == <span class="s">"gt"</span>: <span class="k">return</span> metric <span class="k">is not None and</span> metric > threshold
+        <span class="k">if</span> op == <span class="s">"eq"</span>: <span class="k">return</span> metric == threshold
+        <span class="k">return False</span>
+
+    <span class="k">async def</span> <span class="f">_request_approval</span>(self, step, trigger_event) -> bool:
+        <span class="c"># Post to Slack and wait on approval_events queue (timeout 15 min)</span>
+        <span class="k">import</span> httpx
+        payload = {
+            <span class="s">"text"</span>: f<span class="s">"*DCA Approval Required*\nAction: `{step['action']}`\nTrigger: `{trigger_event.event_type}` on `{trigger_event.source_id}`\nReply `/approve {step['id']}` or `/deny {step['id']}`"</span>
+        }
+        <span class="k">async with</span> httpx.AsyncClient() <span class="k">as</span> c:
+            <span class="k">await</span> c.post(SLACK_WEBHOOK, json=payload)
+        <span class="c"># Block and wait for callback — see /approvals/respond endpoint</span>
+        <span class="k">try</span>:
+            decision = <span class="k">await</span> asyncio.wait_for(
+                self._approval_queue.get(),
+                timeout=<span class="n">900</span>  <span class="c"># 15 minute window</span>
+            )
+            <span class="k">return</span> decision == <span class="s">"approved"</span>
+        <span class="k">except</span> asyncio.TimeoutError:
+            <span class="k">return False</span></pre>
+  </div>
+</section>
+
+<!-- ── 12. FEEDBACK LOOP ───────────────────────────────────────── -->
+<section class="section" id="feedback">
+  <div class="section-label"><span class="num">12</span> Feedback & Learning</div>
+  <h2>Closing the Loop</h2>
+  <p>The feedback loop is what turns the executor into a learning system. After every plan execution, the system records the outcome, updates procedural memory's confidence scores, and reinforces causal relationships in the knowledge graph.</p>
+
+  <h3>The 7-Step Feedback Cycle</h3>
+  <ol class="steps">
+    <li><div><strong>Action completes</strong> — PlanRunner calls <span class="inline-code">_publish_feedback()</span> with full plan context, elapsed time, and per-step results. This posts an <span class="inline-code">action_completed</span> (or <span class="inline-code">action_failed</span>) event to <span class="inline-code">cognitive.events</span>.</div></li>
+    <li><div><strong>Perception picks it up</strong> — The agent_event normalizer processes the feedback event like any other CognitiveEvent. It gets timestamped, entity-referenced, and validated. It flows through the memory router.</div></li>
+    <li><div><strong>Episodic memory records the full context</strong> — TimescaleDB stores: the original trigger event, the situation summary that was generated, the decision that was made, every plan step and its outcome, and the total elapsed time.</div></li>
+    <li><div><strong>World model updates</strong> — The entity that was remediated has its state refreshed. The anomaly is removed from the active anomaly registry. Causal chain edges are updated: the RESOLVES relationship between the action and the anomaly is strengthened.</div></li>
+    <li><div><strong>Procedural memory updates confidence</strong> — The playbook entry for this event_type → action mapping gets its success count incremented. After 3 successes: fast-path eligible. After 10+ with &lt;20% failure rate: fully trusted. Failures increment failure count and reduce confidence.</div></li>
+    <li><div><strong>Knowledge graph learns relationships</strong> — If action A consistently resolves event type B on entity C, a <code>RESOLVES</code> edge is added or strengthened between the action node and the event type node. If two event types consistently co-occur (e.g. slow queries always precede pool exhaustion), a <code>HISTORICALLY_CORRELATED</code> edge is added.</div></li>
+    <li><div><strong>Situation assessor recalibrates</strong> — The next time a similar situation arises, the assessor will rank it differently — higher if previously hard to resolve, lower if it consistently resolves quickly. The LLM's context is continuously improving.</div></li>
+  </ol>
+
+  <h3>Feedback Event Schema</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span>Example action_completed feedback event on cognitive.events</span></div>
+    <pre>{
+  <span class="s">"event_id"</span>: <span class="s">"evt_feedback_x9k2"</span>,
+  <span class="s">"timestamp"</span>: <span class="s">"2024-01-15T14:24:03Z"</span>,
+  <span class="s">"source_type"</span>: <span class="s">"agent_event"</span>,
+  <span class="s">"source_id"</span>: <span class="s">"agent:database-remediation-handler"</span>,
+  <span class="s">"event_type"</span>: <span class="s">"action_completed"</span>,
+  <span class="s">"severity"</span>: <span class="s">"info"</span>,
+  <span class="s">"payload"</span>: {
+    <span class="s">"original_event_id"</span>: <span class="s">"evt_a1b2c3"</span>,
+    <span class="s">"original_event_type"</span>: <span class="s">"connection_pool_exhausted"</span>,
+    <span class="s">"action_taken"</span>: <span class="s">"terminate_idle_connections"</span>,
+    <span class="s">"target_entity"</span>: <span class="s">"db:shopcore-postgres"</span>,
+    <span class="s">"terminated_connections"</span>: <span class="n">18</span>,
+    <span class="s">"elapsed_s"</span>: <span class="n">42.1</span>,
+    <span class="s">"post_action_pool_pct"</span>: <span class="n">0.45</span>,
+    <span class="s">"success"</span>: <span class="k">true</span>
+  },
+  <span class="s">"entity_refs"</span>: [<span class="s">"db:shopcore-postgres"</span>, <span class="s">"agent:database-remediation-handler"</span>],
+  <span class="s">"confidence"</span>: <span class="n">0.99</span>,
+  <span class="s">"tags"</span>: [<span class="s">"remediation"</span>, <span class="s">"database"</span>, <span class="s">"feedback"</span>]
+}</pre>
+  </div>
+</section>
+
+<!-- ── 13. DASHBOARD ──────────────────────────────────────────── -->
+<section class="section" id="dashboard">
+  <div class="section-label"><span class="num">13</span> Dashboard</div>
+  <h2>What the Dashboard Must Show</h2>
+  <p>The dashboard has two purposes: real-time operational status (is ShopCore healthy right now?) and cognitive system observability (what is the DCA thinking and doing?). Both must be on a single screen. Here is the complete layout and the data source for every panel.</p>
+
+  <h3>Dashboard Layout</h3>
+  <div class="flow"><span class="hl">┌──────────────────────────────────────────────────────────────────────────────┐</span>
+<span class="hl">│  HEADER: System Health                                               LIVE ● │</span>
+<span class="hl">│  [● api-gateway OK] [● product-svc OK] [⚠ order-svc DEGRADED] [● user-svc OK]│</span>
+<span class="hl">├─────────────────────────────────┬────────────────────────────────────────────┤</span>
+<span class="hl">│  PANEL A: Active Anomalies      │  PANEL B: World Model State               │</span>
+│  ┌────────────────────────────┐ │  Entity graph (Neo4j viz or SVG)          │
+│  │ 🔴 CRITICAL  1             │ │  Nodes: services, DB, Redis, queues       │
+│  │   db_pool_exhaustion       │ │  Edges colored by relationship strength   │
+│  │   svc:product-service      │ │  Highlighted: affected entities           │
+│  │   detected: 23s ago        │ │  Status: last_seen, health, trend         │
+│  │   [REMEDIATING...]         │ │                                           │
+│  ├────────────────────────────┤ ├───────────────────────────────────────────┤
+│  │ 🟡 HIGH  0                 │ │  PANEL C: Temporal Metrics               │
+│  │ 🟠 MEDIUM  1               │ │  API latency (p50, p95, p99) — sparkline │
+│  │   idle_in_transaction      │ │  DB query duration — sparkline            │
+│  │   db:shopcore-postgres     │ │  Redis hit ratio — sparkline              │
+│  └────────────────────────────┘ │  Kafka consumer lag — bar chart           │
+├─────────────────────────────────┘  Request error rate — sparkline          │
+<span class="hl">├──────────────────────────────────────────────────────────────────────────────┤</span>
+<span class="hl">│  PANEL D: DCA Activity Feed (live tail of cognitive.events)                 │</span>
+│  14:23:11 [DETECT]  connection_pool_exhausted · db:shopcore-postgres         │
+│  14:23:13 [REASON]  Reasoning engine called · confidence 0.92               │
+│  14:23:14 [PLAN]    Plan generated: terminate_idle→verify→restart_if_needed │
+│  14:23:15 [EXEC]    terminate_idle_connections · target db:shopcore-postgres │
+│  14:23:57 [VERIFY]  pool_pct = 0.45 ✓ success condition met                │
+│  14:23:57 [LEARN]   Procedural memory updated: terminate_idle_connections +1│
+<span class="hl">├─────────────────────────────────┬────────────────────────────────────────────┤</span>
+<span class="hl">│  PANEL E: Chaos Lab Status      │  PANEL F: Performance Counters            │</span>
+│  Active scenarios: 0/18        │  Total scenarios tested:  47              │
+│  Last injection: 14:21:03      │  Detection rate:          94.4% (17/18)   │
+│  Next scheduled: 14:27:30      │  Remediation rate:        87.5% (7/8)     │
+│  Phase 13 progress:            │  Avg detection time:      28s             │
+│  [Detection ████████░░ 94%]    │  Avg remediation time:    63s             │
+│  [Remediation ██████░░░░ 75%]  │  LLM calls:       12      Fast-path: 35   │
+└─────────────────────────────────┴────────────────────────────────────────────┘</div>
+</section>
+
+<!-- ── 14. DASHBOARD IMPLEMENTATION ──────────────────────────── -->
+<section class="section" id="dashboard-impl">
+  <div class="section-label"><span class="num">14</span> Dashboard Implementation</div>
+  <h2>How to Build the Dashboard</h2>
+  <p>The dashboard has two implementation tiers: a <strong>Grafana tier</strong> for time-series metrics (Panels C and F) and a <strong>custom FastAPI + WebSocket tier</strong> for the live event feed and DCA-specific panels (A, B, D, E).</p>
+
+  <h3>Tier 1: Grafana (Metrics Panels)</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span>Grafana dashboard panel queries</span></div>
+    <pre><span class="c"># Panel C1: API Gateway Latency (p95)</span>
+histogram_quantile(0.95, rate(shopcore_gateway_latency_seconds_bucket[2m]))
+
+<span class="c"># Panel C2: DB Query Duration (avg of slow queries)</span>
+rate(shopcore_db_query_duration_seconds_sum[2m])
+/ rate(shopcore_db_query_duration_seconds_count[2m])
+
+<span class="c"># Panel C3: Redis Hit Ratio</span>
+rate(redis_keyspace_hits_total[2m])
+/ (rate(redis_keyspace_hits_total[2m]) + rate(redis_keyspace_misses_total[2m]))
+
+<span class="c"># Panel C4: Kafka Consumer Lag</span>
+kafka_consumer_lag_sum{group="order-processor", topic="order-events"}
+
+<span class="c"># Panel F1: Detection Rate</span>
+sum(dca_scenario_detected_total) / sum(dca_scenario_total) * 100
+
+<span class="c"># Panel F2: Average Detection Time</span>
+avg(dca_detection_latency_seconds)</pre>
+  </div>
+
+  <h3>Tier 2: Custom WebSocket Dashboard (Panels A, B, D, E)</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span>dashboard/server.py — FastAPI + WebSocket + Kafka consumer</span></div>
+    <pre><span class="k">from</span> fastapi <span class="k">import</span> FastAPI, WebSocket, WebSocketDisconnect
+<span class="k">from</span> fastapi.responses <span class="k">import</span> HTMLResponse
+<span class="k">from</span> aiokafka <span class="k">import</span> AIOKafkaConsumer
+<span class="k">import</span> asyncio, json
+
+app = FastAPI(title=<span class="s">"DCA × ShopCore Dashboard"</span>)
+connected: list[WebSocket] = []
+
+<span class="c"># ── WebSocket: clients connect here, receive live events ─────────</span>
+@app.websocket(<span class="s">"/ws/events"</span>)
+<span class="k">async def</span> <span class="f">websocket_events</span>(ws: WebSocket):
+    <span class="k">await</span> ws.accept()
+    connected.append(ws)
+    <span class="k">try</span>:
+        <span class="k">while True</span>: <span class="k">await</span> asyncio.sleep(<span class="n">60</span>)   <span class="c"># keep alive</span>
+    <span class="k">except</span> WebSocketDisconnect:
+        connected.remove(ws)
+
+<span class="c"># ── Background: consume cognitive.events, broadcast to all WS clients ─</span>
+<span class="k">async def</span> <span class="f">kafka_to_websocket</span>():
+    consumer = <span class="t">AIOKafkaConsumer</span>(
+        <span class="s">"cognitive.events"</span>,
+        bootstrap_servers=<span class="s">"localhost:9092"</span>,
+        auto_offset_reset=<span class="s">"latest"</span>,
+        group_id=<span class="s">"dashboard-consumer"</span>,
+    )
+    <span class="k">await</span> consumer.start()
+    <span class="k">async for</span> msg <span class="k">in</span> consumer:
+        payload = msg.value.decode()
+        dead = []
+        <span class="k">for</span> ws <span class="k">in</span> connected:
+            <span class="k">try</span>:
+                <span class="k">await</span> ws.send_text(payload)
+            <span class="k">except</span>:
+                dead.append(ws)
+        <span class="k">for</span> ws <span class="k">in</span> dead:
+            connected.remove(ws)
+
+<span class="c"># ── REST: world model snapshot for Panel B ────────────────────────</span>
+@app.get(<span class="s">"/api/world-model"</span>)
+<span class="k">async def</span> <span class="f">world_model_snapshot</span>():
+    <span class="c"># Proxy to your world model API</span>
+    <span class="k">import</span> httpx
+    <span class="k">async with</span> httpx.AsyncClient() <span class="k">as</span> c:
+        r = <span class="k">await</span> c.get(<span class="s">"http://localhost:8010/world-model/snapshot"</span>)
+    <span class="k">return</span> r.json()
+
+<span class="c"># ── REST: chaos lab status for Panel E ───────────────────────────</span>
+@app.get(<span class="s">"/api/chaos-status"</span>)
+<span class="k">async def</span> <span class="f">chaos_status</span>():
+    <span class="k">import</span> httpx
+    <span class="k">async with</span> httpx.AsyncClient() <span class="k">as</span> c:
+        r = <span class="k">await</span> c.get(<span class="s">"http://localhost:9090/status"</span>)
+    <span class="k">return</span> r.json()
+
+@app.<span class="f">on_event</span>(<span class="s">"startup"</span>)
+<span class="k">async def</span> <span class="f">startup</span>():
+    asyncio.create_task(kafka_to_websocket())</pre>
+  </div>
+
+  <h3>Frontend: React Dashboard Component</h3>
+  <p>The React frontend connects to <span class="inline-code">ws://localhost:8020/ws/events</span> and maintains a rolling buffer of the last 200 events. It polls <span class="inline-code">/api/world-model</span> every 5 seconds and <span class="inline-code">/api/chaos-status</span> every 10 seconds.</p>
+  <div class="code-wrap">
+    <div class="code-header"><span>dashboard/src/App.jsx — key hooks</span></div>
+    <pre><span class="k">import</span> { useState, useEffect, useRef } <span class="k">from</span> <span class="s">"react"</span>;
+
+<span class="k">export default function</span> <span class="f">Dashboard</span>() {
+  <span class="k">const</span> [events, setEvents] = useState([]);
+  <span class="k">const</span> [worldModel, setWorldModel] = useState(null);
+  <span class="k">const</span> [chaosStatus, setChaosStatus] = useState(null);
+  <span class="k">const</span> wsRef = useRef(null);
+
+  <span class="c">// Live event feed via WebSocket</span>
+  useEffect(() => {
+    <span class="k">const</span> ws = <span class="k">new</span> WebSocket(<span class="s">"ws://localhost:8020/ws/events"</span>);
+    wsRef.current = ws;
+    ws.onmessage = (msg) => {
+      <span class="k">const</span> ev = JSON.parse(msg.data);
+      setEvents(prev => [ev, ...prev].slice(<span class="n">0</span>, <span class="n">200</span>));   <span class="c">// rolling 200</span>
+    };
+    <span class="k">return</span> () => ws.close();
+  }, []);
+
+  <span class="c">// World model polling (every 5s)</span>
+  useEffect(() => {
+    <span class="k">const</span> poll = <span class="k">async</span> () => {
+      <span class="k">const</span> r = <span class="k">await</span> fetch(<span class="s">"/api/world-model"</span>);
+      setWorldModel(<span class="k">await</span> r.json());
+    };
+    poll();
+    <span class="k">const</span> id = setInterval(poll, <span class="n">5000</span>);
+    <span class="k">return</span> () => clearInterval(id);
+  }, []);
+
+  <span class="c">// Filter events by category for each panel</span>
+  <span class="k">const</span> activeAnomalies = events
+    .filter(e => [<span class="s">"critical"</span>, <span class="s">"high"</span>].includes(e.severity))
+    .filter(e => !e.event_type.includes(<span class="s">"action_completed"</span>))
+    .slice(<span class="n">0</span>, <span class="n">5</span>);
+
+  <span class="k">const</span> activityFeed = events.slice(<span class="n">0</span>, <span class="n">50</span>);
+
+  <span class="k">return</span> (
+    &lt;div className=<span class="s">"dashboard"</span>&gt;
+      &lt;ServiceHealthBar worldModel={worldModel} /&gt;
+      &lt;div className=<span class="s">"panels"</span>&gt;
+        &lt;AnomalyPanel anomalies={activeAnomalies} /&gt;
+        &lt;WorldModelGraph worldModel={worldModel} /&gt;
+        &lt;MetricsPanel /&gt;  {/* Grafana iframe or recharts */}
+        &lt;ActivityFeed events={activityFeed} /&gt;
+        &lt;ChaosLabPanel chaos={chaosStatus} /&gt;
+        &lt;PerformanceCounters events={events} /&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}</pre>
+  </div>
+
+  <h3>Panel D: Activity Feed Event Classification</h3>
+  <p>The activity feed labels each event by its role in the DCA loop so operators can see the full detect → reason → plan → execute → verify → learn cycle unfold in sequence.</p>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th>Label</th><th>Filter</th><th>Color</th></tr></thead>
+    <tbody>
+      <tr><td><code>[DETECT]</code></td><td><code>source_type ∈ {log, metric, api, database, redis, queue, filesystem}</code> AND <code>severity ∈ {critical, high}</code></td><td class="sev-critical">Red</td></tr>
+      <tr><td><code>[WARN]</code></td><td><code>source_type ∈ {log, metric, api, database}</code> AND <code>severity = medium</code></td><td class="sev-medium">Yellow</td></tr>
+      <tr><td><code>[REASON]</code></td><td><code>event_type = reasoning_called OR event_type = fast_path_matched</code></td><td style="color:var(--signal2)">Blue</td></tr>
+      <tr><td><code>[PLAN]</code></td><td><code>event_type = plan_generated</code></td><td style="color:var(--purple)">Purple</td></tr>
+      <tr><td><code>[EXEC]</code></td><td><code>source_type = agent_event AND event_type ≠ action_completed</code></td><td class="sev-high">Orange</td></tr>
+      <tr><td><code>[VERIFY]</code></td><td><code>event_type = action_completed OR event_type = action_failed</code></td><td class="sev-low">Green or Red</td></tr>
+      <tr><td><code>[LEARN]</code></td><td><code>event_type = playbook_updated OR event_type = graph_edge_reinforced</code></td><td style="color:var(--signal)">Teal</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout ok">
+    <div class="callout-icon">✅</div>
+    <div class="callout-body">
+      <div class="callout-title">Phase 13 Pass Criteria</div>
+      <strong>Detection Score ≥ 90%:</strong> 16 of 18 scenarios emit the expected CognitiveEvent within their SLO. <strong>Remediation Score ≥ 75%:</strong> 6 of 8 critical/high scenarios self-heal within their remediation SLO. <strong>Zero silent drops:</strong> No events on <code>cognitive.perception_failures</code> that aren't retried or escalated. When both pass: you are ready for Phase 14 — Production Hardening (rate limiting, audit logging, multi-tenancy isolation).
+    </div>
+  </div>
+
+  <h3>Docker Compose — Running the Entire Stack</h3>
+  <div class="code-wrap">
+    <div class="code-header"><span>One command to start everything</span></div>
+    <pre><span class="c"># Start ShopCore target system</span>
+docker-compose -f target_system/docker-compose.yml up -d
+
+<span class="c"># Start DCA (perception through execution)</span>
+docker-compose -f dca/docker-compose.yml up -d
+
+<span class="c"># Start Chaos Engine API</span>
+uvicorn chaos_engine.api:app --port 9090 --reload
+
+<span class="c"># Start dashboard server</span>
+uvicorn dashboard.server:app --port 8020 --reload
+
+<span class="c"># Open dashboard</span>
+open http://localhost:8020
+
+<span class="c"># Open Grafana (metrics panels)</span>
+open http://localhost:3001
+
+<span class="c"># Watch the full event stream raw</span>
+kcat -b localhost:9092 -t cognitive.events -C -f '%s\n' | jq .
+
+<span class="c"># Run Phase 13 automated test suite</span>
+pytest tests/ -v --timeout=300
+
+<span class="c"># Run randomized chaos gauntlet (60 minutes, random scenarios)</span>
+python chaos_engine/scheduler.py --mode random --duration-minutes 60</pre>
+  </div>
+</section>
+
+</main>
+</div>
+</body>
+</html>

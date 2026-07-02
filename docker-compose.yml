@@ -1,0 +1,112 @@
+version: "3.8"
+
+services:
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.2.8
+    container_name: cognitive-redpanda
+    command:
+      - redpanda start
+      - --overprovisioned
+      - --smp 1
+      - --memory 512M
+      - --reserve-memory 0M
+      - --node-id 0
+      - --check=false
+      - --kafka-addr internal://0.0.0.0:29092,external://0.0.0.0:9092
+      - --advertise-kafka-addr internal://cognitive-redpanda:29092,external://localhost:9092
+    ports:
+      - "9092:9092"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+
+  redpanda-console:
+    image: docker.redpanda.com/redpandadata/console:v2.3.1
+    container_name: cognitive-redpanda-console
+    ports:
+      - "8888:8080"
+    environment:
+      KAFKA_BROKERS: redpanda:29092
+    depends_on:
+      - redpanda
+
+  redis:
+    image: redis/redis-stack:latest
+    container_name: cognitive-redis
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    volumes:
+      - redis_data:/data
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: cognitive-mqtt
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./infrastructure/mosquitto.conf:/mosquitto/config/mosquitto.conf
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: cognitive-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./infrastructure/alert.rules.yml:/etc/prometheus/alert.rules.yml
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: cognitive-alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./infrastructure/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+
+  # ── NEW: Episodic Memory (TimescaleDB) ──
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: cognitive-timescaledb
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cognitive
+    volumes:
+      - ts_data:/var/lib/postgresql/data
+      - ./infrastructure/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # ── NEW: Semantic Memory (Neo4j Graph Database) ──
+  neo4j:
+    image: neo4j:5-community
+    container_name: cognitive-neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: neo4j/password123
+      NEO4J_PLUGINS: '["apoc"]'
+    volumes:
+      - neo4j_data:/data
+
+  # ── NEW: Vector Search Memory (Qdrant Database) ──
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: cognitive-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+volumes:
+  redis_data: {}
+  redpanda_data: {}
+  ts_data: {}
+  neo4j_data: {}
+  qdrant_data: {}
+
+networks:
+  default:
+    name: target_system_shopcore
+    external: true

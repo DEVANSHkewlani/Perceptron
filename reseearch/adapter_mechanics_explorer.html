@@ -1,0 +1,411 @@
+
+<h2 class="sr-only">Adapter mechanics explorer — how each signal source is detected, tracked, and delivered to the perception layer</h2>
+<style>
+.tab-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tab-btn{padding:6px 14px;font-size:13px;border:0.5px solid var(--color-border-secondary);border-radius:20px;background:transparent;cursor:pointer;color:var(--color-text-secondary);transition:all .15s}
+.tab-btn.active{background:var(--color-background-secondary);color:var(--color-text-primary);border-color:var(--color-border-primary)}
+.src-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.src-card{padding:12px 14px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);cursor:pointer;transition:border-color .15s,background .15s}
+.src-card:hover{background:var(--color-background-secondary);border-color:var(--color-border-secondary)}
+.src-card.selected{border-color:var(--color-border-primary);background:var(--color-background-secondary)}
+.src-name{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:3px}
+.src-tag{font-size:11px;padding:2px 8px;border-radius:20px;display:inline-block;font-weight:500}
+.detail-card{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:18px;background:var(--color-background-primary)}
+.detail-card h3{font-size:15px;font-weight:500;color:var(--color-text-primary);margin:0 0 12px}
+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.field{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px}
+.field-label{font-size:11px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+.field-val{font-size:13px;color:var(--color-text-primary);line-height:1.6}
+.code-block{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px;font-family:var(--font-mono);font-size:12px;color:var(--color-text-secondary);line-height:1.6;margin-top:12px;white-space:pre-wrap;word-break:break-word}
+.ask-btn{width:100%;margin-top:12px;padding:9px 14px;font-size:13px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;cursor:pointer;color:var(--color-text-primary);text-align:left;transition:background .12s}
+.ask-btn:hover{background:var(--color-background-secondary)}
+.conf-bar{height:6px;border-radius:3px;background:var(--color-border-tertiary);margin-top:6px;overflow:hidden}
+.conf-fill{height:100%;border-radius:3px}
+.section-title{font-size:14px;font-weight:500;color:var(--color-text-primary);margin:18px 0 10px}
+.reg-card{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:14px;margin-bottom:10px}
+.reg-card h4{font-size:13px;font-weight:500;color:var(--color-text-primary);margin:0 0 8px}
+.reg-card p{font-size:13px;color:var(--color-text-secondary);margin:0 0 8px;line-height:1.6}
+</style>
+
+<div class="tab-row">
+  <button class="tab-btn active" onclick="showTab('adapters',this)">Adapter mechanics</button>
+  <button class="tab-btn" onclick="showTab('registration',this)">Source registration</button>
+</div>
+
+<div id="tab-adapters">
+  <div class="src-grid" id="src-grid"></div>
+  <div class="detail-card" id="detail-pane"><p style="font-size:13px;color:var(--color-text-tertiary)">Select a source above to see how its adapter works.</p></div>
+</div>
+
+<div id="tab-registration" style="display:none">
+  <p class="section-title">Method 1 — Config file (YAML manifest)</p>
+  <div class="reg-card">
+    <h4>What it is</h4>
+    <p>You write a single YAML file that declares every source the perception layer should monitor. On startup, the perception layer reads this file and instantiates one adapter process per source entry.</p>
+    <div class="code-block">sources:
+  - id: svc:auth-service
+    type: log
+    path: /var/log/auth-service/*.log
+    format: json
+    poll_interval_ms: 500
+
+  - id: svc:api-gateway
+    type: metric
+    prometheus_url: http://prometheus:9090
+    targets: ["api-gateway"]
+    threshold_rules:
+      - metric: http_error_rate
+        gt: 0.05
+        severity: high
+
+  - id: db:postgres-primary
+    type: database
+    dsn: postgresql://user:pass@pg:5432/prod
+    exporters: [pg_stat_activity, pg_stat_replication]
+
+  - id: queue:orders
+    type: queue
+    broker: kafka://kafka:9092
+    topic: orders
+    thresholds:
+      consumer_lag_gt: 1000</div>
+    <button class="ask-btn" onclick="sendPrompt('Show me a complete YAML config file for a website monitoring setup with all 9 source types populated')">Show me a full YAML config for website monitoring ↗</button>
+  </div>
+
+  <p class="section-title">Method 2 — Service discovery (Kubernetes / Consul)</p>
+  <div class="reg-card">
+    <h4>What it is</h4>
+    <p>The perception layer queries a service registry at startup and on a regular re-scan interval (e.g. every 60 seconds). Every service it finds gets auto-registered as a source with sensible defaults.</p>
+    <p>For Kubernetes: it calls the K8s API server (<code>GET /api/v1/namespaces/production/services</code>) and receives a list of all running services with their labels, ports, and health endpoints. It auto-creates an <code>api</code> source for every service that exposes port 80 or 443, and a <code>metric</code> source for every service that has the label <code>prometheus.io/scrape: "true"</code>.</p>
+    <div class="code-block">from kubernetes import client, config as k8s_config
+
+def discover_k8s_sources():
+    k8s_config.load_incluster_config()
+    v1 = client.CoreV1Api()
+    services = v1.list_namespaced_service(namespace="production")
+    sources = []
+    for svc in services.items:
+        labels = svc.metadata.labels or {}
+        if labels.get("cognitive.monitor") == "true":
+            sources.append({
+                "id": f"svc:{svc.metadata.name}",
+                "type": "api",
+                "health_url": f"http://{svc.metadata.name}/health",
+                "poll_interval_ms": 5000
+            })
+        if labels.get("prometheus.io/scrape") == "true":
+            sources.append({
+                "id": f"svc:{svc.metadata.name}",
+                "type": "metric",
+                "prometheus_job": svc.metadata.name
+            })
+    return sources</div>
+    <button class="ask-btn" onclick="sendPrompt('How does Consul service discovery work for the perception layer — what does the Consul API return and how do we register those sources?')">How does Consul-based discovery work? ↗</button>
+  </div>
+
+  <p class="section-title">Method 3 — Auto-detection (active scanning)</p>
+  <div class="reg-card">
+    <h4>What it is</h4>
+    <p>The perception layer actively probes the environment to find sources that were not explicitly declared. Runs at startup and on a periodic schedule (every 5 minutes). Each probe type targets a different signal class.</p>
+    <div class="code-block">class AutoDetector:
+
+  def scan_prometheus_targets(self):
+      # Queries Prometheus /api/v1/targets — returns every scrape target
+      r = requests.get("http://prometheus:9090/api/v1/targets")
+      for t in r.json()["data"]["activeTargets"]:
+          self.register_if_new({
+              "id": f"svc:{t['labels']['job']}",
+              "type": "metric",
+              "prometheus_job": t["labels"]["job"]
+          })
+
+  def scan_log_directories(self, watch_paths=["/var/log/services"]):
+      # Uses inotify (Linux) to watch directories for new .log files
+      import inotify.adapters
+      inotify_obj = inotify.adapters.InotifyTree(watch_paths[0])
+      for event in inotify_obj.event_gen(yield_nones=False):
+          _, types, path, filename = event
+          if "IN_CREATE" in types and filename.endswith(".log"):
+              self.register_if_new({
+                  "id": f"log:{filename.replace('.log','')}",
+                  "type": "log",
+                  "path": f"{path}/{filename}"
+              })
+
+  def scan_database_ports(self, host_range="10.0.0.0/24"):
+      # Tries connecting to known DB ports (5432, 3306, 27017, 6379)
+      for port, db_type in [(5432,"postgres"),(3306,"mysql"),(27017,"mongo")]:
+          if self.port_open(host_range, port):
+              self.register_if_new({
+                  "id": f"db:{db_type}-{port}",
+                  "type": "database",
+                  "db_type": db_type
+              })</div>
+    <button class="ask-btn" onclick="sendPrompt('What other auto-detection methods exist — how do we detect MQTT brokers, message queues, external API endpoints automatically?')">What other auto-detection methods exist? ↗</button>
+  </div>
+</div>
+
+<script>
+const SOURCES = [
+  {
+    id:"log", name:"Application logs", group:"Infrastructure",
+    tagBg:"#E1F5EE", tagColor:"#085041",
+    mechanism:"Push (streaming)",
+    tools:"Filebeat or Fluent Bit (log agent)",
+    howRuns:"Log agent runs as a sidecar or system service on every host. It tails log files in real-time using the OS inotify API — the kernel notifies it the instant any new bytes are written to a file. No polling. Sub-second latency.",
+    watchedData:"Error messages, warnings, exception stack traces, request/response logs, deployment events",
+    confidence:0.75,
+    confNote:"0.75 — event_type must be inferred by regex matching unstructured text",
+    deliveryPath:"Fluent Bit reads file → parses lines → forwards to Kafka topic 'raw.logs' → normalizer subscribes → extracts event_type + entity_refs → publishes to 'cognitive.events'",
+    snippet:`# fluent-bit.conf
+[INPUT]
+    Name tail
+    Path /var/log/services/*.log
+    Tag  raw.logs
+    DB   /var/log/fb.db  # tracks read position
+
+[OUTPUT]
+    Name  kafka
+    Match raw.logs
+    Brokers kafka:9092
+    Topics  raw.logs`
+  },
+  {
+    id:"metric", name:"System metrics", group:"Infrastructure",
+    tagBg:"#E1F5EE", tagColor:"#085041",
+    mechanism:"Pull (scraping) + push (threshold events)",
+    tools:"Prometheus scraper + custom alerting bridge",
+    howRuns:"Prometheus scrapes every target every 15s (configurable). A custom bridge subscribes to Prometheus Alertmanager webhooks — when a threshold rule fires, Alertmanager sends an HTTP POST to the bridge, which normalises it into a schema event. Near-instant for threshold crossings; 15s lag for raw metric discovery.",
+    watchedData:"CPU %, memory %, disk I/O bytes/s, network throughput, process count, request rate, error rate",
+    confidence:0.98,
+    confNote:"0.98 — Prometheus threshold crossings are deterministic, no interpretation needed",
+    deliveryPath:"Prometheus scrapes /metrics endpoint → evaluates rules → fires Alertmanager webhook → bridge receives POST → normalises to schema → publishes to 'cognitive.events'",
+    snippet:`# prometheus.yml alerting rule
+- alert: HighErrorRate
+  expr: rate(http_errors_total[5m]) > 0.05
+  for: 1m
+  labels:
+    severity: high
+  annotations:
+    source_id: "{{ $labels.service }}"
+# Bridge converts this webhook to schema event`
+  },
+  {
+    id:"api", name:"APIs and services", group:"Infrastructure",
+    tagBg:"#E1F5EE", tagColor:"#085041",
+    mechanism:"Pull (polling) with change detection",
+    tools:"FastAPI background tasks / Celery beat",
+    howRuns:"A polling adapter runs as a background task. Every N seconds (configurable per source) it sends an HTTP GET to the service's /health endpoint. It compares the response to the previous response — if nothing changed, it emits nothing. Only state changes emit events. This prevents the event bus from being flooded with 'everything is fine' noise.",
+    watchedData:"HTTP status codes, response time (ms), health check payload, SSL certificate expiry, redirect chains",
+    confidence:0.97,
+    confNote:"0.97 — direct HTTP observation, status code is unambiguous",
+    deliveryPath:"Celery beat task fires every N seconds → HTTP GET /health → compare to cached state → if changed: normalise to schema → publish to 'cognitive.events'",
+    snippet:`# Celery polling task
+@app.task
+def poll_service_health(source_id, url, interval_s):
+    resp = requests.get(url, timeout=5)
+    state = {"status": resp.status_code,
+             "latency_ms": resp.elapsed.ms}
+    prev = redis.get(f"state:{source_id}")
+    if state != prev:
+        publish_event(source_id, state)
+        redis.set(f"state:{source_id}", state)`
+  },
+  {
+    id:"database", name:"Database state", group:"Infrastructure",
+    tagBg:"#E1F5EE", tagColor:"#085041",
+    mechanism:"Pull (exporter scraping)",
+    tools:"postgres_exporter / mysqld_exporter → Prometheus",
+    howRuns:"A database-specific exporter runs alongside each database. It connects to the DB's internal stats tables (e.g. pg_stat_activity, pg_stat_replication for Postgres) and exposes those metrics as a Prometheus /metrics endpoint. Prometheus scrapes it every 15s. The alerting bridge converts threshold crossings to schema events exactly as with system metrics.",
+    watchedData:"Active connections, connection pool usage, query latency p99, replication lag (seconds), table sizes, slow queries, lock wait time",
+    confidence:0.98,
+    confNote:"0.98 — direct database system table reads",
+    deliveryPath:"postgres_exporter reads pg_stat_* tables → exposes /metrics → Prometheus scrapes → rule fires → bridge normalises → 'cognitive.events'",
+    snippet:`# postgres_exporter runs as sidecar
+docker run -e DATA_SOURCE_NAME="postgresql://user:pass@localhost/prod?sslmode=disable" \
+  quay.io/prometheuscommunity/postgres-exporter
+# Exposes: pg_stat_activity_count,
+# pg_replication_lag, pg_slow_queries_total`
+  },
+  {
+    id:"queue", name:"Message queues", group:"Infrastructure",
+    tagBg:"#E1F5EE", tagColor:"#085041",
+    mechanism:"Pull (admin API polling)",
+    tools:"Kafka consumer group API / RabbitMQ management API",
+    howRuns:"A queue monitor process calls the broker's admin API on a schedule (every 10s). For Kafka it calls the consumer group API to get consumer_lag per partition. For RabbitMQ it calls the management REST API. When a metric exceeds a threshold (e.g. lag > 1000 messages), it emits an event. Also watches for dead-letter queue growth as a silent failure indicator.",
+    watchedData:"Consumer lag (messages behind), queue depth, message age (oldest unprocessed message), dead-letter queue size, throughput rate",
+    confidence:0.96,
+    confNote:"0.96 — admin API returns exact broker state",
+    deliveryPath:"Queue monitor polls admin API → compares to thresholds → if exceeded: normalise to schema → publish to 'cognitive.events'",
+    snippet:`# Kafka consumer lag check
+from confluent_kafka.admin import AdminClient
+admin = AdminClient({"bootstrap.servers": "kafka:9092"})
+
+def check_consumer_lag(group_id):
+    offsets = admin.list_consumer_group_offsets(group_id)
+    for tp, offset in offsets.items():
+        lag = latest_offset(tp) - offset.offset
+        if lag > 1000:
+            emit_event("consumer_lag_high", lag)`
+  },
+  {
+    id:"file", name:"File system", group:"Application",
+    tagBg:"#EEEDFE", tagColor:"#3C3489",
+    mechanism:"Push (kernel events via inotify / fsevents)",
+    tools:"inotify (Linux) / fsevents (macOS) / watchdog (Python)",
+    howRuns:"The kernel notifies the adapter instantly when any file operation occurs in a watched directory. This is not polling — the OS pushes change events the moment they happen. The Python watchdog library wraps inotify/fsevents into a cross-platform API. Typical latency is under 10ms from file write to event emission.",
+    watchedData:"File created, modified, deleted, permission changed, file renamed, directory created. Watches config directories, deployment artifacts, log directories, data upload folders.",
+    confidence:0.95,
+    confNote:"0.95 — kernel event is exact; event_type classification is straightforward",
+    deliveryPath:"OS kernel detects file operation → inotify pushes event to watchdog → adapter maps to schema event_type → publishes to 'cognitive.events'",
+    snippet:`# Python watchdog
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
+class Adapter(FileSystemEventHandler):
+    def on_created(self, event):
+        emit_schema_event(
+            event_type="file_created",
+            source_id=f"fs:{event.src_path}",
+            confidence=0.95
+        )
+
+observer = Observer()
+observer.schedule(Adapter(), "/var/config", recursive=True)
+observer.start()`
+  },
+  {
+    id:"user_event", name:"User events", group:"Application",
+    tagBg:"#EEEDFE", tagColor:"#3C3489",
+    mechanism:"Push (frontend SDK → HTTP POST)",
+    tools:"Custom JS SDK → FastAPI perception endpoint",
+    howRuns:"A lightweight JavaScript SDK runs in the browser. It listens to DOM events (clicks, form submissions, page navigation, session start/end) and batches them. Every few seconds (or on certain triggers), it sends a POST request to the perception API endpoint. The FastAPI endpoint normalises the payload and publishes to Kafka. No polling at all — pure push.",
+    watchedData:"Button clicks (with element ID and page context), form submissions (field names, not values), page navigations, session starts/ends, error dialogs shown, feature usage events",
+    confidence:0.88,
+    confNote:"0.88 — intent must be inferred from DOM context, some ambiguity",
+    deliveryPath:"Browser JS SDK captures DOM event → batches → POST to FastAPI /perception/events → normaliser extracts intent → publishes to 'cognitive.events'",
+    snippet:`// browser SDK (lightweight, ~2kb)
+window.cognitiveSDK = {
+  track(event_type, context={}) {
+    this._queue.push({
+      event_type,
+      source_id: "usr:" + this.session_id,
+      timestamp: new Date().toISOString(),
+      payload: context
+    });
+    if (this._queue.length >= 10) this.flush();
+  },
+  flush() {
+    fetch("/perception/events", {
+      method:"POST", body: JSON.stringify(this._queue)
+    });
+    this._queue = [];
+  }
+}`
+  },
+  {
+    id:"sensor", name:"Sensor data", group:"External",
+    tagBg:"#FAECE7", tagColor:"#712B13",
+    mechanism:"Push (MQTT broker / hardware SDK)",
+    tools:"MQTT broker (Mosquitto / AWS IoT) + Paho Python client",
+    howRuns:"Physical sensors publish readings to an MQTT broker on a configurable interval (e.g. temperature every 30s, GPS every 5s). An MQTT subscriber runs as a permanent process. It subscribes to sensor topics on the broker and receives messages in real time. The adapter normalises each message into a schema event. For cameras: a frame processor samples frames at defined intervals and runs inference to extract structured events.",
+    watchedData:"Temperature (°C), humidity (%), GPS coordinates, accelerometer (x/y/z g-force), pressure (hPa), camera frames → object detection results, door/window open/close",
+    confidence:0.82,
+    confNote:"0.82 — sensor readings can have hardware noise; calibration drift affects accuracy",
+    deliveryPath:"Sensor publishes to MQTT topic → Paho subscriber receives message → normaliser converts reading to schema event → publishes to 'cognitive.events'",
+    snippet:`import paho.mqtt.client as mqtt
+
+def on_message(client, userdata, msg):
+    payload = json.loads(msg.payload)
+    emit_schema_event(
+        source_type="sensor",
+        source_id=f"sensor:{msg.topic.replace('/','.')}",
+        event_type="sensor_reading",
+        payload=payload,
+        confidence=0.82
+    )
+
+client = mqtt.Client()
+client.on_message = on_message
+client.connect("mqtt-broker", 1883)
+client.subscribe("sensors/#")  # all sensor topics
+client.loop_forever()`
+  },
+  {
+    id:"agent_event", name:"Agent events", group:"Application",
+    tagBg:"#EEEDFE", tagColor:"#3C3489",
+    mechanism:"Push (direct Kafka publish from agent SDK)",
+    tools:"Agent SDK (confluent-kafka-python)",
+    howRuns:"Each cognitive sub-agent includes a small SDK that publishes directly to the event bus. The agent doesn't call an HTTP endpoint — it writes to Kafka directly. This means agent events arrive at the same latency and durability level as any other event. No intermediary. Agents publish on action taken, task completed, decision made, error encountered.",
+    watchedData:"Action taken (type, parameters, target entity), task started/completed/failed, reasoning trace summary, plan step executed, human approval requested",
+    confidence:1.0,
+    confNote:"1.0 — agent events are structured by definition, no interpretation needed",
+    deliveryPath:"Agent SDK calls publish_event() → confluent-kafka writes directly to 'cognitive.events' topic → memory router + world model receive like any other event",
+    snippet:`# Built into every agent via SDK
+from cognitive.sdk import AgentEventPublisher
+
+pub = AgentEventPublisher(agent_id="monitor-agent-01")
+
+pub.emit(
+    event_type="service_restarted",
+    entity_refs=["svc:auth-service"],
+    payload={"reason": "high_error_rate",
+             "action": "kubectl rollout restart"},
+    confidence=1.0
+)`
+  },
+];
+
+let selected = null;
+
+function renderGrid(){
+  const g = document.getElementById('src-grid');
+  g.innerHTML = SOURCES.map(s => `
+    <div class="src-card ${selected===s.id?'selected':''}" onclick="select('${s.id}')">
+      <div class="src-name">${s.name}</div>
+      <span class="src-tag" style="background:${s.tagBg};color:${s.tagColor}">${s.group}</span>
+    </div>`).join('');
+}
+
+function select(id){
+  selected = id;
+  renderGrid();
+  const s = SOURCES.find(x=>x.id===id);
+  const pct = Math.round(s.confidence*100);
+  const fillColor = pct>=95?'#1D9E75':pct>=80?'#BA7517':'#993C1D';
+  document.getElementById('detail-pane').innerHTML = `
+    <h3>${s.name} adapter</h3>
+    <div class="row">
+      <div class="field"><div class="field-label">Mechanism</div><div class="field-val">${s.mechanism}</div></div>
+      <div class="field"><div class="field-label">Tool</div><div class="field-val">${s.tools}</div></div>
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <div class="field-label">How it runs continuously</div>
+      <div class="field-val">${s.howRuns}</div>
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <div class="field-label">What it watches</div>
+      <div class="field-val">${s.watchedData}</div>
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <div class="field-label">Delivery path to perception layer</div>
+      <div class="field-val">${s.deliveryPath}</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Confidence score — ${s.confNote}</div>
+      <div class="conf-bar"><div class="conf-fill" style="width:${pct}%;background:${fillColor}"></div></div>
+    </div>
+    <div class="code-block">${s.snippet}</div>
+    <button class="ask-btn" onclick="sendPrompt('Explain the ${s.name} adapter in full detail — implementation, edge cases, and what normalizer logic extracts event_type and entity_refs from it')">Go deeper on the ${s.name} adapter ↗</button>
+  `;
+}
+
+function showTab(name, btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-adapters').style.display = name==='adapters'?'block':'none';
+  document.getElementById('tab-registration').style.display = name==='registration'?'block':'none';
+}
+
+renderGrid();
+</script>

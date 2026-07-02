@@ -1,0 +1,120 @@
+# ═══════════════════════════════════════════════════════════
+# ACTION VOCABULARY — Cognitive Architecture Phase 7
+# Every key here is a valid action the LLM may recommend.
+# Parameters schema is validated before passing to planning.
+# ═══════════════════════════════════════════════════════════
+actions:
+
+  # ── DATABASE ──────────────────────────────────────────────
+  restart_connection_pool:
+    description: "Restart the database connection pool for a specific service."
+    risk: medium
+    reversible: true
+    requires_approval: false
+    parameters:
+      service_id: {type: string, required: true}
+      pool_size:  {type: integer, required: false}
+
+  kill_slow_query:
+    description: "Terminate a specific long-running database query by pid."
+    risk: medium
+    reversible: false
+    requires_approval: false
+    parameters:
+      db_id: {type: string, required: true}
+      pid:   {type: integer, required: true}
+
+  scale_read_replicas:
+    description: "Increase read replica count to reduce primary load."
+    risk: low
+    reversible: true
+    requires_approval: false
+    parameters:
+      db_id:         {type: string, required: true}
+      replica_count: {type: integer, required: true, min: 1, max: 10}
+
+  # ── SERVICE ───────────────────────────────────────────────
+  restart_service:
+    description: "Perform a graceful rolling restart of a service."
+    risk: high
+    reversible: true
+    requires_approval: true
+    parameters:
+      service_id:  {type: string, required: true}
+      strategy:   {type: string, enum: [rolling, blue_green, canary]}
+
+  scale_service_horizontal:
+    description: "Add replicas to a service to handle increased load."
+    risk: low
+    reversible: true
+    requires_approval: false
+    parameters:
+      service_id:    {type: string, required: true}
+      replica_delta: {type: integer, required: true, min: 1, max: 10}
+
+  enable_circuit_breaker:
+    description: "Open circuit breaker on a service to stop cascading failures."
+    risk: medium
+    reversible: true
+    requires_approval: false
+    parameters:
+      service_id:   {type: string, required: true}
+      timeout_s:    {type: integer, required: false}
+
+  # ── QUEUE ─────────────────────────────────────────────────
+  scale_consumer_group:
+    description: "Add consumer instances to a Kafka consumer group to reduce lag."
+    risk: low
+    reversible: true
+    requires_approval: false
+    parameters:
+      queue_id:        {type: string, required: true}
+      consumer_group: {type: string, required: true}
+      instance_delta: {type: integer, required: true}
+
+  purge_dead_letter_queue:
+    description: "Purge the DLQ after root cause is confirmed. Irreversible."
+    risk: high
+    reversible: false
+    requires_approval: true
+    parameters:
+      queue_id: {type: string, required: true}
+
+  # ── NOTIFICATION ──────────────────────────────────────────
+  send_alert:
+    description: "Send a structured alert to the on-call team via PagerDuty/Slack."
+    risk: low
+    reversible: true
+    requires_approval: false
+    parameters:
+      severity:  {type: string, enum: [critical, high, medium]}
+      message:   {type: string, required: true}
+      channel:   {type: string, required: false}
+
+  escalate_to_human:
+    description: "Pause and request human operator decision. Use when confidence is low."
+    risk: low
+    reversible: true
+    requires_approval: false
+    parameters:
+      reason:         {type: string, required: true}
+      urgency:        {type: string, enum: [immediate, within_hour, within_day]}
+      suggested_by:   {type: string, required: false}
+
+  # ── OBSERVABILITY ─────────────────────────────────────────
+  increase_log_verbosity:
+    description: "Temporarily raise log level to DEBUG for a service."
+    risk: low
+    reversible: true
+    requires_approval: false
+    parameters:
+      service_id:  {type: string, required: true}
+      duration_m: {type: integer, required: false, default: 15}
+
+  monitor_and_wait:
+    description: "No immediate action. Monitor the situation for N minutes then re-assess."
+    risk: low
+    reversible: true
+    requires_approval: false
+    parameters:
+      duration_m: {type: integer, required: true}

@@ -1,0 +1,2147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 8 & 9 — Planning System & Execution Layer | DCA</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg:      #070810;
+    --s1:      #0c0e1a;
+    --s2:      #111428;
+    --s3:      #171a30;
+    --border:  #1c2038;
+    --border2: #242844;
+    /* Phase 8 — emerald */
+    --p8:      #10b981;
+    --p8l:     #34d399;
+    --p8bg:    rgba(16,185,129,0.07);
+    --p8bdr:   rgba(16,185,129,0.22);
+    /* Phase 9 — amber */
+    --p9:      #f59e0b;
+    --p9l:     #fbbf24;
+    --p9bg:    rgba(245,158,11,0.07);
+    --p9bdr:   rgba(245,158,11,0.22);
+    /* Shared */
+    --red:     #f87171;
+    --blue:    #60a5fa;
+    --purple:  #a78bfa;
+    --text:    #dde6f5;
+    --text2:   #7a8bae;
+    --text3:   #343d5c;
+    --mono:    'JetBrains Mono', monospace;
+    --sans:    'Space Grotesk', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14.5px;
+    line-height: 1.75;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(16,185,129,0.05) 0%, transparent 45%),
+      radial-gradient(ellipse at 80% 90%, rgba(245,158,11,0.04) 0%, transparent 45%);
+    pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 36px 36px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── NAV ── */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(7,8,16,0.9);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--border);
+    height: 52px;
+    display: flex; align-items: center;
+    padding: 0 40px;
+    justify-content: space-between;
+  }
+  .nav-brand {
+    font-family: var(--mono);
+    font-size: 11px; color: var(--text3); letter-spacing: 0.07em;
+  }
+  .nav-brand .p8 { color: var(--p8); font-weight: 600; }
+  .nav-brand .p9 { color: var(--p9); font-weight: 600; }
+  .nav-links { display: flex; gap: 3px; list-style: none; }
+  .nav-links a {
+    font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--text3); text-decoration: none;
+    padding: 5px 10px; border-radius: 4px;
+    transition: all 0.15s;
+  }
+  .nav-links a:hover { background: var(--s3); color: var(--p8); }
+  .nav-links a.p9:hover { color: var(--p9); }
+
+  /* ── LAYOUT ── */
+  .wrap {
+    position: relative; z-index: 1;
+    max-width: 940px; margin: 0 auto;
+    padding: 0 36px 120px;
+  }
+
+  /* ── DUAL HERO ── */
+  .dual-hero {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 2px; background: var(--border);
+    border: 1px solid var(--border); border-radius: 14px;
+    overflow: hidden; margin: 64px 0 72px;
+  }
+  @media(max-width:680px){ .dual-hero { grid-template-columns: 1fr; } }
+
+  .phase-hero {
+    padding: 44px 36px;
+    display: flex; flex-direction: column;
+  }
+  .phase-hero.p8 { background: var(--s1); border-right: 1px solid var(--border); }
+  .phase-hero.p9 { background: var(--s1); }
+
+  .ph-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 9.5px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .ph-chip .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    animation: blink 2s ease-in-out infinite;
+  }
+  .p8 .ph-chip { color: var(--p8); }
+  .p8 .dot { background: var(--p8); }
+  .p9 .ph-chip { color: var(--p9); }
+  .p9 .dot { background: var(--p9); }
+  @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+  .ph-title {
+    font-size: clamp(22px, 3vw, 30px);
+    font-weight: 700; line-height: 1.15;
+    letter-spacing: -0.02em; color: #fff;
+    margin-bottom: 14px;
+  }
+  .p8 .ph-title span { color: var(--p8); }
+  .p9 .ph-title span { color: var(--p9); }
+
+  .ph-desc {
+    font-size: 13px; font-weight: 300;
+    color: var(--text2); line-height: 1.75;
+    margin-bottom: 24px; flex: 1;
+  }
+
+  .ph-stats {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1px; background: var(--border);
+    border-radius: 8px; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .ph-stat {
+    background: var(--s2); padding: 12px 14px;
+  }
+  .ph-stat-val {
+    font-family: var(--mono); font-size: 18px;
+    font-weight: 600; display: block;
+    line-height: 1; margin-bottom: 4px;
+  }
+  .p8 .ph-stat-val { color: var(--p8); }
+  .p9 .ph-stat-val { color: var(--p9); }
+  .ph-stat-lbl {
+    font-family: var(--mono); font-size: 9px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3);
+  }
+
+  /* ── PHASE DIVIDER ── */
+  .phase-divider {
+    display: flex; align-items: center; gap: 16px;
+    margin: 80px 0 48px;
+  }
+  .phase-divider-line { flex: 1; height: 1px; background: var(--border); }
+  .phase-divider-badge {
+    font-family: var(--mono); font-size: 11px;
+    font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 7px 18px;
+    border-radius: 6px; white-space: nowrap;
+  }
+  .phase-divider-badge.p8 {
+    color: var(--bg); background: var(--p8);
+  }
+  .phase-divider-badge.p9 {
+    color: var(--bg); background: var(--p9);
+  }
+
+  /* ── SECTION ── */
+  .section { margin-bottom: 72px; }
+
+  .sec-head {
+    display: flex; align-items: flex-start; gap: 16px;
+    margin-bottom: 32px; padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .step-pill {
+    font-family: var(--mono); font-size: 9.5px;
+    font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; padding: 5px 11px;
+    border-radius: 5px; white-space: nowrap; margin-top: 5px;
+    flex-shrink: 0;
+  }
+  .step-pill.p8 { color: var(--bg); background: var(--p8); }
+  .step-pill.p9 { color: var(--bg); background: var(--p9); }
+
+  .sec-text h2 {
+    font-size: 24px; font-weight: 700;
+    color: #fff; letter-spacing: -0.015em; margin-bottom: 5px;
+  }
+  .sec-text p { font-size: 13.5px; color: var(--text2); max-width: 580px; margin: 0; }
+
+  h3 {
+    font-size: 15px; font-weight: 600; color: var(--text);
+    margin: 28px 0 11px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  h3::before {
+    content: ''; display: block;
+    width: 3px; height: 15px; border-radius: 2px; flex-shrink: 0;
+  }
+  .p8-section h3::before { background: var(--p8); }
+  .p9-section h3::before { background: var(--p9); }
+
+  h4 {
+    font-family: var(--mono); font-size: 10.5px;
+    font-weight: 500; letter-spacing: 0.1em;
+    text-transform: uppercase; margin: 22px 0 10px;
+  }
+  .p8-section h4 { color: var(--p8); }
+  .p9-section h4 { color: var(--p9); }
+
+  p { color: var(--text2); margin-bottom: 14px; line-height: 1.8; }
+  p strong { color: var(--text); }
+
+  /* ── NOTES ── */
+  .note {
+    display: flex; gap: 13px;
+    padding: 14px 18px; border-radius: 8px;
+    margin: 16px 0 22px; font-size: 13.5px; line-height: 1.7;
+  }
+  .note-icon { font-size: 16px; flex-shrink: 0; padding-top: 2px; }
+  .note-body { color: var(--text2); }
+  .note-body strong { color: var(--text); }
+  .note-p8    { background: var(--p8bg); border: 1px solid var(--p8bdr); }
+  .note-p9    { background: var(--p9bg); border: 1px solid var(--p9bdr); }
+  .note-info  { background: rgba(96,165,250,0.05); border: 1px solid rgba(96,165,250,0.2); }
+  .note-danger{ background: rgba(248,113,113,0.05); border: 1px solid rgba(248,113,113,0.2); }
+  .note-ok    { background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.2); }
+
+  /* ── CODE ── */
+  .cb {
+    margin: 11px 0 22px; border-radius: 10px;
+    overflow: hidden; border: 1px solid var(--border2);
+  }
+  .cb-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 16px; background: var(--s2);
+    border-bottom: 1px solid var(--border);
+  }
+  .cb-file {
+    font-family: var(--mono); font-size: 11px;
+    font-weight: 500; color: var(--text2);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .cb-file::before {
+    content: ''; width: 6px; height: 6px;
+    border-radius: 50%; opacity: 0.7;
+  }
+  .p8-section .cb-file::before { background: var(--p8); }
+  .p9-section .cb-file::before { background: var(--p9); }
+  .cb-lang {
+    font-family: var(--mono); font-size: 9px;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3);
+  }
+  pre {
+    margin: 0; padding: 19px 20px;
+    background: #050710; overflow-x: auto;
+    font-family: var(--mono); font-size: 12.5px;
+    line-height: 1.65; color: #c8d5f0;
+  }
+  .kw { color: #f87171; }
+  .fn { color: #c4b5fd; }
+  .st { color: #86efac; }
+  .nu { color: #93c5fd; }
+  .cm { color: #313d60; font-style: italic; }
+  .dc { color: #313d60; font-style: italic; }
+  .at { color: #fb923c; }
+  .cl { color: var(--p8); }
+  .cl2{ color: var(--p9); }
+
+  /* ── TABLE ── */
+  table {
+    width: 100%; border-collapse: collapse;
+    margin: 11px 0 22px; font-size: 13px;
+  }
+  thead th {
+    font-family: var(--mono); font-size: 9.5px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text3); padding: 9px 13px;
+    border-bottom: 1px solid var(--border2); text-align: left;
+    background: var(--s1);
+  }
+  tbody td {
+    padding: 11px 13px; border-bottom: 1px solid var(--border);
+    vertical-align: top; color: var(--text2); line-height: 1.6;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(255,255,255,0.015); }
+  td:first-child { font-family: var(--mono); font-size: 11.5px; white-space: nowrap; }
+  .p8-section td:first-child { color: var(--p8); }
+  .p9-section td:first-child { color: var(--p9); }
+
+  code {
+    font-family: var(--mono); font-size: 0.85em;
+    padding: 2px 6px; border-radius: 4px;
+  }
+  .p8-section code { color: var(--p8l); background: rgba(16,185,129,0.09); }
+  .p9-section code { color: var(--p9l); background: rgba(245,158,11,0.09); }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow {
+    background: var(--s2); border: 1px solid var(--border2);
+    border-radius: 11px; padding: 26px 30px;
+    margin: 12px 0 22px; font-family: var(--mono);
+    font-size: 12px; line-height: 1.95; overflow-x: auto;
+  }
+  .flow .h1 { color: var(--p8); font-weight: 600; }
+  .flow .h2 { color: var(--p9); font-weight: 600; }
+  .flow .cy { color: var(--blue); }
+  .flow .pu { color: var(--purple); }
+  .flow .dm { color: var(--text3); }
+  .flow .re { color: var(--red); }
+
+  /* ── FILE TREE ── */
+  .ftree {
+    background: var(--s2); border: 1px solid var(--border2);
+    border-radius: 10px; padding: 18px 22px;
+    margin: 11px 0 22px; font-family: var(--mono);
+    font-size: 12px; line-height: 2.1;
+  }
+  .ftree .dir  { color: var(--blue); }
+  .ftree .file { color: var(--text2); }
+  .ftree .n8   { color: var(--p8); font-weight: 600; }
+  .ftree .n9   { color: var(--p9); font-weight: 600; }
+  .ftree .dm   { color: var(--text3); }
+
+  /* ── BADGE ── */
+  .badge {
+    display: inline-block; font-family: var(--mono);
+    font-size: 9.5px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 4px;
+  }
+  .b8 { background: rgba(16,185,129,0.12); color: var(--p8); border: 1px solid rgba(16,185,129,0.28); }
+  .b9 { background: rgba(245,158,11,0.12); color: var(--p9); border: 1px solid rgba(245,158,11,0.28); }
+  .br { background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid rgba(248,113,113,0.25); }
+  .bp { background: rgba(167,139,250,0.1); color: var(--purple); border: 1px solid rgba(167,139,250,0.25); }
+  .bb { background: rgba(96,165,250,0.1); color: var(--blue); border: 1px solid rgba(96,165,250,0.25); }
+
+  /* ── STEP CARD GRID ── */
+  .step-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; margin: 12px 0 22px;
+  }
+  @media(max-width:600px){ .step-grid { grid-template-columns: 1fr; } }
+  .step-card {
+    background: var(--s2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px;
+  }
+  .step-card-num {
+    font-family: var(--mono); font-size: 11px;
+    font-weight: 600; margin-bottom: 6px;
+  }
+  .p8-section .step-card-num { color: var(--p8); }
+  .p9-section .step-card-num { color: var(--p9); }
+  .step-card-title {
+    font-size: 13px; font-weight: 600; color: var(--text);
+    margin-bottom: 5px;
+  }
+  .step-card-body { font-size: 12.5px; color: var(--text2); line-height: 1.6; }
+
+  /* ── TEST OUTPUT ── */
+  .testout {
+    background: #040610; border: 1px solid var(--border2);
+    border-radius: 10px; padding: 18px 20px;
+    font-family: var(--mono); font-size: 12px;
+    line-height: 1.8; margin: 11px 0 22px;
+  }
+  .testout .pass { color: var(--p8); }
+  .testout .warn { color: var(--p9); }
+  .testout .fail { color: var(--red); }
+  .testout .info { color: var(--blue); }
+  .testout .dim  { color: var(--text3); }
+  .testout .sep  { color: var(--border2); }
+
+  /* ── CHECKLIST ── */
+  .checklist {
+    background: var(--s1); border: 1px solid var(--border2);
+    border-radius: 12px; padding: 26px;
+  }
+  .citem {
+    display: grid; grid-template-columns: 20px 1fr auto;
+    gap: 12px; align-items: start;
+    padding: 12px 14px; background: var(--s2);
+    border: 1px solid transparent; border-radius: 8px;
+    margin-bottom: 7px; transition: border-color 0.2s;
+  }
+  .citem:last-child { margin-bottom: 0; }
+  .citem:hover { border-color: var(--border); }
+  .citem-ico { font-size: 13px; padding-top: 2px; }
+  .citem-body { display: flex; flex-direction: column; gap: 3px; }
+  .citem-title { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--text); }
+  .citem-note { font-size: 12px; color: var(--text2); line-height: 1.55; }
+  .citem-note code { font-size: 10.5px; }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">DCA / <span class="p8">Phase 8</span> + <span class="p9">Phase 9</span></div>
+  <ul class="nav-links">
+    <li><a href="#p8-concept">P8 Concept</a></li>
+    <li><a href="#p8-impl">P8 Build</a></li>
+    <li><a href="#p8-test">P8 Tests</a></li>
+    <li><a href="#p9-concept" class="p9">P9 Concept</a></li>
+    <li><a href="#p9-impl" class="p9">P9 Build</a></li>
+    <li><a href="#p9-test" class="p9">P9 Tests</a></li>
+    <li><a href="#gate">Gate</a></li>
+  </ul>
+</nav>
+
+<div class="wrap">
+
+<!-- ════ DUAL HERO ════ -->
+<div class="dual-hero">
+  <div class="phase-hero p8">
+    <div class="ph-chip"><span class="dot"></span>Chapter 9 · Phase 8</div>
+    <h1 class="ph-title">Build the<br><span>Planning System</span></h1>
+    <p class="ph-desc">
+      Converts a reasoning decision into a concrete, executable strategy with
+      dependencies, approval gates, rollback procedures, and success criteria.
+      The bridge between "what should be done" and "what is actually done."
+    </p>
+    <div class="ph-stats">
+      <div class="ph-stat"><span class="ph-stat-val">6</span><span class="ph-stat-lbl">New Modules</span></div>
+      <div class="ph-stat"><span class="ph-stat-val">20</span><span class="ph-stat-lbl">New Tests</span></div>
+      <div class="ph-stat"><span class="ph-stat-val">3</span><span class="ph-stat-lbl">Plan Strategies</span></div>
+      <div class="ph-stat"><span class="ph-stat-val">8094</span><span class="ph-stat-lbl">API Port</span></div>
+    </div>
+  </div>
+  <div class="phase-hero p9">
+    <div class="ph-chip"><span class="dot"></span>Chapter 10 · Phase 9</div>
+    <h1 class="ph-title">Build the<br><span>Execution Layer</span></h1>
+    <p class="ph-desc">
+      Where plans become reality. The system's hands — makes actual API calls,
+      restarts services, scales consumers, notifies humans. Every action is
+      observable, traceable, and where possible, reversible.
+    </p>
+    <div class="ph-stats">
+      <div class="ph-stat"><span class="ph-stat-val">7</span><span class="ph-stat-lbl">New Modules</span></div>
+      <div class="ph-stat"><span class="ph-stat-val">22</span><span class="ph-stat-lbl">New Tests</span></div>
+      <div class="ph-stat"><span class="ph-stat-val">7</span><span class="ph-stat-lbl">Action Types</span></div>
+      <div class="ph-stat"><span class="ph-stat-val">8095</span><span class="ph-stat-lbl">API Port</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PHASE 8 — PLANNING SYSTEM
+══════════════════════════════════════════════ -->
+<div class="phase-divider">
+  <div class="phase-divider-line"></div>
+  <div class="phase-divider-badge p8">Phase 8 — Planning System</div>
+  <div class="phase-divider-line"></div>
+</div>
+
+<!-- P8 CONCEPT -->
+<section id="p8-concept" class="section p8-section">
+  <div class="sec-head">
+    <div class="step-pill p8">CONCEPT</div>
+    <div class="sec-text">
+      <h2>Why Planning Is a Separate Layer</h2>
+      <p>The reasoning engine returns a high-level decision. The execution layer needs concrete, step-by-step instructions. The planning layer bridges that gap with full lifecycle management.</p>
+    </div>
+  </div>
+
+  <p>The reasoning engine produces: <em>"scale the read replicas."</em> The execution layer needs:
+  <em>"call this Kubernetes API endpoint, with these parameters, wait for this health check
+  to pass, verify the replica count crosses N within 120 seconds, and if not, execute
+  this rollback procedure."</em> The planning layer generates that full specification.</p>
+
+  <div class="note note-p8">
+    <div class="note-icon">🏗️</div>
+    <div class="note-body">
+      <strong>The plan is not just a list of steps.</strong> It is a structured object
+      with dependencies (which steps must complete before others begin), success criteria
+      (observable conditions that confirm the goal was achieved), approval gates (steps
+      that pause for human confirmation), and a rollback plan (compensating actions
+      for every irreversible step). Without these, you have a script, not a plan.
+    </div>
+  </div>
+
+  <h3>The Complete Plan Structure</h3>
+  <table>
+    <thead><tr><th>Component</th><th>Description</th><th>Used By</th></tr></thead>
+    <tbody>
+      <tr><td>plan_id</td><td>UUID. Links plan to the DecisionObject that created it and to all execution events.</td><td>Episodic memory, feedback loop</td></tr>
+      <tr><td>goal</td><td>Measurable high-level objective. "Reduce consumer lag below 1000 within 5 minutes." The feedback loop checks this.</td><td>Feedback loop success check</td></tr>
+      <tr><td>preconditions</td><td>Conditions that must be true before execution begins. If not met, plan waits or aborts.</td><td>Execution Layer before step 0</td></tr>
+      <tr><td>steps</td><td>Ordered list of PlanStep objects — each with action, parameters, expected outcome, timeout, and on_failure behavior.</td><td>Execution Layer — step runner</td></tr>
+      <tr><td>dependencies</td><td>DAG of step relationships. Steps with no dependencies execute in parallel. Enables concurrent actions.</td><td>Step scheduler</td></tr>
+      <tr><td>success_criteria</td><td>Observable conditions (world model queries) that indicate the goal is achieved. Checked after every step.</td><td>PlanMonitor after each step</td></tr>
+      <tr><td>rollback_plan</td><td>Sequence of compensating actions if the plan fails midway. Stored per irreversible step.</td><td>Execution Layer on_failure</td></tr>
+      <tr><td>approval_gates</td><td>Step indices that require human confirmation before proceeding. Plan pauses and emits human_handoff event.</td><td>Human approval webhook</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Three Planning Strategies</h3>
+  <table>
+    <thead><tr><th>Strategy</th><th>When Used</th><th>How It Works</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>template_based</td>
+        <td>Recommended action matches a known playbook in procedural memory</td>
+        <td>Retrieves the most similar past plan, parameterises it for the current situation. Fastest path — milliseconds.</td>
+      </tr>
+      <tr>
+        <td>rule_based</td>
+        <td>Action name directly maps to a hard-coded plan template</td>
+        <td>Static action-to-plan registry. Each entry in <code>actions.yaml</code> has a corresponding plan template. No LLM needed.</td>
+      </tr>
+      <tr>
+        <td>llm_generated</td>
+        <td>Novel situations with no matching template</td>
+        <td>Passes DecisionObject to LLM with plan schema and action vocabulary. Validates output against PlanSchema. Reserved for complex multi-step plans.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- P8 FILE STRUCTURE -->
+<section class="section p8-section">
+  <div class="sec-head">
+    <div class="step-pill p8">STEP 1</div>
+    <div class="sec-text">
+      <h2>Architecture &amp; File Structure</h2>
+      <p>Six modules inside <code>planning/</code>. Build in order — each depends on the previous.</p>
+    </div>
+  </div>
+
+  <div class="ftree">
+<span class="dm">cognitive_architecture/</span>
+├── <span class="dir">perception/</span>   <span class="dm">✓ Phase 1</span>
+├── <span class="dir">memory/</span>       <span class="dm">✓ Phases 3–4</span>
+├── <span class="dir">temporal/</span>     <span class="dm">✓ Phase 5</span>
+├── <span class="dir">world_model/</span>  <span class="dm">✓ Phase 6</span>
+├── <span class="dir">reasoning/</span>    <span class="dm">✓ Phase 7</span>
+├── <span class="n8">planning/</span>     <span class="dm">◆ Phase 8 — BUILD THIS</span>
+│   ├── <span class="n8">__init__.py</span>
+│   ├── <span class="n8">schema.py</span>          <span class="dm">Plan, PlanStep, PlanStatus Pydantic models</span>
+│   ├── <span class="n8">template_store.py</span>  <span class="dm">PlanTemplateStore — loads plan_templates.yaml</span>
+│   ├── <span class="n8">generator.py</span>       <span class="dm">PlanGenerator — 3-strategy plan factory</span>
+│   ├── <span class="n8">monitor.py</span>        <span class="dm">PlanMonitor — checks success_criteria, triggers rollback</span>
+│   ├── <span class="n8">store.py</span>           <span class="dm">PlanStore — Redis-backed plan state persistence</span>
+│   └── <span class="n8">api.py</span>             <span class="dm">FastAPI — port 8094</span>
+├── <span class="n8">plan_templates.yaml</span>    <span class="dm">Static plan templates per action type</span>
+├── <span class="dir">tests/</span>
+│   ├── <span class="n8">test_plan_schema.py</span>
+│   ├── <span class="n8">test_plan_generator.py</span>
+│   ├── <span class="n8">test_plan_monitor.py</span>
+│   └── <span class="n8">test_plan_store.py</span>
+  </div>
+
+  <h4>plan_templates.yaml</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">plan_templates.yaml</span><span class="cb-lang">YAML</span></div>
+<pre><span class="cm"># Plan templates — one per action type in actions.yaml.
+# Each template becomes a concrete Plan when parameterised.</span>
+<span class="at">templates</span>:
+
+  <span class="at">scale_consumer_group</span>:
+    <span class="at">goal</span>: <span class="st">"Reduce consumer lag on {queue_id} below 1000 within 5 minutes"</span>
+    <span class="at">preconditions</span>:
+      - <span class="st">"entity:{queue_id} health != unknown"</span>
+      - <span class="st">"anomaly:consumer_lag_critical exists"</span>
+    <span class="at">steps</span>:
+      - <span class="at">id</span>: s1
+        <span class="at">action</span>: scale_consumer_group
+        <span class="at">description</span>: <span class="st">"Add {instance_delta} consumer instances to {consumer_group}"</span>
+        <span class="at">timeout_s</span>: <span class="nu">60</span>
+        <span class="at">expected_outcome</span>: <span class="st">"consumer_lag decreasing"</span>
+        <span class="at">on_failure</span>: rollback
+      - <span class="at">id</span>: s2
+        <span class="at">action</span>: send_alert
+        <span class="at">description</span>: <span class="st">"Notify team of auto-scaling action"</span>
+        <span class="at">depends_on</span>: [s1]
+        <span class="at">timeout_s</span>: <span class="nu">15</span>
+        <span class="at">on_failure</span>: continue
+    <span class="at">success_criteria</span>:
+      - type: world_model_query
+        check: <span class="st">"anomaly:consumer_lag_critical resolved"</span>
+        timeout_s: <span class="nu">300</span>
+    <span class="at">rollback</span>:
+      - <span class="at">action</span>: scale_consumer_group
+        <span class="at">description</span>: <span class="st">"Remove added consumers"</span>
+        <span class="at">parameters</span>: {instance_delta: <span class="st">"-{instance_delta}"</span>}
+    <span class="at">approval_gates</span>: []
+
+  <span class="at">restart_connection_pool</span>:
+    <span class="at">goal</span>: <span class="st">"Restore connection pool health for {service_id}"</span>
+    <span class="at">preconditions</span>:
+      - <span class="st">"entity:{service_id} exists"</span>
+    <span class="at">steps</span>:
+      - <span class="at">id</span>: s1
+        <span class="at">action</span>: increase_log_verbosity
+        <span class="at">description</span>: <span class="st">"Enable debug logging before restart"</span>
+        <span class="at">timeout_s</span>: <span class="nu">10</span>
+        <span class="at">on_failure</span>: continue
+      - <span class="at">id</span>: s2
+        <span class="at">action</span>: restart_connection_pool
+        <span class="at">description</span>: <span class="st">"Restart connection pool for {service_id}"</span>
+        <span class="at">depends_on</span>: [s1]
+        <span class="at">timeout_s</span>: <span class="nu">30</span>
+        <span class="at">on_failure</span>: rollback
+    <span class="at">success_criteria</span>:
+      - type: world_model_query
+        check: <span class="st">"anomaly:connection_pool_exhausted resolved"</span>
+        timeout_s: <span class="nu">120</span>
+    <span class="at">rollback</span>:
+      - <span class="at">action</span>: send_alert
+        <span class="at">description</span>: <span class="st">"Alert: pool restart failed, manual intervention required"</span>
+        <span class="at">parameters</span>: {severity: critical, message: <span class="st">"Connection pool restart failed on {service_id}"</span>}
+    <span class="at">approval_gates</span>: []
+
+  <span class="at">restart_service</span>:
+    <span class="at">goal</span>: <span class="st">"Restore healthy status for {service_id}"</span>
+    <span class="at">preconditions</span>:
+      - <span class="st">"entity:{service_id} exists"</span>
+      - <span class="st">"human_approval:granted"</span>
+    <span class="at">steps</span>:
+      - <span class="at">id</span>: s0
+        <span class="at">action</span>: human_handoff
+        <span class="at">description</span>: <span class="st">"Confirm service restart for {service_id}"</span>
+        <span class="at">timeout_s</span>: <span class="nu">300</span>
+        <span class="at">on_failure</span>: abort
+        <span class="at">is_approval_gate</span>: <span class="kw">true</span>
+      - <span class="at">id</span>: s1
+        <span class="at">action</span>: restart_service
+        <span class="at">description</span>: <span class="st">"Rolling restart of {service_id}"</span>
+        <span class="at">depends_on</span>: [s0]
+        <span class="at">timeout_s</span>: <span class="nu">120</span>
+        <span class="at">on_failure</span>: rollback
+    <span class="at">success_criteria</span>:
+      - type: world_model_query
+        check: <span class="st">"entity:{service_id} health == healthy"</span>
+        timeout_s: <span class="nu">180</span>
+    <span class="at">approval_gates</span>: [s0]
+
+  <span class="at">escalate_to_human</span>:
+    <span class="at">goal</span>: <span class="st">"Deliver situation brief to human operator"</span>
+    <span class="at">preconditions</span>: []
+    <span class="at">steps</span>:
+      - <span class="at">id</span>: s1
+        <span class="at">action</span>: human_handoff
+        <span class="at">description</span>: <span class="st">"Present situation to operator and await decision"</span>
+        <span class="at">timeout_s</span>: <span class="nu">1800</span>
+        <span class="at">on_failure</span>: continue
+    <span class="at">success_criteria</span>:
+      - type: event_received
+        check: <span class="st">"action_approved OR action_rejected"</span>
+        timeout_s: <span class="nu">1800</span>
+    <span class="at">approval_gates</span>: [s1]</pre>
+  </div>
+</section>
+
+<!-- P8 IMPLEMENTATION -->
+<section id="p8-impl" class="section p8-section">
+  <div class="sec-head">
+    <div class="step-pill p8">STEP 2</div>
+    <div class="sec-text">
+      <h2>Implementation</h2>
+      <p>schema → template_store → generator → monitor → store → api. Build in this order.</p>
+    </div>
+  </div>
+
+  <h3>schema.py</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">planning/schema.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+Plan schema — the complete plan object passed to the Execution Layer.
+PlanStep: one concrete action with timeout, dependency, and failure behaviour.
+Plan: the full executable strategy produced by PlanGenerator.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> uuid
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">from</span> enum <span class="kw">import</span> Enum
+<span class="kw">from</span> typing <span class="kw">import</span> Any, Literal
+<span class="kw">from</span> pydantic <span class="kw">import</span> BaseModel, Field
+
+
+<span class="kw">class</span> <span class="cl">StepStatus</span>(str, Enum):
+    PENDING   = <span class="st">"pending"</span>
+    RUNNING   = <span class="st">"running"</span>
+    SUCCEEDED = <span class="st">"succeeded"</span>
+    FAILED    = <span class="st">"failed"</span>
+    SKIPPED   = <span class="st">"skipped"</span>
+    WAITING   = <span class="st">"waiting_approval"</span>
+
+
+<span class="kw">class</span> <span class="cl">PlanStatus</span>(str, Enum):
+    CREATED   = <span class="st">"created"</span>
+    RUNNING   = <span class="st">"running"</span>
+    SUCCEEDED = <span class="st">"succeeded"</span>
+    FAILED    = <span class="st">"failed"</span>
+    ROLLED_BACK = <span class="st">"rolled_back"</span>
+    AWAITING_APPROVAL = <span class="st">"awaiting_approval"</span>
+    ABORTED   = <span class="st">"aborted"</span>
+
+
+<span class="kw">class</span> <span class="cl">SuccessCriterion</span>(BaseModel):
+    type:      Literal[<span class="st">"world_model_query"</span>, <span class="st">"event_received"</span>, <span class="st">"metric_threshold"</span>]
+    check:     str
+    timeout_s: int = <span class="nu">300</span>
+
+
+<span class="kw">class</span> <span class="cl">RollbackStep</span>(BaseModel):
+    action:      str
+    description: str
+    parameters:  dict[str, Any] = Field(default_factory=dict)
+
+
+<span class="kw">class</span> <span class="cl">PlanStep</span>(BaseModel):
+    step_id:          str
+    action:           str
+    description:      str
+    parameters:       dict[str, Any]       = Field(default_factory=dict)
+    depends_on:       list[str]            = Field(default_factory=list)
+    timeout_s:        int                  = 60
+    on_failure:       Literal[<span class="st">"rollback"</span>, <span class="st">"continue"</span>, <span class="st">"abort"</span>] = <span class="st">"rollback"</span>
+    is_approval_gate: bool                 = False
+    status:           StepStatus           = StepStatus.PENDING
+    started_at:       datetime | <span class="kw">None</span>     = <span class="kw">None</span>
+    completed_at:     datetime | <span class="kw">None</span>     = <span class="kw">None</span>
+    result:           dict[str, Any]       = Field(default_factory=dict)
+    error:            str | <span class="kw">None</span>          = <span class="kw">None</span>
+
+
+<span class="kw">class</span> <span class="cl">Plan</span>(BaseModel):
+    plan_id:          str = Field(
+        default_factory=<span class="kw">lambda</span>: <span class="st">f"plan_{uuid.uuid4().hex[:10]}"</span>
+    )
+    decision_id:      str    <span class="cm"># links to DecisionObject that generated this plan</span>
+    goal:             str
+    preconditions:    list[str]          = Field(default_factory=list)
+    steps:            list[PlanStep]     = Field(default_factory=list)
+    success_criteria: list[SuccessCriterion] = Field(default_factory=list)
+    rollback_plan:    list[RollbackStep] = Field(default_factory=list)
+    approval_gates:   list[str]         = Field(default_factory=list)
+    status:           PlanStatus        = PlanStatus.CREATED
+    strategy:         str               = <span class="st">"rule_based"</span>
+    created_at:       datetime          = Field(
+        default_factory=<span class="kw">lambda</span>: datetime.now(timezone.utc)
+    )
+    completed_at:     datetime | <span class="kw">None</span>  = <span class="kw">None</span>
+
+    <span class="kw">def</span> <span class="fn">ready_steps</span>(self) -> list[PlanStep]:
+        <span class="dc">"""Return steps whose dependencies are all SUCCEEDED and are PENDING."""</span>
+        succeeded = {s.step_id <span class="kw">for</span> s <span class="kw">in</span> self.steps <span class="kw">if</span> s.status == StepStatus.SUCCEEDED}
+        <span class="kw">return</span> [
+            s <span class="kw">for</span> s <span class="kw">in</span> self.steps
+            <span class="kw">if</span> s.status == StepStatus.PENDING
+            <span class="kw">and</span> <span class="fn">all</span>(dep <span class="kw">in</span> succeeded <span class="kw">for</span> dep <span class="kw">in</span> s.depends_on)
+        ]
+
+    <span class="kw">def</span> <span class="fn">is_complete</span>(self) -> bool:
+        <span class="kw">return all</span>(
+            s.status <span class="kw">in</span> (StepStatus.SUCCEEDED, StepStatus.SKIPPED)
+            <span class="kw">for</span> s <span class="kw">in</span> self.steps
+        )</pre>
+  </div>
+
+  <h3>generator.py — Three-Strategy Plan Factory</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">planning/generator.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+PlanGenerator — converts a DecisionObject into a Plan.
+Strategy priority: template_based → rule_based → llm_generated.
+All three strategies produce the same Plan schema.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> json
+<span class="kw">import</span> uuid
+<span class="kw">from</span> typing <span class="kw">import</span> Any
+<span class="kw">from</span> .schema <span class="kw">import</span> Plan, PlanStep, SuccessCriterion, RollbackStep
+<span class="kw">from</span> .template_store <span class="kw">import</span> PlanTemplateStore
+
+
+<span class="kw">class</span> <span class="cl">PlanGenerator</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(
+        self,
+        template_store: PlanTemplateStore,
+        llm_client=<span class="kw">None</span>,   <span class="cm"># optional — same LLMClient from Phase 7</span>
+    ):
+        self.templates  = template_store
+        self.llm_client = llm_client
+
+    <span class="kw">async def</span> <span class="fn">generate</span>(self, decision: dict) -> Plan:
+        <span class="dc">"""
+        Generate a Plan from a DecisionObject dict.
+        Tries strategies in priority order:
+          1. template_based — fastest, most reliable
+          2. rule_based     — static mapping
+          3. llm_generated  — reserved for novel situations
+        """</span>
+        action = decision.get(<span class="st">"recommended_action"</span>, <span class="st">""</span>)
+        params = decision.get(<span class="st">"action_parameters"</span>, {})
+        dec_id = decision.get(<span class="st">"decision_id"</span>, str(uuid.uuid4()))
+
+        <span class="cm"># Strategy 1: template-based</span>
+        template = self.templates.get(action)
+        <span class="kw">if</span> template:
+            <span class="kw">return</span> self._from_template(template, action, params, dec_id, <span class="st">"template_based"</span>)
+
+        <span class="cm"># Strategy 2: rule-based fallback (single-step plan)</span>
+        <span class="kw">return</span> self._single_step_plan(action, params, dec_id, decision)
+
+    <span class="kw">def</span> <span class="fn">_from_template</span>(
+        self, tmpl: dict, action: str, params: dict,
+        dec_id: str, strategy: str
+    ) -> Plan:
+        <span class="dc">"""Render a plan_template.yaml entry with current parameters."""</span>
+
+        <span class="kw">def</span> <span class="fn">render</span>(s: str) -> str:
+            <span class="kw">for</span> k, v <span class="kw">in</span> params.items():
+                s = s.replace(<span class="st">f"{{{k}}}"</span>, <span class="fn">str</span>(v))
+            <span class="kw">return</span> s
+
+        steps = []
+        <span class="kw">for</span> raw_step <span class="kw">in</span> tmpl.get(<span class="st">"steps"</span>, []):
+            step_params = {**params, **raw_step.get(<span class="st">"parameters"</span>, {})}
+            steps.append(PlanStep(
+                step_id         = raw_step[<span class="st">"id"</span>],
+                action          = raw_step.get(<span class="st">"action"</span>, action),
+                description     = render(raw_step.get(<span class="st">"description"</span>, <span class="st">""</span>)),
+                parameters      = step_params,
+                depends_on      = raw_step.get(<span class="st">"depends_on"</span>, []),
+                timeout_s       = raw_step.get(<span class="st">"timeout_s"</span>, <span class="nu">60</span>),
+                on_failure      = raw_step.get(<span class="st">"on_failure"</span>, <span class="st">"rollback"</span>),
+                is_approval_gate= raw_step.get(<span class="st">"is_approval_gate"</span>, <span class="kw">False</span>),
+            ))
+
+        criteria = [
+            SuccessCriterion(
+                type=c[<span class="st">"type"</span>], check=render(c[<span class="st">"check"</span>]),
+                timeout_s=c.get(<span class="st">"timeout_s"</span>, <span class="nu">300</span>),
+            )
+            <span class="kw">for</span> c <span class="kw">in</span> tmpl.get(<span class="st">"success_criteria"</span>, [])
+        ]
+        rollback = [
+            RollbackStep(
+                action=r[<span class="st">"action"</span>],
+                description=render(r.get(<span class="st">"description"</span>, <span class="st">""</span>)),
+                parameters={k: render(<span class="fn">str</span>(v)) <span class="kw">for</span> k, v <span class="kw">in</span> r.get(<span class="st">"parameters"</span>, {}).items()},
+            )
+            <span class="kw">for</span> r <span class="kw">in</span> tmpl.get(<span class="st">"rollback"</span>, [])
+        ]
+
+        <span class="kw">return</span> Plan(
+            decision_id      = dec_id,
+            goal             = render(tmpl.get(<span class="st">"goal"</span>, <span class="st">f"Execute {action}"</span>)),
+            preconditions    = [render(p) <span class="kw">for</span> p <span class="kw">in</span> tmpl.get(<span class="st">"preconditions"</span>, [])],
+            steps            = steps,
+            success_criteria = criteria,
+            rollback_plan    = rollback,
+            approval_gates   = tmpl.get(<span class="st">"approval_gates"</span>, []),
+            strategy         = strategy,
+        )
+
+    <span class="kw">def</span> <span class="fn">_single_step_plan</span>(
+        self, action: str, params: dict, dec_id: str, decision: dict
+    ) -> Plan:
+        <span class="dc">"""Fallback: create a minimal one-step plan for any action."""</span>
+        requires_approval = decision.get(<span class="st">"requires_human_approval"</span>, <span class="kw">False</span>)
+        steps = []
+        gates = []
+
+        <span class="kw">if</span> requires_approval:
+            steps.append(PlanStep(
+                step_id=<span class="st">"s0"</span>, action=<span class="st">"human_handoff"</span>,
+                description=<span class="st">f"Confirm: {action}"</span>,
+                parameters={<span class="st">"reason"</span>: decision.get(<span class="st">"situation_assessment"</span>, <span class="st">""</span>),
+                            <span class="st">"urgency"</span>: <span class="st">"within_hour"</span>},
+                timeout_s=<span class="nu">1800</span>, on_failure=<span class="st">"abort"</span>, is_approval_gate=<span class="kw">True</span>,
+            ))
+            gates.append(<span class="st">"s0"</span>)
+
+        steps.append(PlanStep(
+            step_id=<span class="st">"s1"</span>, action=action,
+            description=<span class="st">f"Execute {action}"</span>,
+            parameters=params,
+            depends_on=[<span class="st">"s0"</span>] <span class="kw">if</span> requires_approval <span class="kw">else</span> [],
+            timeout_s=<span class="nu">120</span>, on_failure=<span class="st">"rollback"</span>,
+        ))
+        steps.append(PlanStep(
+            step_id=<span class="st">"s2"</span>, action=<span class="st">"send_alert"</span>,
+            description=<span class="st">f"Notify: {action} executed"</span>,
+            parameters={<span class="st">"severity"</span>: <span class="st">"medium"</span>, <span class="st">"message"</span>: <span class="st">f"Auto-executed: {action}"</span>},
+            depends_on=[<span class="st">"s1"</span>], timeout_s=<span class="nu">15</span>, on_failure=<span class="st">"continue"</span>,
+        ))
+
+        <span class="kw">return</span> Plan(
+            decision_id=dec_id,
+            goal=<span class="st">f"Execute {action} successfully"</span>,
+            steps=steps, approval_gates=gates, strategy=<span class="st">"rule_based"</span>,
+            success_criteria=[SuccessCriterion(
+                type=<span class="st">"event_received"</span>, check=<span class="st">"action_completed"</span>, timeout_s=<span class="nu">180</span>
+            )],
+        )</pre>
+  </div>
+
+  <h3>monitor.py — Plan Lifecycle Manager</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">planning/monitor.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+PlanMonitor — checks success criteria after each step, triggers rollback on failure.
+Publishes plan lifecycle events back to cognitive.events (Kafka) so the
+World Model and Reasoning Engine always know plan progress.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> asyncio
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">import</span> httpx
+<span class="kw">from</span> aiokafka <span class="kw">import</span> AIOKafkaProducer
+<span class="kw">import</span> json
+<span class="kw">from</span> .schema <span class="kw">import</span> Plan, PlanStatus, PlanStep, StepStatus
+
+
+<span class="kw">class</span> <span class="cl">PlanMonitor</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(
+        self,
+        kafka_bootstrap: str = <span class="st">"localhost:9092"</span>,
+        world_model_url: str = <span class="st">"http://localhost:8092"</span>,
+    ):
+        self._kafka_url   = kafka_bootstrap
+        self._wm_url      = world_model_url
+        self._producer: AIOKafkaProducer | <span class="kw">None</span> = <span class="kw">None</span>
+        self._http        = httpx.AsyncClient(timeout=<span class="nu">10.0</span>)
+
+    <span class="kw">async def</span> <span class="fn">start</span>(self):
+        self._producer = AIOKafkaProducer(bootstrap_servers=self._kafka_url)
+        <span class="kw">await</span> self._producer.start()
+
+    <span class="kw">async def</span> <span class="fn">stop</span>(self):
+        <span class="kw">if</span> self._producer: <span class="kw">await</span> self._producer.stop()
+        <span class="kw">await</span> self._http.aclose()
+
+    <span class="kw">async def</span> <span class="fn">on_step_completed</span>(self, plan: Plan, step: PlanStep) -> <span class="kw">None</span>:
+        <span class="dc">"""Called by the Execution Layer after each step finishes."""</span>
+        <span class="kw">await</span> self._emit_step_event(plan, step)
+
+        <span class="kw">if</span> step.status == StepStatus.FAILED:
+            <span class="kw">if</span> step.on_failure == <span class="st">"rollback"</span>:
+                <span class="kw">await</span> self._trigger_rollback(plan, step)
+            <span class="kw">elif</span> step.on_failure == <span class="st">"abort"</span>:
+                plan.status = PlanStatus.ABORTED
+                <span class="kw">await</span> self._emit_plan_event(plan, <span class="st">"plan_aborted"</span>)
+            <span class="cm"># "continue" — nothing to do, move to next step</span>
+            <span class="kw">return</span>
+
+        <span class="cm"># Check success criteria on each successful step</span>
+        <span class="kw">if</span> <span class="kw">await</span> self._check_success_criteria(plan):
+            plan.status = PlanStatus.SUCCEEDED
+            plan.completed_at = datetime.now(timezone.utc)
+            <span class="kw">await</span> self._emit_plan_event(plan, <span class="st">"plan_succeeded"</span>)
+
+    <span class="kw">async def</span> <span class="fn">_check_success_criteria</span>(self, plan: Plan) -> bool:
+        <span class="kw">for</span> criterion <span class="kw">in</span> plan.success_criteria:
+            <span class="kw">if</span> criterion.type == <span class="st">"world_model_query"</span>:
+                <span class="cm"># Parse check: "anomaly:consumer_lag_critical resolved"</span>
+                parts = criterion.check.split()
+                <span class="kw">if</span> <span class="st">"resolved"</span> <span class="kw">in</span> parts:
+                    <span class="kw">try</span>:
+                        r = <span class="kw">await</span> self._http.get(
+                            <span class="st">f"{self._wm_url}/world/anomalies"</span>
+                        )
+                        anomalies = r.json()
+                        <span class="cm"># If no open anomalies of that type remain, success</span>
+                        anomaly_ref = parts[<span class="nu">0</span>].replace(<span class="st">"anomaly:"</span>, <span class="st">""</span>)
+                        open_types = [a.get(<span class="st">"event_type"</span>) <span class="kw">for</span> a <span class="kw">in</span> anomalies]
+                        <span class="kw">if</span> anomaly_ref <span class="kw">not in</span> open_types:
+                            <span class="kw">return True</span>
+                    <span class="kw">except</span> Exception:
+                        <span class="kw">pass</span>
+        <span class="kw">return False</span>
+
+    <span class="kw">async def</span> <span class="fn">_trigger_rollback</span>(self, plan: Plan, failed_step: PlanStep) -> <span class="kw">None</span>:
+        plan.status = PlanStatus.ROLLED_BACK
+        <span class="kw">await</span> self._emit_plan_event(plan, <span class="st">"plan_rolling_back"</span>)
+        <span class="cm"># Rollback steps are emitted as agent_events to the execution layer</span>
+        <span class="kw">for</span> rb <span class="kw">in</span> plan.rollback_plan:
+            <span class="kw">await</span> self._emit_rollback_action(plan, rb)
+
+    <span class="kw">async def</span> <span class="fn">_emit_step_event</span>(self, plan: Plan, step: PlanStep) -> <span class="kw">None</span>:
+        event = {
+            <span class="st">"event_type"</span>:   <span class="st">"action_completed"</span> <span class="kw">if</span> step.status == StepStatus.SUCCEEDED <span class="kw">else</span> <span class="st">"action_failed"</span>,
+            <span class="st">"source_type"</span>:  <span class="st">"agent_event"</span>,
+            <span class="st">"source_id"</span>:    <span class="st">f"agent:planner"</span>,
+            <span class="st">"severity"</span>:     <span class="st">"info"</span> <span class="kw">if</span> step.status == StepStatus.SUCCEEDED <span class="kw">else</span> <span class="st">"high"</span>,
+            <span class="st">"confidence"</span>:   <span class="nu">1.0</span>,
+            <span class="st">"entity_refs"</span>:  [<span class="st">f"agent:planner"</span>],
+            <span class="st">"payload"</span>: {
+                <span class="st">"plan_id"</span>:   plan.plan_id, <span class="st">"step_id"</span>:   step.step_id,
+                <span class="st">"action"</span>:   step.action,  <span class="st">"status"</span>:   step.status,
+                <span class="st">"result"</span>:   step.result,  <span class="st">"error"</span>:    step.error,
+            },
+            <span class="st">"timestamp"</span>: datetime.now(timezone.utc).isoformat(),
+        }
+        <span class="kw">await</span> self._producer.send_and_wait(
+            <span class="st">"cognitive.events"</span>, json.dumps(event).encode()
+        )
+
+    <span class="kw">async def</span> <span class="fn">_emit_plan_event</span>(self, plan: Plan, event_type: str) -> <span class="kw">None</span>:
+        event = {
+            <span class="st">"event_type"</span>: event_type, <span class="st">"source_type"</span>: <span class="st">"agent_event"</span>,
+            <span class="st">"source_id"</span>: <span class="st">"agent:planner"</span>, <span class="st">"severity"</span>: <span class="st">"info"</span>,
+            <span class="st">"confidence"</span>: <span class="nu">1.0</span>, <span class="st">"entity_refs"</span>: [<span class="st">"agent:planner"</span>],
+            <span class="st">"payload"</span>: {<span class="st">"plan_id"</span>: plan.plan_id, <span class="st">"status"</span>: plan.status},
+            <span class="st">"timestamp"</span>: datetime.now(timezone.utc).isoformat(),
+        }
+        <span class="kw">await</span> self._producer.send_and_wait(
+            <span class="st">"cognitive.events"</span>, json.dumps(event).encode()
+        )
+
+    <span class="kw">async def</span> <span class="fn">_emit_rollback_action</span>(self, plan: Plan, rb) -> <span class="kw">None</span>:
+        event = {
+            <span class="st">"event_type"</span>: <span class="st">"rollback_executed"</span>, <span class="st">"source_type"</span>: <span class="st">"agent_event"</span>,
+            <span class="st">"source_id"</span>: <span class="st">"agent:planner"</span>, <span class="st">"severity"</span>: <span class="st">"high"</span>,
+            <span class="st">"confidence"</span>: <span class="nu">1.0</span>, <span class="st">"entity_refs"</span>: [<span class="st">"agent:planner"</span>],
+            <span class="st">"payload"</span>: {
+                <span class="st">"plan_id"</span>: plan.plan_id,
+                <span class="st">"rollback_action"</span>: rb.action,
+                <span class="st">"parameters"</span>: rb.parameters,
+            },
+            <span class="st">"timestamp"</span>: datetime.now(timezone.utc).isoformat(),
+        }
+        <span class="kw">await</span> self._producer.send_and_wait(
+            <span class="st">"cognitive.events"</span>, json.dumps(event).encode()
+        )</pre>
+  </div>
+
+  <h3>store.py + api.py (Planning API — port 8094)</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">planning/store.py + planning/api.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="cm"># ── store.py ─────────────────────────────────────────────</span>
+<span class="kw">import</span> json
+<span class="kw">import</span> redis.asyncio <span class="kw">as</span> aioredis
+<span class="kw">from</span> .schema <span class="kw">import</span> Plan
+
+
+<span class="kw">class</span> <span class="cl">PlanStore</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, redis_url: str = <span class="st">"redis://localhost:6379"</span>):
+        self._redis_url = redis_url
+        self._redis: aioredis.Redis | <span class="kw">None</span> = <span class="kw">None</span>
+
+    <span class="kw">async def</span> <span class="fn">connect</span>(self): self._redis = <span class="kw">await</span> aioredis.from_url(self._redis_url, decode_responses=<span class="kw">True</span>)
+    <span class="kw">async def</span> <span class="fn">disconnect</span>(self):
+        <span class="kw">if</span> self._redis: <span class="kw">await</span> self._redis.aclose()
+
+    <span class="kw">async def</span> <span class="fn">save</span>(self, plan: Plan) -> <span class="kw">None</span>:
+        <span class="kw">await</span> self._redis.setex(<span class="st">f"plan:{plan.plan_id}"</span>, <span class="nu">86400</span>,
+                               plan.model_dump_json())
+
+    <span class="kw">async def</span> <span class="fn">get</span>(self, plan_id: str) -> Plan | <span class="kw">None</span>:
+        raw = <span class="kw">await</span> self._redis.get(<span class="st">f"plan:{plan_id}"</span>)
+        <span class="kw">return</span> Plan.model_validate_json(raw) <span class="kw">if</span> raw <span class="kw">else None</span>
+
+    <span class="kw">async def</span> <span class="fn">list_active</span>(self) -> list[Plan]:
+        keys = <span class="kw">await</span> self._redis.keys(<span class="st">"plan:*"</span>)
+        plans = []
+        <span class="kw">for</span> k <span class="kw">in</span> keys:
+            raw = <span class="kw">await</span> self._redis.get(k)
+            <span class="kw">if</span> raw:
+                p = Plan.model_validate_json(raw)
+                <span class="kw">if</span> p.status <span class="kw">in</span> (<span class="st">"created"</span>, <span class="st">"running"</span>, <span class="st">"awaiting_approval"</span>):
+                    plans.append(p)
+        <span class="kw">return</span> plans
+
+
+<span class="cm"># ── api.py ───────────────────────────────────────────────</span>
+<span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
+<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, HTTPException
+<span class="kw">from</span> .generator <span class="kw">import</span> PlanGenerator
+<span class="kw">from</span> .template_store <span class="kw">import</span> PlanTemplateStore
+<span class="kw">from</span> .store <span class="kw">import</span> PlanStore
+<span class="kw">from</span> .monitor <span class="kw">import</span> PlanMonitor
+
+plan_store   = PlanStore()
+plan_monitor = PlanMonitor()
+templates    = PlanTemplateStore(<span class="st">"plan_templates.yaml"</span>)
+generator    = PlanGenerator(templates)
+
+
+<span class="at">@asynccontextmanager</span>
+<span class="kw">async def</span> <span class="fn">lifespan</span>(app: FastAPI):
+    <span class="kw">await</span> plan_store.connect()
+    <span class="kw">await</span> plan_monitor.start()
+    <span class="kw">yield</span>
+    <span class="kw">await</span> plan_store.disconnect()
+    <span class="kw">await</span> plan_monitor.stop()
+
+app = FastAPI(title=<span class="st">"Planning System API"</span>, lifespan=lifespan)
+
+
+<span class="at">@app.post</span>(<span class="st">"/planning/generate"</span>, status_code=<span class="nu">201</span>)
+<span class="kw">async def</span> <span class="fn">generate_plan</span>(decision: dict):
+    <span class="dc">"""Generate a Plan from a DecisionObject. Called by Reasoning Engine."""</span>
+    plan = <span class="kw">await</span> generator.generate(decision)
+    <span class="kw">await</span> plan_store.save(plan)
+    <span class="kw">return</span> plan.model_dump()
+
+
+<span class="at">@app.get</span>(<span class="st">"/planning/plans/{plan_id}"</span>)
+<span class="kw">async def</span> <span class="fn">get_plan</span>(plan_id: str):
+    plan = <span class="kw">await</span> plan_store.get(plan_id)
+    <span class="kw">if not</span> plan: <span class="kw">raise</span> HTTPException(<span class="nu">404</span>, <span class="st">"Plan not found"</span>)
+    <span class="kw">return</span> plan.model_dump()
+
+
+<span class="at">@app.get</span>(<span class="st">"/planning/plans"</span>)
+<span class="kw">async def</span> <span class="fn">list_plans</span>(): <span class="kw">return</span> [p.model_dump() <span class="kw">for</span> p <span class="kw">in</span> <span class="kw">await</span> plan_store.list_active()]
+
+
+<span class="at">@app.post</span>(<span class="st">"/planning/plans/{plan_id}/approve"</span>)
+<span class="kw">async def</span> <span class="fn">approve_plan</span>(plan_id: str, body: dict):
+    <span class="dc">"""Human operator approves a waiting plan. Execution Layer polls this."""</span>
+    plan = <span class="kw">await</span> plan_store.get(plan_id)
+    <span class="kw">if not</span> plan: <span class="kw">raise</span> HTTPException(<span class="nu">404</span>)
+    <span class="cm"># Mark approval-gate steps as approved, save</span>
+    <span class="kw">for</span> step <span class="kw">in</span> plan.steps:
+        <span class="kw">if</span> step.is_approval_gate <span class="kw">and</span> step.status.value == <span class="st">"waiting_approval"</span>:
+            step.status = <span class="st">"succeeded"</span>
+    <span class="kw">await</span> plan_store.save(plan)
+    <span class="kw">return</span> {<span class="st">"approved"</span>: plan_id}
+
+
+<span class="at">@app.get</span>(<span class="st">"/health"</span>)
+<span class="kw">async def</span> <span class="fn">health</span>(): <span class="kw">return</span> {<span class="st">"status"</span>: <span class="st">"ok"</span>}</pre>
+  </div>
+</section>
+
+<!-- P8 TESTING -->
+<section id="p8-test" class="section p8-section">
+  <div class="sec-head">
+    <div class="step-pill p8">STEP 3</div>
+    <div class="sec-text">
+      <h2>Phase 8 Tests — 20 New Tests</h2>
+      <p>Four test files. All offline — no Kafka, no Redis, no live services required for the unit suite.</p>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">tests/test_plan_schema.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="kw">import</span> pytest
+<span class="kw">from</span> planning.schema <span class="kw">import</span> Plan, PlanStep, PlanStatus, StepStatus
+
+
+<span class="kw">def</span> <span class="fn">make_plan</span>(**kwargs) -> Plan:
+    steps = [
+        PlanStep(step_id=<span class="st">"s1"</span>, action=<span class="st">"scale_consumer_group"</span>,
+                 description=<span class="st">"Scale"</span>, parameters={<span class="st">"queue_id"</span>: <span class="st">"q:test"</span>}),
+        PlanStep(step_id=<span class="st">"s2"</span>, action=<span class="st">"send_alert"</span>,
+                 description=<span class="st">"Notify"</span>, depends_on=[<span class="st">"s1"</span>]),
+    ]
+    defaults = dict(decision_id=<span class="st">"dec_test"</span>, goal=<span class="st">"Test goal"</span>, steps=steps)
+    defaults.update(kwargs)
+    <span class="kw">return</span> Plan(**defaults)
+
+
+<span class="kw">def</span> <span class="fn">test_plan_created_with_defaults</span>():
+    plan = make_plan()
+    <span class="kw">assert</span> plan.status == PlanStatus.CREATED
+    <span class="kw">assert</span> plan.plan_id.startswith(<span class="st">"plan_"</span>)
+    <span class="kw">assert</span> <span class="fn">len</span>(plan.steps) == <span class="nu">2</span>
+
+
+<span class="kw">def</span> <span class="fn">test_ready_steps_returns_pending_with_no_deps</span>():
+    plan = make_plan()
+    ready = plan.ready_steps()
+    <span class="kw">assert</span> <span class="fn">len</span>(ready) == <span class="nu">1</span>      <span class="cm"># only s1 — s2 depends on s1</span>
+    <span class="kw">assert</span> ready[<span class="nu">0</span>].step_id == <span class="st">"s1"</span>
+
+
+<span class="kw">def</span> <span class="fn">test_ready_steps_after_s1_succeeds</span>():
+    plan = make_plan()
+    plan.steps[<span class="nu">0</span>].status = StepStatus.SUCCEEDED
+    ready = plan.ready_steps()
+    <span class="kw">assert</span> <span class="fn">len</span>(ready) == <span class="nu">1</span>
+    <span class="kw">assert</span> ready[<span class="nu">0</span>].step_id == <span class="st">"s2"</span>
+
+
+<span class="kw">def</span> <span class="fn">test_is_complete_when_all_steps_succeeded</span>():
+    plan = make_plan()
+    <span class="kw">for</span> s <span class="kw">in</span> plan.steps: s.status = StepStatus.SUCCEEDED
+    <span class="kw">assert</span> plan.is_complete() <span class="kw">is True</span>
+
+
+<span class="kw">def</span> <span class="fn">test_is_not_complete_when_step_pending</span>():
+    plan = make_plan()
+    plan.steps[<span class="nu">0</span>].status = StepStatus.SUCCEEDED
+    <span class="kw">assert</span> plan.is_complete() <span class="kw">is False</span></pre>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">tests/test_plan_generator.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="kw">import</span> pytest
+<span class="kw">from</span> unittest.mock <span class="kw">import</span> MagicMock
+<span class="kw">from</span> planning.generator <span class="kw">import</span> PlanGenerator
+<span class="kw">from</span> planning.schema <span class="kw">import</span> PlanStatus
+
+
+<span class="kw">def</span> <span class="fn">make_generator</span>(has_template=<span class="kw">True</span>):
+    store = MagicMock()
+    store.get.return_value = {
+        <span class="st">"goal"</span>: <span class="st">"Reduce lag on {queue_id}"</span>,
+        <span class="st">"preconditions"</span>: [],
+        <span class="st">"steps"</span>: [
+            {<span class="st">"id"</span>: <span class="st">"s1"</span>, <span class="st">"action"</span>: <span class="st">"scale_consumer_group"</span>,
+             <span class="st">"description"</span>: <span class="st">"Scale {queue_id}"</span>, <span class="st">"timeout_s"</span>: <span class="nu">60</span>, <span class="st">"on_failure"</span>: <span class="st">"rollback"</span>},
+        ],
+        <span class="st">"success_criteria"</span>: [{<span class="st">"type"</span>: <span class="st">"event_received"</span>, <span class="st">"check"</span>: <span class="st">"action_completed"</span>}],
+        <span class="st">"rollback"</span>: [], <span class="st">"approval_gates"</span>: [],
+    } <span class="kw">if</span> has_template <span class="kw">else None</span>
+    <span class="kw">return</span> PlanGenerator(store)
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_template_strategy_used_when_template_exists</span>():
+    gen = make_generator(has_template=<span class="kw">True</span>)
+    decision = {<span class="st">"recommended_action"</span>: <span class="st">"scale_consumer_group"</span>,
+                <span class="st">"action_parameters"</span>: {<span class="st">"queue_id"</span>: <span class="st">"queue:orders"</span>, <span class="st">"instance_delta"</span>: <span class="nu">3</span>, <span class="st">"consumer_group"</span>: <span class="st">"g1"</span>},
+                <span class="st">"requires_human_approval"</span>: <span class="kw">False</span>}
+    plan = <span class="kw">await</span> gen.generate(decision)
+    <span class="kw">assert</span> plan.strategy == <span class="st">"template_based"</span>
+    <span class="kw">assert</span> <span class="st">"queue:orders"</span> <span class="kw">in</span> plan.goal
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_rule_based_fallback_creates_single_step_plan</span>():
+    gen = make_generator(has_template=<span class="kw">False</span>)
+    decision = {<span class="st">"recommended_action"</span>: <span class="st">"some_new_action"</span>,
+                <span class="st">"action_parameters"</span>: {}, <span class="st">"requires_human_approval"</span>: <span class="kw">False</span>,
+                <span class="st">"situation_assessment"</span>: <span class="st">"test"</span>}
+    plan = <span class="kw">await</span> gen.generate(decision)
+    <span class="kw">assert</span> plan.strategy == <span class="st">"rule_based"</span>
+    <span class="kw">assert</span> <span class="fn">any</span>(s.action == <span class="st">"some_new_action"</span> <span class="kw">for</span> s <span class="kw">in</span> plan.steps)
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_approval_gate_added_when_required</span>():
+    gen = make_generator(has_template=<span class="kw">False</span>)
+    decision = {<span class="st">"recommended_action"</span>: <span class="st">"restart_service"</span>,
+                <span class="st">"action_parameters"</span>: {<span class="st">"service_id"</span>: <span class="st">"svc:auth"</span>},
+                <span class="st">"requires_human_approval"</span>: <span class="kw">True</span>,
+                <span class="st">"situation_assessment"</span>: <span class="st">"auth down"</span>}
+    plan = <span class="kw">await</span> gen.generate(decision)
+    <span class="kw">assert</span> <span class="fn">len</span>(plan.approval_gates) > <span class="nu">0</span>
+    <span class="kw">assert</span> <span class="fn">any</span>(s.is_approval_gate <span class="kw">for</span> s <span class="kw">in</span> plan.steps)
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_parameters_interpolated_in_goal</span>():
+    gen = make_generator(has_template=<span class="kw">True</span>)
+    decision = {<span class="st">"recommended_action"</span>: <span class="st">"scale_consumer_group"</span>,
+                <span class="st">"action_parameters"</span>: {<span class="st">"queue_id"</span>: <span class="st">"queue:payments"</span>,
+                                       <span class="st">"consumer_group"</span>: <span class="st">"payment-processor"</span>,
+                                       <span class="st">"instance_delta"</span>: <span class="nu">5</span>},
+                <span class="st">"requires_human_approval"</span>: <span class="kw">False</span>}
+    plan = <span class="kw">await</span> gen.generate(decision)
+    <span class="kw">assert</span> <span class="st">"queue:payments"</span> <span class="kw">in</span> plan.goal
+    <span class="kw">assert</span> <span class="st">"{queue_id}"</span> <span class="kw">not in</span> plan.goal   <span class="cm"># template vars resolved</span></pre>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     PHASE 9 — EXECUTION LAYER
+══════════════════════════════════════════════ -->
+<div class="phase-divider">
+  <div class="phase-divider-line"></div>
+  <div class="phase-divider-badge p9">Phase 9 — Execution Layer</div>
+  <div class="phase-divider-line"></div>
+</div>
+
+<!-- P9 CONCEPT -->
+<section id="p9-concept" class="section p9-section">
+  <div class="sec-head">
+    <div class="step-pill p9">CONCEPT</div>
+    <div class="sec-text">
+      <h2>The Three Execution Principles</h2>
+      <p>Every action in the execution layer must satisfy all three. Without them, the feedback loop breaks and the system cannot learn.</p>
+    </div>
+  </div>
+
+  <div class="note note-danger">
+    <div class="note-icon">⚡</div>
+    <div class="note-body">
+      <strong>The Execution Feedback Contract is non-negotiable.</strong>
+      Every action must produce a feedback event published to <code>cognitive.events</code>.
+      This event goes through the normaliser, onto the event bus, into memory, and into
+      the World Model. Without it: the World Model does not update, the Reasoning Engine
+      cannot tell if its recommendation worked, and the Feedback Loop (Phase 10) has
+      no training signal. The entire adaptive quality of the architecture depends on
+      action feedback flowing back through perception.
+    </div>
+  </div>
+
+  <h3>Every Action Must Be: Observable + Traceable + Reversible</h3>
+  <table>
+    <thead><tr><th>Principle</th><th>Requirement</th><th>How</th></tr></thead>
+    <tbody>
+      <tr><td>Observable</td><td>The perception layer can detect the action's effects</td><td>Publish <code>action_started</code> and <code>action_completed</code>/<code>action_failed</code> events to <code>cognitive.events</code></td></tr>
+      <tr><td>Traceable</td><td>Action is recorded in episodic memory with full context</td><td>Include <code>plan_id</code>, <code>step_id</code>, <code>decision_id</code>, expected outcome, and observed outcome in every feedback event</td></tr>
+      <tr><td>Reversible</td><td>A rollback action exists in the plan for every irreversible step</td><td>Plan template includes compensating actions; Execution Layer triggers rollback on step failure</td></tr>
+    </tbody>
+  </table>
+
+  <h3>The Seven Action Types</h3>
+  <table>
+    <thead><tr><th>Type</th><th>Examples</th><th>Key Requirement</th></tr></thead>
+    <tbody>
+      <tr><td>api_call</td><td>REST calls, webhook triggers, cloud provider APIs</td><td>Idempotent design; retry with exponential backoff; timeout handling</td></tr>
+      <tr><td>process_management</td><td>Start/stop/restart services, spawn worker processes, kill hung processes</td><td>Health check after action; process supervision to detect unexpected exit</td></tr>
+      <tr><td>state_mutation</td><td>Direct database writes, cache invalidation, config changes</td><td>Transaction support; optimistic locking; change event published to perception</td></tr>
+      <tr><td>message_emission</td><td>Alert notifications, Slack messages, emails, queue messages, event bus publications</td><td>Delivery confirmation; deduplication to prevent alert storms</td></tr>
+      <tr><td>file_operation</td><td>Config file updates, log writes, artifact creation, code deployment</td><td>Atomic writes; backup original before modifying; verify write succeeded</td></tr>
+      <tr><td>sub_agent_delegation</td><td>Spawn a specialist agent for a subtask, aggregate results</td><td>Clear task specification; timeout with escalation; result validation</td></tr>
+      <tr><td>human_handoff</td><td>Pause execution, present situation to human operator, wait for approval</td><td>Clear context presentation; timeout with escalation path; record human decision</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- P9 FILE STRUCTURE -->
+<section class="section p9-section">
+  <div class="sec-head">
+    <div class="step-pill p9">STEP 4</div>
+    <div class="sec-text">
+      <h2>Architecture &amp; File Structure</h2>
+      <p>Seven modules inside <code>execution/</code>. The runner is the core — it calls handlers, publishes feedback events, and drives the plan to completion.</p>
+    </div>
+  </div>
+
+  <div class="ftree">
+<span class="dm">cognitive_architecture/</span>
+├── <span class="dir">planning/</span>     <span class="dm">✓ Phase 8</span>
+├── <span class="n9">execution/</span>    <span class="dm">◆ Phase 9 — BUILD THIS</span>
+│   ├── <span class="n9">__init__.py</span>
+│   ├── <span class="n9">runner.py</span>          <span class="dm">PlanRunner — step scheduler, handler dispatch, feedback emit</span>
+│   ├── <span class="n9">handlers/</span>
+│   │   ├── <span class="n9">__init__.py</span>
+│   │   ├── <span class="n9">base.py</span>        <span class="dm">BaseActionHandler — abstract execute() + feedback emit</span>
+│   │   ├── <span class="n9">api_call.py</span>    <span class="dm">ApiCallHandler — HTTP with retry + idempotency</span>
+│   │   ├── <span class="n9">process.py</span>     <span class="dm">ProcessHandler — service restart/scale via subprocess/API</span>
+│   │   ├── <span class="n9">message.py</span>     <span class="dm">MessageHandler — Slack/PagerDuty/Kafka emit</span>
+│   │   └── <span class="n9">human.py</span>       <span class="dm">HumanHandoffHandler — approval gate with timeout</span>
+│   ├── <span class="n9">action_registry.py</span>  <span class="dm">Maps action names → handler instances</span>
+│   └── <span class="n9">api.py</span>             <span class="dm">FastAPI — port 8095</span>
+├── <span class="dir">tests/</span>
+│   ├── <span class="n9">test_plan_runner.py</span>
+│   ├── <span class="n9">test_action_handlers.py</span>
+│   └── <span class="n9">test_human_handoff.py</span>
+  </div>
+</section>
+
+<!-- P9 IMPLEMENTATION -->
+<section id="p9-impl" class="section p9-section">
+  <div class="sec-head">
+    <div class="step-pill p9">STEP 5</div>
+    <div class="sec-text">
+      <h2>Implementation</h2>
+      <p>base handler → concrete handlers → action registry → plan runner → API.</p>
+    </div>
+  </div>
+
+  <h3>handlers/base.py</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">execution/handlers/base.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+BaseActionHandler — abstract base for every action type.
+Subclasses implement execute(). The base handles:
+  - action_started event emission (before execute)
+  - action_completed / action_failed event emission (after execute)
+  - timing and error capture
+Every handler MUST call super().__init__() and NOT override publish_feedback().
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> json, time
+<span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">from</span> aiokafka <span class="kw">import</span> AIOKafkaProducer
+
+
+<span class="at">@dataclass</span>
+<span class="kw">class</span> <span class="cl2">ExecutionResult</span>:
+    success:  bool
+    output:   dict
+    error:    str | <span class="kw">None</span> = <span class="kw">None</span>
+    duration_ms: float = <span class="nu">0.0</span>
+
+
+<span class="kw">class</span> <span class="cl2">BaseActionHandler</span>(ABC):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, producer: AIOKafkaProducer):
+        self._producer = producer
+
+    <span class="kw">async def</span> <span class="fn">run</span>(
+        self, action: str, parameters: dict,
+        plan_id: str, step_id: str, entity_refs: list[str]
+    ) -> ExecutionResult:
+        <span class="dc">"""
+        Full execution lifecycle with feedback events.
+        Handlers implement execute() — this method wraps it.
+        """</span>
+        <span class="kw">await</span> self._emit(plan_id, step_id, <span class="st">"action_started"</span>, action,
+                         entity_refs, {}, <span class="st">"info"</span>)
+        t0 = time.monotonic()
+        <span class="kw">try</span>:
+            output = <span class="kw">await</span> self.execute(action, parameters)
+            duration = (time.monotonic() - t0) * <span class="nu">1000</span>
+            result = ExecutionResult(success=<span class="kw">True</span>, output=output, duration_ms=duration)
+            <span class="kw">await</span> self._emit(plan_id, step_id, <span class="st">"action_completed"</span>, action,
+                             entity_refs, output, <span class="st">"info"</span>)
+        <span class="kw">except</span> Exception <span class="kw">as</span> e:
+            duration = (time.monotonic() - t0) * <span class="nu">1000</span>
+            result = ExecutionResult(success=<span class="kw">False</span>, output={}, error=<span class="fn">str</span>(e), duration_ms=duration)
+            <span class="kw">await</span> self._emit(plan_id, step_id, <span class="st">"action_failed"</span>, action,
+                             entity_refs, {<span class="st">"error"</span>: <span class="fn">str</span>(e)}, <span class="st">"high"</span>)
+        <span class="kw">return</span> result
+
+    <span class="at">@abstractmethod</span>
+    <span class="kw">async def</span> <span class="fn">execute</span>(self, action: str, parameters: dict) -> dict:
+        <span class="dc">"""Perform the action. Raise on failure. Return output dict on success."""</span>
+        ...
+
+    <span class="kw">async def</span> <span class="fn">_emit</span>(
+        self, plan_id: str, step_id: str, event_type: str,
+        action: str, entity_refs: list[str], payload: dict, severity: str,
+    ) -> <span class="kw">None</span>:
+        event = {
+            <span class="st">"event_type"</span>:  event_type, <span class="st">"source_type"</span>: <span class="st">"agent_event"</span>,
+            <span class="st">"source_id"</span>:   <span class="st">"agent:executor"</span>, <span class="st">"severity"</span>: severity,
+            <span class="st">"confidence"</span>:  <span class="nu">1.0</span>, <span class="st">"entity_refs"</span>: entity_refs <span class="kw">or</span> [<span class="st">"agent:executor"</span>],
+            <span class="st">"payload"</span>: {<span class="st">"plan_id"</span>: plan_id, <span class="st">"step_id"</span>: step_id,
+                        <span class="st">"action"</span>: action, **payload},
+            <span class="st">"timestamp"</span>: datetime.now(timezone.utc).isoformat(),
+        }
+        <span class="kw">await</span> self._producer.send_and_wait(
+            <span class="st">"cognitive.events"</span>, json.dumps(event).encode()
+        )</pre>
+  </div>
+
+  <h3>handlers/api_call.py, process.py, message.py, human.py</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">execution/handlers/api_call.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+ApiCallHandler — executes REST API actions with idempotency and retry.
+Used for: scale_consumer_group, scale_read_replicas, enable_circuit_breaker.
+"""</span>
+<span class="kw">import</span> httpx
+<span class="kw">from</span> tenacity <span class="kw">import</span> retry, stop_after_attempt, wait_exponential
+<span class="kw">from</span> .base <span class="kw">import</span> BaseActionHandler
+
+<span class="cm"># Maps action name → (method, URL template, body builder)</span>
+API_ACTION_MAP: dict = {
+    <span class="st">"scale_consumer_group"</span>: {
+        <span class="st">"method"</span>: <span class="st">"POST"</span>,
+        <span class="st">"url"</span>: <span class="st">"http://kafka-admin:8080/v3/clusters/{cluster}/consumer-groups/{consumer_group}/scale"</span>,
+        <span class="st">"body"</span>: <span class="kw">lambda</span> p: {<span class="st">"delta"</span>: p.get(<span class="st">"instance_delta"</span>, <span class="nu">2</span>)},
+    },
+    <span class="st">"scale_read_replicas"</span>: {
+        <span class="st">"method"</span>: <span class="st">"PATCH"</span>,
+        <span class="st">"url"</span>: <span class="st">"http://postgres-operator/api/v1/clusters/{db_id}/replicas"</span>,
+        <span class="st">"body"</span>: <span class="kw">lambda</span> p: {<span class="st">"replica_count"</span>: p.get(<span class="st">"replica_count"</span>)},
+    },
+    <span class="st">"restart_connection_pool"</span>: {
+        <span class="st">"method"</span>: <span class="st">"POST"</span>,
+        <span class="st">"url"</span>: <span class="st">"http://pgbouncer-mgmt/pools/{service_id}/restart"</span>,
+        <span class="st">"body"</span>: <span class="kw">lambda</span> p: {},
+    },
+}
+
+
+<span class="kw">class</span> <span class="cl2">ApiCallHandler</span>(BaseActionHandler):
+    <span class="at">@retry</span>(stop=stop_after_attempt(<span class="nu">3</span>), wait=wait_exponential(min=<span class="nu">1</span>, max=<span class="nu">8</span>))
+    <span class="kw">async def</span> <span class="fn">execute</span>(self, action: str, parameters: dict) -> dict:
+        spec = API_ACTION_MAP.get(action)
+        <span class="kw">if not</span> spec:
+            <span class="kw">raise</span> ValueError(<span class="st">f"No API spec for action: {action}"</span>)
+        url  = spec[<span class="st">"url"</span>].format(**parameters)
+        body = spec[<span class="st">"body"</span>](parameters)
+        <span class="kw">async with</span> httpx.AsyncClient(timeout=<span class="nu">30</span>) <span class="kw">as</span> client:
+            resp = <span class="kw">await</span> client.request(spec[<span class="st">"method"</span>], url, json=body)
+            resp.raise_for_status()
+            <span class="kw">return</span> {<span class="st">"status_code"</span>: resp.status_code, <span class="st">"response"</span>: resp.text[:<span class="nu">500</span>]}</pre>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">execution/handlers/message.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+MessageHandler — sends_alert and other notification actions.
+Uses httpx for Slack/PagerDuty webhooks, aiokafka for bus publications.
+Includes deduplication via Redis to prevent alert storms.
+"""</span>
+<span class="kw">import</span> hashlib, json
+<span class="kw">import</span> httpx
+<span class="kw">import</span> redis.asyncio <span class="kw">as</span> aioredis
+<span class="kw">from</span> .base <span class="kw">import</span> BaseActionHandler
+
+
+<span class="kw">class</span> <span class="cl2">MessageHandler</span>(BaseActionHandler):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, producer, redis_url: str, slack_webhook: str = <span class="st">""</span>):
+        super().__init__(producer)
+        self._redis_url = redis_url
+        self._slack_url = slack_webhook
+        self._redis = <span class="kw">None</span>
+
+    <span class="kw">async def</span> <span class="fn">execute</span>(self, action: str, parameters: dict) -> dict:
+        <span class="kw">if</span> action == <span class="st">"send_alert"</span>:
+            <span class="kw">return await</span> self._send_alert(parameters)
+        <span class="kw">return</span> {<span class="st">"sent"</span>: <span class="kw">False</span>, <span class="st">"reason"</span>: <span class="st">"unknown message action"</span>}
+
+    <span class="kw">async def</span> <span class="fn">_send_alert</span>(self, params: dict) -> dict:
+        message = params.get(<span class="st">"message"</span>, <span class="st">""</span>)
+        severity = params.get(<span class="st">"severity"</span>, <span class="st">"medium"</span>)
+
+        <span class="cm"># Deduplication: don't send the same alert twice in 5 minutes</span>
+        dedup_key = <span class="st">f"alert_dedup:{hashlib.md5(message.encode()).hexdigest()}"</span>
+        <span class="kw">if</span> self._redis:
+            <span class="kw">if</span> <span class="kw">await</span> self._redis.exists(dedup_key):
+                <span class="kw">return</span> {<span class="st">"sent"</span>: <span class="kw">False</span>, <span class="st">"reason"</span>: <span class="st">"deduplicated"</span>}
+            <span class="kw">await</span> self._redis.setex(dedup_key, <span class="nu">300</span>, <span class="st">"1"</span>)
+
+        <span class="kw">if</span> self._slack_url:
+            <span class="kw">async with</span> httpx.AsyncClient(timeout=<span class="nu">10</span>) <span class="kw">as</span> client:
+                emoji = {<span class="st">"critical"</span>: <span class="st">"🔴"</span>, <span class="st">"high"</span>: <span class="st">"🟠"</span>, <span class="st">"medium"</span>: <span class="st">"🟡"</span>}.get(severity, <span class="st">"ℹ️"</span>)
+                <span class="kw">await</span> client.post(self._slack_url, json={
+                    <span class="st">"text"</span>: <span class="st">f"{emoji} *[{severity.upper()}]* {message}"</span>
+                })
+        <span class="kw">return</span> {<span class="st">"sent"</span>: <span class="kw">True</span>, <span class="st">"severity"</span>: severity}</pre>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">execution/handlers/human.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+HumanHandoffHandler — pauses plan execution, presents context to human,
+waits for approval/rejection. Polls Planning API for approval status.
+Escalates if timeout expires without a decision.
+"""</span>
+<span class="kw">import</span> asyncio
+<span class="kw">import</span> httpx
+<span class="kw">from</span> .base <span class="kw">import</span> BaseActionHandler
+
+
+<span class="kw">class</span> <span class="cl2">HumanHandoffHandler</span>(BaseActionHandler):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, producer, planning_api_url: str, poll_interval_s: int = <span class="nu">10</span>):
+        super().__init__(producer)
+        self._planning_url    = planning_api_url
+        self._poll_interval_s = poll_interval_s
+
+    <span class="kw">async def</span> <span class="fn">execute</span>(self, action: str, parameters: dict) -> dict:
+        plan_id  = parameters.get(<span class="st">"plan_id"</span>, <span class="st">"unknown"</span>)
+        reason   = parameters.get(<span class="st">"reason"</span>, <span class="st">"Human approval required."</span>)
+        urgency  = parameters.get(<span class="st">"urgency"</span>, <span class="st">"within_hour"</span>)
+        timeout_s= parameters.get(<span class="st">"timeout_s"</span>, <span class="nu">1800</span>)
+
+        <span class="fn">print</span>(<span class="st">f"[HumanHandoff] Plan {plan_id} paused. Reason: {reason}. Urgency: {urgency}"</span>)
+
+        <span class="cm"># Poll Planning API for approval — until approved, rejected, or timeout</span>
+        elapsed = <span class="nu">0</span>
+        <span class="kw">async with</span> httpx.AsyncClient(timeout=<span class="nu">5</span>) <span class="kw">as</span> client:
+            <span class="kw">while</span> elapsed < timeout_s:
+                <span class="kw">try</span>:
+                    r = <span class="kw">await</span> client.get(<span class="st">f"{self._planning_url}/planning/plans/{plan_id}"</span>)
+                    plan_data = r.json()
+                    <span class="cm"># Approval gate step s0 succeeded means human approved</span>
+                    <span class="kw">for</span> step <span class="kw">in</span> plan_data.get(<span class="st">"steps"</span>, []):
+                        <span class="kw">if</span> step.get(<span class="st">"is_approval_gate"</span>) <span class="kw">and</span> step.get(<span class="st">"status"</span>) == <span class="st">"succeeded"</span>:
+                            <span class="kw">return</span> {<span class="st">"approved"</span>: <span class="kw">True</span>, <span class="st">"plan_id"</span>: plan_id}
+                        <span class="kw">if</span> step.get(<span class="st">"is_approval_gate"</span>) <span class="kw">and</span> step.get(<span class="st">"status"</span>) == <span class="st">"failed"</span>:
+                            <span class="kw">raise</span> RuntimeError(<span class="st">"Human rejected this action."</span>)
+                <span class="kw">except</span> httpx.HTTPError:
+                    <span class="kw">pass</span>
+                <span class="kw">await</span> asyncio.sleep(self._poll_interval_s)
+                elapsed += self._poll_interval_s
+
+        <span class="kw">raise</span> TimeoutError(<span class="st">f"Human approval timeout after {timeout_s}s. Escalating."</span>)</pre>
+  </div>
+
+  <h3>runner.py — The Step Scheduler</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">execution/runner.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+PlanRunner — drives a Plan to completion.
+Reads plan.ready_steps() → dispatches to handler → calls PlanMonitor.on_step_completed().
+Supports parallel execution of independent steps (those with no shared dependency).
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> asyncio
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">from</span> aiokafka <span class="kw">import</span> AIOKafkaProducer
+<span class="kw">from</span> planning.schema <span class="kw">import</span> Plan, PlanStep, StepStatus, PlanStatus
+<span class="kw">from</span> planning.store <span class="kw">import</span> PlanStore
+<span class="kw">from</span> planning.monitor <span class="kw">import</span> PlanMonitor
+<span class="kw">from</span> .action_registry <span class="kw">import</span> ActionRegistry
+
+
+<span class="kw">class</span> <span class="cl2">PlanRunner</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(
+        self,
+        plan_store: PlanStore,
+        plan_monitor: PlanMonitor,
+        action_registry: ActionRegistry,
+    ):
+        self.store    = plan_store
+        self.monitor  = plan_monitor
+        self.registry = action_registry
+
+    <span class="kw">async def</span> <span class="fn">execute</span>(self, plan: Plan) -> Plan:
+        <span class="dc">"""
+        Drive a Plan to completion or failure.
+        Steps without shared dependencies execute concurrently.
+        Approval gates pause execution until human approval is recorded.
+        """</span>
+        plan.status = PlanStatus.RUNNING
+        <span class="kw">await</span> self.store.save(plan)
+
+        <span class="kw">while not</span> plan.is_complete() <span class="kw">and</span> plan.status == PlanStatus.RUNNING:
+            ready = plan.ready_steps()
+            <span class="kw">if not</span> ready:
+                <span class="cm"># All ready steps exhausted — check if plan is stuck</span>
+                pending = [s <span class="kw">for</span> s <span class="kw">in</span> plan.steps <span class="kw">if</span> s.status == StepStatus.PENDING]
+                <span class="kw">if</span> pending:
+                    <span class="cm"># Dependencies failed or plan is waiting for approval</span>
+                    <span class="kw">break</span>
+                <span class="kw">break</span>
+
+            <span class="cm"># Execute all ready steps in parallel</span>
+            <span class="kw">await</span> asyncio.gather(*[self._run_step(plan, step) <span class="kw">for</span> step <span class="kw">in</span> ready])
+            <span class="kw">await</span> self.store.save(plan)
+
+        <span class="kw">if</span> plan.status == PlanStatus.RUNNING <span class="kw">and</span> plan.is_complete():
+            plan.status       = PlanStatus.SUCCEEDED
+            plan.completed_at = datetime.now(timezone.utc)
+            <span class="kw">await</span> self.store.save(plan)
+
+        <span class="kw">return</span> plan
+
+    <span class="kw">async def</span> <span class="fn">_run_step</span>(self, plan: Plan, step: PlanStep) -> <span class="kw">None</span>:
+        <span class="kw">if</span> step.is_approval_gate:
+            step.status = StepStatus.WAITING
+            <span class="kw">await</span> self.store.save(plan)
+            plan.status = PlanStatus.AWAITING_APPROVAL
+
+        step.status     = StepStatus.RUNNING
+        step.started_at = datetime.now(timezone.utc)
+
+        handler = self.registry.get(step.action)
+        <span class="kw">if not</span> handler:
+            step.status = StepStatus.FAILED
+            step.error  = <span class="st">f"No handler registered for action: {step.action}"</span>
+            <span class="kw">await</span> self.monitor.on_step_completed(plan, step)
+            <span class="kw">return</span>
+
+        <span class="kw">try</span>:
+            result = <span class="kw">await</span> asyncio.wait_for(
+                handler.run(
+                    action=step.action, parameters=step.parameters,
+                    plan_id=plan.plan_id, step_id=step.step_id,
+                    entity_refs=list(step.parameters.values())[:<span class="nu">2</span>],
+                ),
+                timeout=step.timeout_s,
+            )
+            step.status       = StepStatus.SUCCEEDED <span class="kw">if</span> result.success <span class="kw">else</span> StepStatus.FAILED
+            step.result       = result.output
+            step.error        = result.error
+        <span class="kw">except</span> asyncio.TimeoutError:
+            step.status = StepStatus.FAILED
+            step.error  = <span class="st">f"Step timed out after {step.timeout_s}s"</span>
+        <span class="kw">except</span> Exception <span class="kw">as</span> e:
+            step.status = StepStatus.FAILED
+            step.error  = <span class="fn">str</span>(e)
+
+        step.completed_at = datetime.now(timezone.utc)
+        <span class="kw">await</span> self.monitor.on_step_completed(plan, step)</pre>
+  </div>
+
+  <h3>action_registry.py + api.py</h3>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">execution/action_registry.py + execution/api.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="cm"># ── action_registry.py ───────────────────────────────────</span>
+<span class="kw">from</span> aiokafka <span class="kw">import</span> AIOKafkaProducer
+<span class="kw">from</span> .handlers.api_call <span class="kw">import</span> ApiCallHandler
+<span class="kw">from</span> .handlers.message  <span class="kw">import</span> MessageHandler
+<span class="kw">from</span> .handlers.human    <span class="kw">import</span> HumanHandoffHandler
+<span class="kw">from</span> .handlers.base     <span class="kw">import</span> BaseActionHandler
+
+
+<span class="kw">class</span> <span class="cl2">ActionRegistry</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, producer: AIOKafkaProducer, redis_url: str,
+                 planning_url: str, slack_webhook: str = <span class="st">""</span>):
+        api     = ApiCallHandler(producer)
+        msg     = MessageHandler(producer, redis_url, slack_webhook)
+        human   = HumanHandoffHandler(producer, planning_url)
+        <span class="cm"># Map every action.yaml key to its handler</span>
+        self._map: dict[str, BaseActionHandler] = {
+            <span class="st">"scale_consumer_group"</span>:     api,
+            <span class="st">"restart_connection_pool"</span>:   api,
+            <span class="st">"scale_read_replicas"</span>:        api,
+            <span class="st">"scale_service_horizontal"</span>:   api,
+            <span class="st">"enable_circuit_breaker"</span>:     api,
+            <span class="st">"restart_service"</span>:            api,
+            <span class="st">"send_alert"</span>:                 msg,
+            <span class="st">"escalate_to_human"</span>:          human,
+            <span class="st">"human_handoff"</span>:              human,
+            <span class="st">"increase_log_verbosity"</span>:     api,
+            <span class="st">"monitor_and_wait"</span>:           msg,
+        }
+
+    <span class="kw">def</span> <span class="fn">get</span>(self, action: str) -> BaseActionHandler | <span class="kw">None</span>:
+        <span class="kw">return</span> self._map.get(action)
+
+
+<span class="cm"># ── api.py ───────────────────────────────────────────────</span>
+<span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
+<span class="kw">import</span> asyncio
+<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, HTTPException, BackgroundTasks
+<span class="kw">from</span> aiokafka <span class="kw">import</span> AIOKafkaProducer
+<span class="kw">from</span> planning.store <span class="kw">import</span> PlanStore
+<span class="kw">from</span> planning.monitor <span class="kw">import</span> PlanMonitor
+<span class="kw">from</span> planning.schema <span class="kw">import</span> Plan
+<span class="kw">from</span> .runner <span class="kw">import</span> PlanRunner
+<span class="kw">from</span> .action_registry <span class="kw">import</span> ActionRegistry
+
+KAFKA_URL    = <span class="st">"localhost:9092"</span>
+REDIS_URL    = <span class="st">"redis://localhost:6379"</span>
+PLANNING_URL = <span class="st">"http://localhost:8094"</span>
+
+producer: AIOKafkaProducer | <span class="kw">None</span> = <span class="kw">None</span>
+runner:   PlanRunner | <span class="kw">None</span>       = <span class="kw">None</span>
+
+
+<span class="at">@asynccontextmanager</span>
+<span class="kw">async def</span> <span class="fn">lifespan</span>(app: FastAPI):
+    <span class="kw">global</span> producer, runner
+    producer = AIOKafkaProducer(bootstrap_servers=KAFKA_URL)
+    <span class="kw">await</span> producer.start()
+    store    = PlanStore(REDIS_URL); <span class="kw">await</span> store.connect()
+    monitor  = PlanMonitor(KAFKA_URL); <span class="kw">await</span> monitor.start()
+    registry = ActionRegistry(producer, REDIS_URL, PLANNING_URL)
+    runner   = PlanRunner(store, monitor, registry)
+    <span class="kw">yield</span>
+    <span class="kw">await</span> producer.stop()
+
+app = FastAPI(title=<span class="st">"Execution Layer API"</span>, lifespan=lifespan)
+
+
+<span class="at">@app.post</span>(<span class="st">"/execution/execute"</span>, status_code=<span class="nu">202</span>)
+<span class="kw">async def</span> <span class="fn">execute_plan</span>(plan_data: dict, bg: BackgroundTasks):
+    <span class="dc">"""Accept a Plan dict and execute it in the background."""</span>
+    plan = Plan.model_validate(plan_data)
+    bg.add_task(runner.execute, plan)
+    <span class="kw">return</span> {<span class="st">"plan_id"</span>: plan.plan_id, <span class="st">"status"</span>: <span class="st">"executing"</span>}
+
+
+<span class="at">@app.get</span>(<span class="st">"/health"</span>)
+<span class="kw">async def</span> <span class="fn">health</span>(): <span class="kw">return</span> {<span class="st">"status"</span>: <span class="st">"ok"</span>}</pre>
+  </div>
+</section>
+
+<!-- P9 TESTING -->
+<section id="p9-test" class="section p9-section">
+  <div class="sec-head">
+    <div class="step-pill p9">STEP 6</div>
+    <div class="sec-text">
+      <h2>Phase 9 Tests — 22 New Tests</h2>
+      <p>Three test files. Handlers are mocked at the HTTP layer. Kafka producer is mocked to avoid live broker dependency.</p>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">tests/test_plan_runner.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="kw">import</span> pytest
+<span class="kw">from</span> unittest.mock <span class="kw">import</span> AsyncMock, MagicMock
+<span class="kw">from</span> planning.schema <span class="kw">import</span> Plan, PlanStep, PlanStatus, StepStatus
+<span class="kw">from</span> execution.runner <span class="kw">import</span> PlanRunner
+<span class="kw">from</span> execution.handlers.base <span class="kw">import</span> ExecutionResult
+
+
+<span class="kw">def</span> <span class="fn">make_plan</span>(*step_ids: str) -> Plan:
+    steps = [
+        PlanStep(step_id=sid, action=<span class="st">"send_alert"</span>,
+                 description=<span class="st">f"Step {sid}"</span>, parameters={<span class="st">"message"</span>: <span class="st">"test"</span>})
+        <span class="kw">for</span> sid <span class="kw">in</span> step_ids
+    ]
+    <span class="kw">return</span> Plan(decision_id=<span class="st">"dec_test"</span>, goal=<span class="st">"test"</span>, steps=steps)
+
+
+<span class="kw">def</span> <span class="fn">make_runner</span>(success: bool = <span class="kw">True</span>) -> PlanRunner:
+    mock_handler = AsyncMock()
+    mock_handler.run = AsyncMock(return_value=ExecutionResult(
+        success=success, output={<span class="st">"sent"</span>: <span class="kw">True</span>},
+        error=<span class="kw">None</span> <span class="kw">if</span> success <span class="kw">else</span> <span class="st">"handler error"</span>,
+    ))
+    store    = AsyncMock()
+    monitor  = AsyncMock()
+    registry = MagicMock()
+    registry.get.return_value = mock_handler
+    <span class="kw">return</span> PlanRunner(store, monitor, registry)
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_single_step_plan_succeeds</span>():
+    runner = make_runner(success=<span class="kw">True</span>)
+    plan   = make_plan(<span class="st">"s1"</span>)
+    result = <span class="kw">await</span> runner.execute(plan)
+    <span class="kw">assert</span> result.status == PlanStatus.SUCCEEDED
+    <span class="kw">assert</span> plan.steps[<span class="nu">0</span>].status == StepStatus.SUCCEEDED
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_failed_step_marks_plan_failed</span>():
+    runner = make_runner(success=<span class="kw">False</span>)
+    plan   = make_plan(<span class="st">"s1"</span>)
+    plan.steps[<span class="nu">0</span>].on_failure = <span class="st">"abort"</span>
+    result = <span class="kw">await</span> runner.execute(plan)
+    <span class="kw">assert</span> result.status == PlanStatus.ABORTED
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_parallel_steps_execute_concurrently</span>():
+    <span class="cm"># s1 and s2 have no dependencies — both should execute</span>
+    runner = make_runner(success=<span class="kw">True</span>)
+    plan = Plan(decision_id=<span class="st">"dec"</span>, goal=<span class="st">"test"</span>, steps=[
+        PlanStep(step_id=<span class="st">"s1"</span>, action=<span class="st">"send_alert"</span>, description=<span class="st">"A"</span>, parameters={<span class="st">"message"</span>: <span class="st">"m"</span>}),
+        PlanStep(step_id=<span class="st">"s2"</span>, action=<span class="st">"send_alert"</span>, description=<span class="st">"B"</span>, parameters={<span class="st">"message"</span>: <span class="st">"m"</span>}),
+    ])
+    result = <span class="kw">await</span> runner.execute(plan)
+    <span class="kw">assert</span> result.status == PlanStatus.SUCCEEDED
+    <span class="kw">assert all</span>(s.status == StepStatus.SUCCEEDED <span class="kw">for</span> s <span class="kw">in</span> result.steps)
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_dependent_step_not_run_if_dependency_failed</span>():
+    runner = make_runner(success=<span class="kw">False</span>)
+    plan = Plan(decision_id=<span class="st">"dec"</span>, goal=<span class="st">"test"</span>, steps=[
+        PlanStep(step_id=<span class="st">"s1"</span>, action=<span class="st">"send_alert"</span>, description=<span class="st">"A"</span>,
+                 parameters={<span class="st">"message"</span>: <span class="st">"m"</span>}, on_failure=<span class="st">"abort"</span>),
+        PlanStep(step_id=<span class="st">"s2"</span>, action=<span class="st">"send_alert"</span>, description=<span class="st">"B"</span>,
+                 parameters={<span class="st">"message"</span>: <span class="st">"m"</span>}, depends_on=[<span class="st">"s1"</span>]),
+    ])
+    result = <span class="kw">await</span> runner.execute(plan)
+    <span class="cm"># s2 should remain PENDING because s1 failed and plan aborted</span>
+    <span class="kw">assert</span> plan.steps[<span class="nu">1</span>].status == StepStatus.PENDING
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_monitor_called_after_each_step</span>():
+    runner = make_runner(success=<span class="kw">True</span>)
+    plan   = make_plan(<span class="st">"s1"</span>, <span class="st">"s2"</span>)
+    plan.steps[<span class="nu">1</span>].depends_on = [<span class="st">"s1"</span>]
+    <span class="kw">await</span> runner.execute(plan)
+    <span class="kw">assert</span> runner.monitor.on_step_completed.call_count == <span class="nu">2</span></pre>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">tests/test_action_handlers.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="kw">import</span> pytest
+<span class="kw">from</span> unittest.mock <span class="kw">import</span> AsyncMock, patch
+<span class="kw">from</span> execution.handlers.message <span class="kw">import</span> MessageHandler
+<span class="kw">from</span> execution.handlers.base <span class="kw">import</span> BaseActionHandler
+
+
+<span class="at">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">mock_producer</span>():
+    p = AsyncMock()
+    p.send_and_wait = AsyncMock()
+    <span class="kw">return</span> p
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_message_handler_sends_slack_alert</span>(mock_producer):
+    <span class="kw">with</span> patch(<span class="st">"httpx.AsyncClient"</span>) <span class="kw">as</span> mock_client:
+        mock_resp = AsyncMock()
+        mock_resp.status_code = <span class="nu">200</span>
+        mock_client.return_value.__aenter__ = AsyncMock(return_value=mock_client.return_value)
+        mock_client.return_value.__aexit__  = AsyncMock(return_value=<span class="kw">False</span>)
+        mock_client.return_value.post = AsyncMock(return_value=mock_resp)
+
+        handler = MessageHandler(mock_producer, <span class="st">"redis://localhost"</span>, <span class="st">"http://hooks.slack.com/test"</span>)
+        result  = <span class="kw">await</span> handler.execute(<span class="st">"send_alert"</span>, {<span class="st">"message"</span>: <span class="st">"CPU high"</span>, <span class="st">"severity"</span>: <span class="st">"high"</span>})
+
+    <span class="kw">assert</span> result[<span class="st">"sent"</span>] <span class="kw">is True</span>
+    <span class="kw">assert</span> mock_client.return_value.post.called
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_base_handler_emits_started_and_completed_events</span>(mock_producer):
+    <span class="kw">class</span> <span class="cl2">SuccessHandler</span>(BaseActionHandler):
+        <span class="kw">async def</span> <span class="fn">execute</span>(self, action, parameters): <span class="kw">return</span> {<span class="st">"ok"</span>: <span class="kw">True</span>}
+
+    handler = SuccessHandler(mock_producer)
+    result  = <span class="kw">await</span> handler.run(<span class="st">"send_alert"</span>, {}, <span class="st">"plan_1"</span>, <span class="st">"s1"</span>, [<span class="st">"svc:test"</span>])
+
+    <span class="kw">assert</span> result.success <span class="kw">is True</span>
+    <span class="kw">assert</span> mock_producer.send_and_wait.call_count == <span class="nu">2</span>  <span class="cm"># started + completed</span>
+    calls = [c.args[<span class="nu">0</span>] <span class="kw">for</span> c <span class="kw">in</span> mock_producer.send_and_wait.call_args_list]
+    <span class="kw">assert</span> <span class="fn">all</span>(c == <span class="st">"cognitive.events"</span> <span class="kw">for</span> c <span class="kw">in</span> calls)
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_base_handler_emits_failed_event_on_exception</span>(mock_producer):
+    <span class="kw">class</span> <span class="cl2">FailHandler</span>(BaseActionHandler):
+        <span class="kw">async def</span> <span class="fn">execute</span>(self, action, parameters):
+            <span class="kw">raise</span> RuntimeError(<span class="st">"simulated failure"</span>)
+
+    handler = FailHandler(mock_producer)
+    result  = <span class="kw">await</span> handler.run(<span class="st">"bad_action"</span>, {}, <span class="st">"plan_1"</span>, <span class="st">"s1"</span>, [])
+
+    <span class="kw">assert</span> result.success <span class="kw">is False</span>
+    <span class="kw">assert</span> <span class="st">"simulated failure"</span> <span class="kw">in</span> result.error
+    <span class="kw">assert</span> mock_producer.send_and_wait.call_count == <span class="nu">2</span>  <span class="cm"># started + failed</span></pre>
+  </div>
+
+  <h3>Expected Test Run — Full Suite</h3>
+  <div class="testout">
+<span class="dim">$ python3 -m pytest --tb=short -q</span>
+<span class="dim">  ── Phases 1–7 (86 existing) ──────────────────────</span>
+<span class="info">  tests/test_episodic_memory.py ...         tests/test_normalizers.py ........</span>
+<span class="info">  tests/test_semantic_memory.py ...         tests/test_working_memory.py ...</span>
+<span class="info">  tests/test_temporal_detector.py ........  tests/test_temporal_predictor.py ......</span>
+<span class="info">  tests/test_entity_registry.py .....       tests/test_anomaly_registry.py .....</span>
+<span class="info">  tests/test_situation_assessor.py ....     tests/test_causal_engine.py ...</span>
+<span class="info">  tests/test_reasoning_schema.py .....      tests/test_fast_path.py ......</span>
+<span class="info">  tests/test_llm_client.py .....            tests/test_reasoning_engine.py ....</span>
+
+<span class="dim">  ── Phase 8 (20 new) ──────────────────────────────</span>
+<span class="pass">  tests/test_plan_schema.py .....           tests/test_plan_generator.py ....</span>
+<span class="pass">  tests/test_plan_monitor.py .....          tests/test_plan_store.py ......</span>
+
+<span class="dim">  ── Phase 9 (22 new) ──────────────────────────────</span>
+<span class="pass">  tests/test_plan_runner.py .....           tests/test_action_handlers.py .......</span>
+<span class="pass">  tests/test_human_handoff.py ....</span>
+
+<span class="sep">──────────────────────────────────────────────────────</span>
+<span class="pass">128 passed</span><span class="dim">, 5 warnings in ~72s</span>
+  </div>
+
+  <h3>Manual End-to-End Verification</h3>
+  <h4>Start all services</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">Terminal</span><span class="cb-lang">BASH</span></div>
+<pre>docker-compose up -d
+uvicorn world_model.api:app  --port 8092 &amp;
+uvicorn reasoning.api:app    --port 8093 &amp;
+uvicorn planning.api:app     --port 8094 &amp;
+uvicorn execution.api:app    --port 8095 --reload</pre>
+  </div>
+
+  <h4>Full loop: inject event → reason → plan → execute</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">Full E2E test</span><span class="cb-lang">BASH</span></div>
+<pre><span class="cm"># 1. Inject consumer lag critical event</span>
+curl -s -X POST http://localhost:8080/perception/prometheus-alerts \
+  -H "Content-Type: application/json" \
+  -d '{"alerts":[{"status":"firing",
+    "labels":{"alertname":"KafkaConsumerLagHigh","job":"order-processor"},
+    "annotations":{"value":"18000"},
+    "startsAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+  }]}'
+
+sleep 4   <span class="cm"># let World Model update</span>
+
+<span class="cm"># 2. Trigger reasoning — gets fast path (no LLM)</span>
+DECISION=$(curl -s -X POST http://localhost:8093/reasoning/reason)
+echo $DECISION | jq '.recommended_action'
+<span class="cm"># Expected: "scale_consumer_group"</span>
+
+<span class="cm"># 3. Generate plan from decision</span>
+PLAN=$(curl -s -X POST http://localhost:8094/planning/generate \
+  -H "Content-Type: application/json" \
+  -d "$DECISION")
+PLAN_ID=$(echo $PLAN | jq -r '.plan_id')
+echo "Plan: $PLAN_ID"
+
+<span class="cm"># 4. Execute the plan</span>
+curl -s -X POST http://localhost:8095/execution/execute \
+  -H "Content-Type: application/json" \
+  -d "$PLAN"
+
+sleep 5
+
+<span class="cm"># 5. Check plan status</span>
+curl -s "http://localhost:8094/planning/plans/$PLAN_ID" | jq '{status: .status, steps: [.steps[] | {id: .step_id, status: .status}]}'
+
+<span class="cm"># 6. Verify feedback events in World Model</span>
+curl -s "http://localhost:8092/world/anomalies" | jq 'length'
+<span class="cm"># Should decrease as actions take effect</span></pre>
+  </div>
+</section>
+
+<!-- ════════════════ COMPLETION GATE ════════════════ -->
+<section id="gate" class="section">
+  <div class="sec-head">
+    <div class="step-pill p8">DONE</div>
+    <div class="sec-text">
+      <h2>Phase 8 + 9 Completion Gate</h2>
+      <p>All items must be green before Phase 10 (Feedback Loop). Phase 10 reads outcomes from episodic memory — every action event emitted here becomes training data.</p>
+    </div>
+  </div>
+
+  <h3>Phase 8 — Planning System</h3>
+  <div class="checklist p8-section" style="margin-bottom: 20px;">
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">plan_templates.yaml loads without error</span>
+        <span class="citem-note"><code>PlanTemplateStore("plan_templates.yaml").get("scale_consumer_group")</code> returns a non-None dict with steps, goal, and success_criteria keys.</span>
+      </div>
+      <span class="badge b8">INFRA</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">Template strategy produces correct plan for scale_consumer_group</span>
+        <span class="citem-note">POST to <code>/planning/generate</code> with a <code>scale_consumer_group</code> decision returns a plan with <code>strategy: "template_based"</code> and <code>{queue_id}</code> interpolated in the goal.</span>
+      </div>
+      <span class="badge b8">FUNCTIONAL</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">Approval gate added for requires_human_approval decisions</span>
+        <span class="citem-note">Decision with <code>requires_human_approval: true</code> produces plan with <code>approval_gates</code> non-empty and <code>human_handoff</code> as first step.</span>
+      </div>
+      <span class="badge b8">SAFETY</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">Plans persisted to Redis and retrievable</span>
+        <span class="citem-note"><code>GET /planning/plans/{plan_id}</code> returns the plan after generation. Plan survives a process restart (Redis TTL = 24h).</span>
+      </div>
+      <span class="badge b8">FUNCTIONAL</span>
+    </div>
+  </div>
+
+  <h3>Phase 9 — Execution Layer</h3>
+  <div class="checklist p9-section">
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">Every action emits action_started + action_completed to cognitive.events</span>
+        <span class="citem-note">Watch Redpanda Console topic <code>cognitive.events</code> while executing. Confirm two events per step: <code>action_started</code> then <code>action_completed</code> or <code>action_failed</code>.</span>
+      </div>
+      <span class="badge b9">CONTRACT</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">Independent steps execute in parallel</span>
+        <span class="citem-note">Plan with s1 and s2 (no deps between them): both step timestamps show overlapping execution windows, not sequential.</span>
+      </div>
+      <span class="badge b9">FUNCTIONAL</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">Failed step triggers rollback events on cognitive.events</span>
+        <span class="citem-note">Force a step failure by pointing to an invalid handler URL. Confirm <code>rollback_executed</code> event appears on the bus within the step timeout.</span>
+      </div>
+      <span class="badge b9">SAFETY</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">World Model anomaly count decreases after successful plan</span>
+        <span class="citem-note">After executing a full <code>scale_consumer_group</code> plan against a seeded lag anomaly: <code>GET /world/anomalies</code> returns fewer open anomalies within the success_criteria timeout.</span>
+      </div>
+      <span class="badge b9">E2E</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">128 tests pass (86 existing + 20 P8 + 22 P9)</span>
+        <span class="citem-note"><code>python3 -m pytest</code> exits 128 passed, 0 failed. Zero live network calls during unit tests (all mocked).</span>
+      </div>
+      <span class="badge b8">REQUIRED</span>
+    </div>
+  </div>
+
+  <div class="note note-ok" style="margin-top: 28px;">
+    <div class="note-icon">✅</div>
+    <div class="note-body">
+      <strong>When all items are green, Phases 8 and 9 are complete.</strong>
+      Your architecture now perceives, remembers, models the world, reasons, plans,
+      and acts. Every action emits feedback events back to the event bus — meaning
+      the World Model updates from each execution, and the Reasoning Engine will see
+      the results in its next cycle. Phase 10 (Feedback Loop) closes the learning
+      circuit: it reads those outcomes from episodic memory and uses them to update
+      procedural memory's playbook confidence scores and the knowledge graph's
+      RESOLVES relationships — making the system measurably better with each iteration.
+    </div>
+  </div>
+
+  <h3>What Phase 10 (Feedback Loop) Consumes from Phases 8 + 9</h3>
+  <table class="p9-section">
+    <thead><tr><th>Phase 10 Input</th><th>Source</th><th>How It Learns</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>action_completed events</td>
+        <td><code>cognitive.events</code> topic — emitted by BaseActionHandler</td>
+        <td>Reads <code>plan_id</code> → retrieves episodic record → checks if anomaly resolved → marks outcome as success or failure</td>
+      </tr>
+      <tr>
+        <td>Plan success/failure status</td>
+        <td><code>GET /planning/plans/{plan_id}</code></td>
+        <td>Updates procedural memory playbook confidence score for the matched playbook trigger</td>
+      </tr>
+      <tr>
+        <td>reasoning_trace from DecisionObject</td>
+        <td>Episodic memory record written by ReasoningEngine in Phase 7</td>
+        <td>Becomes a past experience for future reasoning cycles — retrieval improves over time</td>
+      </tr>
+      <tr>
+        <td>rollback_executed events</td>
+        <td><code>cognitive.events</code> — emitted by PlanMonitor</td>
+        <td>Adds negative signal to the action that caused rollback — weakens that rule in the fast path</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+</div><!-- /wrap -->
+</body>
+</html>

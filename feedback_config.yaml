@@ -1,0 +1,29 @@
+# Verification delay per action type.
+# How long to wait before checking World Model state after action.
+# Shorter = faster feedback but more false negatives.
+# Longer = more accurate but slower learning cycle.
+
+defaults:
+  verification_delay_s: 90        # default for unknown actions
+  confidence_increment: 0.04     # per success on RESOLVES edge
+  confidence_decrement: 0.05     # per failure on RESOLVES edge
+  confidence_min:       0.10     # floor — never forget a path exists
+  confidence_max:       0.99     # cap — always allow some doubt
+
+action_overrides:
+  scale_consumer_group:
+    verification_delay_s: 60      # fast-propagating infra action
+  restart_connection_pool:
+    verification_delay_s: 45
+  restart_service:
+    verification_delay_s: 120     # rolling restart needs more time
+  send_alert:
+    verification_delay_s: 5       # alerts are immediate — no propagation
+  escalate_to_human:
+    verification_delay_s: 1800   # wait for human to act (30 min)
+  monitor_and_wait:
+    verification_delay_s: 300    # 5-minute watch period
+  scale_read_replicas:
+    verification_delay_s: 90
+  increase_log_verbosity:
+    verification_delay_s: 10     # immediate — just config change

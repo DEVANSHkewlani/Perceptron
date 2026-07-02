@@ -1,0 +1,75 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+rule_files:
+  - 'alert.rules.yml'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']
+
+  - job_name: 'shopcore-api-gateway'
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - 'shopcore-api-gateway:8010'
+          - 'host.docker.internal:8010'
+        labels:
+          service: api-gateway
+
+  - job_name: 'shopcore-product-service'
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - 'shopcore-product-service:8011'
+          - 'host.docker.internal:8011'
+        labels:
+          service: product-service
+
+  - job_name: 'shopcore-order-service'
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - 'shopcore-order-service:8012'
+          - 'host.docker.internal:8012'
+        labels:
+          service: order-service
+
+  - job_name: 'shopcore-user-service'
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - 'shopcore-user-service:8013'
+          - 'host.docker.internal:8013'
+        labels:
+          service: user-service
+
+  - job_name: 'shopcore-cart-service'
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - 'shopcore-cart-service:8014'
+          - 'host.docker.internal:8014'
+        labels:
+          service: cart-service
+
+  - job_name: 'shopcore-notification-service'
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - 'shopcore-notification-service:8015'
+          - 'host.docker.internal:8015'
+        labels:
+          service: notification-service

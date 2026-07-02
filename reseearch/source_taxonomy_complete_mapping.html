@@ -1,0 +1,265 @@
+
+<h2 class="sr-only">Complete source taxonomy — 14 website signal categories mapped to 9 schema types, with adapter, confidence, and completeness assessment</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tab{padding:6px 14px;font-size:13px;border:0.5px solid var(--color-border-secondary);border-radius:20px;background:transparent;cursor:pointer;color:var(--color-text-secondary);transition:all .12s}
+.tab.on{background:var(--color-background-secondary);color:var(--color-text-primary);border-color:var(--color-border-primary)}
+.cat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.cat{padding:11px 13px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);cursor:pointer;transition:border-color .12s,background .12s}
+.cat:hover{background:var(--color-background-secondary);border-color:var(--color-border-secondary)}
+.cat.on{border-color:var(--color-border-primary);background:var(--color-background-secondary)}
+.cat-name{font-size:12px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px;line-height:1.3}
+.cat-q{font-size:11px;color:var(--color-text-tertiary);line-height:1.4}
+.badge{display:inline-block;font-size:10px;font-weight:500;padding:2px 7px;border-radius:20px;margin-top:5px}
+.detail{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:16px;background:var(--color-background-primary)}
+.detail h3{font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:12px}
+.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:10px}
+.row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:10px}
+.f{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:11px 13px}
+.fl{font-size:10px;font-weight:500;color:var(--color-text-tertiary);letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px}
+.fv{font-size:12px;color:var(--color-text-primary);line-height:1.5}
+.pill-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.pill{font-size:11px;padding:3px 9px;border-radius:20px;border:0.5px solid var(--color-border-tertiary);color:var(--color-text-secondary)}
+.conf-bar{height:5px;border-radius:3px;background:var(--color-border-tertiary);margin-top:5px;overflow:hidden}
+.conf-fill{height:100%;border-radius:3px}
+.ask{width:100%;margin-top:10px;padding:8px 13px;font-size:12px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;cursor:pointer;color:var(--color-text-primary);text-align:left;transition:background .12s}
+.ask:hover{background:var(--color-background-secondary)}
+.comp-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.comp-row:last-child{border-bottom:none}
+.comp-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.comp-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:3px}
+.comp-body{font-size:12px;color:var(--color-text-secondary);line-height:1.6}
+</style>
+
+<div class="tabs">
+  <button class="tab on" onclick="showTab('map',this)">Category → schema mapping</button>
+  <button class="tab" onclick="showTab('complete',this)">Completeness assessment</button>
+</div>
+
+<div id="tab-map">
+  <div class="cat-grid" id="cat-grid"></div>
+  <div class="detail" id="detail-box"><p style="font-size:12px;color:var(--color-text-tertiary)">Select a category above to see its schema mapping, adapter, and signals.</p></div>
+</div>
+
+<div id="tab-complete" style="display:none">
+  <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px">
+    <div class="f"><div class="fl">Your 14 categories</div><div class="fv" style="font-size:20px;font-weight:500">14</div></div>
+    <div class="f"><div class="fl">Schema types used</div><div class="fv" style="font-size:20px;font-weight:500">9</div></div>
+    <div class="f"><div class="fl">New types needed</div><div class="fv" style="font-size:20px;font-weight:500;color:var(--color-text-warning)">2</div></div>
+  </div>
+  <div id="comp-list"></div>
+</div>
+
+<script>
+const SCHEMA={
+  log:{label:'log',bg:'#E1F5EE',tc:'#085041'},
+  metric:{label:'metric',bg:'#E6F1FB',tc:'#0C447C'},
+  api:{label:'api',bg:'#EEEDFE',tc:'#3C3489'},
+  database:{label:'database',bg:'#FAEEDA',tc:'#633806'},
+  queue:{label:'queue',bg:'#FAECE7',tc:'#712B13'},
+  file:{label:'file',bg:'#F1EFE8',tc:'#444441'},
+  user_event:{label:'user_event',bg:'#FBEAF0',tc:'#72243E'},
+  sensor:{label:'sensor',bg:'#EAF3DE',tc:'#27500A'},
+  agent_event:{label:'agent_event',bg:'#FCEBEB',tc:'#791F1F'},
+  new_browser:{label:'browser_event ✦new',bg:'#FAC775',tc:'#412402'},
+  new_security:{label:'security_event ✦new',bg:'#F7C1C1',tc:'#791F1F'},
+};
+
+const CATS=[
+  {id:'applog',name:'1. Application logs',q:'"What is the app saying?"',
+   types:['log'],
+   adapter:'Filebeat / Fluent Bit tail agent → Kafka → regex normalizer extracts event_type',
+   confidence:0.75,confNote:'0.75 — event_type inferred by regex from unstructured text',
+   subs:['application logs','error logs','access logs','exception traces','deployment logs','runtime warnings','authentication logs','framework logs'],
+   detects:['crashes','exceptions','DB timeout','memory leak warnings','JWT failures','degraded flows'],
+   tool:'Fluent Bit (sidecar) + Kafka topic raw.logs',
+   prompt:'How do I build a log normalizer that extracts event_type from different log formats — JSON, plaintext, framework-specific?'},
+  {id:'metric',name:'2. System metrics',q:'"How healthy is the machine?"',
+   types:['metric'],
+   adapter:'Prometheus scrapes /metrics every 15s → Alertmanager webhooks → bridge normalizer',
+   confidence:0.98,confNote:'0.98 — threshold crossings are deterministic, no interpretation',
+   subs:['CPU %','RAM %','disk usage','network throughput','process count','thread count','garbage collection','open file descriptors','container metrics'],
+   detects:['overload','memory leaks','scaling issues','resource exhaustion','bottlenecks'],
+   tool:'Prometheus + node_exporter + cAdvisor (containers) + Alertmanager bridge',
+   prompt:'How do I set up Prometheus alerting rules that emit schema events for CPU, memory, and container metrics?'},
+  {id:'api',name:'3. API & services',q:'"Can services communicate?"',
+   types:['api'],
+   adapter:'Celery beat polling adapter with change-detection — emits only on state change',
+   confidence:0.97,confNote:'0.97 — direct HTTP observation, status code unambiguous',
+   subs:['internal APIs','external APIs','microservice health','response codes','response latency','retries','SSL validity','DNS health'],
+   detects:['degraded services','cascading failures','latency spikes','external dependency failure'],
+   tool:'Celery beat + httpx async + Redis state cache for change detection',
+   prompt:'How do I build a change-detection polling adapter that only emits events when API state actually changes?'},
+  {id:'db',name:'4. Database sources',q:'"Can data systems operate?"',
+   types:['database'],
+   adapter:'postgres_exporter / mysqld_exporter → Prometheus scrape → alerting bridge',
+   confidence:0.98,confNote:'0.98 — reads directly from DB system tables',
+   subs:['query latency','slow queries','locks','replication lag','pool exhaustion','transaction failures','deadlocks','cache hit ratios'],
+   detects:['DB bottlenecks','scaling failures','consistency risks','storage degradation'],
+   tool:'postgres_exporter + pg_stat_* tables + pg_stat_statements for slow queries',
+   prompt:'What PostgreSQL system tables should I monitor and what are the threshold values that indicate problems?'},
+  {id:'queue',name:'5. Queue / stream sources',q:'"Is async workload flowing?"',
+   types:['queue'],
+   adapter:'Admin API polling (Kafka consumer group API / RabbitMQ management API) every 10s',
+   confidence:0.96,confNote:'0.96 — admin API returns exact broker state',
+   subs:['Kafka','RabbitMQ','Redis streams','SQS','Celery queues','consumer lag','queue depth','message age','dead-letter queues','retry storms'],
+   detects:['workload congestion','async failures','worker collapse','hidden bottlenecks'],
+   tool:'confluent_kafka AdminClient + Kombu (RabbitMQ) + boto3 (SQS)',
+   prompt:'How do I monitor Kafka consumer lag and emit schema events when lag exceeds thresholds?'},
+  {id:'file',name:'6. Filesystem sources',q:'"What artifacts changed?"',
+   types:['file'],
+   adapter:'inotify (Linux) / fsevents (macOS) via Python watchdog — kernel-push, not polling',
+   confidence:0.95,confNote:'0.95 — kernel event is exact; classification straightforward',
+   subs:['config files','uploaded files','deployment artifacts','cache directories','static assets','secrets/certificates'],
+   detects:['unauthorized changes','deployment corruption','certificate expiry','missing assets'],
+   tool:'Python watchdog library wrapping inotify/fsevents',
+   prompt:'How do I watch config directories and certificate files for changes using Python watchdog?'},
+  {id:'user',name:'7. User interaction',q:'"What are humans experiencing?"',
+   types:['user_event'],
+   adapter:'Frontend JS SDK → batched POST → FastAPI perception endpoint → normalizer',
+   confidence:0.88,confNote:'0.88 — intent inferred from DOM context, some ambiguity',
+   subs:['clicks','navigation','sessions','rage clicks','cart abandonment','form failures','session duration','feature usage','page exits'],
+   detects:['frustration','UX degradation','feature confusion','conversion failures'],
+   tool:'Custom 2kb JS SDK (or PostHog/Amplitude as source) → perception API endpoint',
+   prompt:'How do I build a frontend SDK that captures rage clicks, form failures, and cart abandonment as schema events?'},
+  {id:'browser',name:'8. Browser environment',q:'"What is happening client-side?"',
+   types:['new_browser'],
+   adapter:'JS error handler + PerformanceObserver + Web Vitals library → POST to perception API',
+   confidence:0.85,confNote:'0.85 — JS exceptions are exact; rendering issues need heuristics',
+   subs:['JS exceptions','frontend performance','hydration failures','browser compatibility','rendering errors','network waterfall timing','Core Web Vitals'],
+   detects:['frontend-only failures','device-specific bugs','rendering degradation'],
+   tool:'window.onerror + PerformanceObserver + web-vitals npm package',
+   prompt:'How do I capture Core Web Vitals, JS exceptions, and hydration failures as schema events from the browser?'},
+  {id:'security',name:'9. Security sources',q:'"Is the system under attack?"',
+   types:['new_security','log','metric'],
+   adapter:'WAF webhook + auth log tail + rate-limit counters + IP geolocation enrichment',
+   confidence:0.80,confNote:'0.80 — attack signals need multi-source correlation; some false positives',
+   subs:['WAF logs','auth failures','unusual traffic','rate limiting','bot detection','geo anomalies','permission changes','suspicious admin actions'],
+   detects:['DDoS','brute force','scraping','fraud','privilege escalation'],
+   tool:'Cloudflare WAF webhooks + Fail2ban + custom rate-limit bridge + MaxMind GeoIP',
+   prompt:'How do I correlate WAF logs, auth failures, and rate-limit signals into unified security_event schema events?'},
+  {id:'network',name:'10. Network sources',q:'"How is traffic moving?"',
+   types:['metric','api'],
+   adapter:'Load balancer metrics → Prometheus + CDN webhook callbacks + DNS polling adapter',
+   confidence:0.96,confNote:'0.96 — network metrics are deterministic measurements',
+   subs:['load balancers','CDN metrics','packet loss','DNS resolution','TLS handshakes','routing latency','ingress/egress traffic'],
+   detects:['regional degradation','traffic anomalies','CDN failures','networking bottlenecks'],
+   tool:'nginx/HAProxy Prometheus exporter + Cloudflare Analytics API + dig polling',
+   prompt:'How do I monitor CDN health, DNS resolution time, and load balancer metrics as schema events?'},
+  {id:'deploy',name:'11. Deployment / CI-CD',q:'"What changed operationally?"',
+   types:['log','file','api'],
+   adapter:'GitHub/GitLab webhooks → deployment event normalizer; K8s watch API for rollout state',
+   confidence:0.99,confNote:'0.99 — deployment events are structured by definition',
+   subs:['Git commits','deployment events','rollback events','feature flag changes','infrastructure changes','Kubernetes rollout state'],
+   detects:['regressions','deployment-caused incidents','unstable releases'],
+   tool:'GitHub webhook receiver + ArgoCD/Flux events + K8s watch API',
+   prompt:'How do I capture deployment events from GitHub webhooks and Kubernetes rollout state as schema events?'},
+  {id:'thirdparty',name:'12. Third-party dependencies',q:'"What external systems can break us?"',
+   types:['api','metric'],
+   adapter:'Status page polling (statuspage.io API) + synthetic probe polling adapters',
+   confidence:0.91,confNote:'0.91 — third-party status pages are reliable; synthetic probes add direct confirmation',
+   subs:['payment gateways','auth providers','analytics SDKs','email providers','cloud APIs','CDN providers'],
+   detects:['dependency outages','degraded integrations','upstream failures'],
+   tool:'Celery beat polling + statuspage.io REST API + Pingdom/Checkly synthetic probes',
+   prompt:'How do I monitor third-party service status pages and emit schema events when they degrade?'},
+  {id:'agent',name:'13. Agent / system events',q:'"What did cognition do?"',
+   types:['agent_event'],
+   adapter:'Agent SDK publishes directly to Kafka — no intermediary, structured by definition',
+   confidence:1.0,confNote:'1.0 — structured by definition, no interpretation needed',
+   subs:['planner decisions','action execution','automated remediations','reasoning traces','task delegation'],
+   detects:['self-induced failures','reasoning errors','execution loops'],
+   tool:'confluent-kafka-python in every agent via shared SDK',
+   prompt:'What should the agent_event schema include — what fields capture planner decisions and reasoning traces?'},
+  {id:'biz',name:'14. Business signals',q:'"What is the operational impact?"',
+   types:['metric','user_event'],
+   adapter:'Analytics platform webhooks (Segment/Amplitude) + database query polling for conversion funnels',
+   confidence:0.90,confNote:'0.90 — business metrics are real but lag actual technical events',
+   subs:['signup rates','conversion','bounce rates','retention','engagement','transaction success','SLA/SLO violations'],
+   detects:['hidden degradation','revenue-impacting failures','business anomalies'],
+   tool:'Segment webhook receiver + custom SLO tracker querying TimescaleDB',
+   prompt:'How do I track SLO violations and conversion funnel degradation as schema events in the cognitive architecture?'},
+];
+
+const COMPLETENESS=[
+  {icon:'ti-circle-check',color:'var(--color-text-success)',title:'12 of 14 categories fully covered by existing 9 schema types',
+   body:'Categories 1–7 and 11–14 map cleanly onto the 9 existing source_type enum values. No schema changes needed for these.'},
+  {icon:'ti-alert-triangle',color:'var(--color-text-warning)',title:'Category 8 (Browser environment) requires a new type: browser_event',
+   body:'JS exceptions, hydration failures, Core Web Vitals, and network waterfall timing are client-side signals that do not fit cleanly into log (server-side) or user_event (user intent). They need source_type: "browser_event" with its own adapter (PerformanceObserver + window.onerror) and its own normalizer. Add it to the enum.'},
+  {icon:'ti-alert-triangle',color:'var(--color-text-warning)',title:'Category 9 (Security) requires a new type: security_event',
+   body:'WAF alerts, brute-force signals, geo anomalies, and bot detections are multi-source correlated signals. They are not simple logs or metrics — they require enrichment (IP geolocation, rate-limit context, threat intelligence). A security_event type with a dedicated security normalizer keeps this logic isolated. Without it, security signals bleed into the log type and lose their structured enrichment.'},
+  {icon:'ti-info-circle',color:'var(--color-text-info)',title:'Category 9 currently spans 3 types (log + metric + security_event)',
+   body:'Until you add the security_event type, security signals will split across log (WAF log lines), metric (rate-limit counters), and a custom event type. This works but makes correlation harder. The security_event type lets the reasoning engine query "all security signals in the last 10 minutes" with a single filter.'},
+  {icon:'ti-info-circle',color:'var(--color-text-info)',title:'Category 10 (Network) maps to metric + api — no new type needed',
+   body:'Load balancer metrics → metric type via Prometheus. DNS health checks → api type via polling adapter. CDN webhook callbacks → api type. Network is fully covered by existing types.'},
+  {icon:'ti-info-circle',color:'var(--color-text-info)',title:'Category 11 (Deployment) maps to log + file + api — no new type needed',
+   body:'Deployment events are webhook POSTs → api adapter. K8s rollout state → api adapter polling the K8s watch API. Feature flag changes → file adapter if config-based, or api adapter if via LaunchDarkly. Fully covered.'},
+  {icon:'ti-circle-check',color:'var(--color-text-success)',title:'Your 14 categories are complete for a general website cognitive system',
+   body:'No significant signal category is missing. The only gaps are infrastructure-level: internal observability of the cognitive system itself (how long does reasoning take? how often does the world model update?) — but that is covered by the observability layer (Prometheus + OpenTelemetry), not a new perception source.'},
+  {icon:'ti-bulb',color:'var(--color-text-secondary)',title:'Recommended final enum (11 types)',
+   body:'log | metric | api | queue | file | user_event | database | sensor | agent_event | browser_event | security_event — add browser_event and security_event to the source_type enum in your unified event schema. Everything else maps to existing types.'},
+];
+
+let selCat=null;
+
+function renderGrid(){
+  const g=document.getElementById('cat-grid');
+  g.innerHTML=CATS.map(c=>{
+    const badges=c.types.map(t=>{
+      const s=SCHEMA[t];
+      return `<span class="badge" style="background:${s.bg};color:${s.tc}">${s.label}</span>`;
+    }).join(' ');
+    return `<div class="cat ${selCat===c.id?'on':''}" onclick="selCat='${c.id}';renderGrid();renderDetail()">
+      <div class="cat-name">${c.name}</div>
+      <div class="cat-q">${c.q}</div>
+      ${badges}
+    </div>`;
+  }).join('');
+}
+
+function renderDetail(){
+  const box=document.getElementById('detail-box');
+  if(!selCat){box.innerHTML='<p style="font-size:12px;color:var(--color-text-tertiary)">Select a category above.</p>';return;}
+  const c=CATS.find(x=>x.id===selCat);
+  const pct=Math.round(c.confidence*100);
+  const fc=pct>=95?'#1D9E75':pct>=85?'#BA7517':'#993C1D';
+  const typesBadges=c.types.map(t=>{const s=SCHEMA[t];return`<span class="badge" style="background:${s.bg};color:${s.tc}">${s.label}</span>`;}).join(' ');
+  box.innerHTML=`
+    <h3>${c.name}</h3>
+    <div class="row3">
+      <div class="f"><div class="fl">Schema type(s)</div><div class="fv" style="margin-top:4px">${typesBadges}</div></div>
+      <div class="f"><div class="fl">Detection tool</div><div class="fv">${c.tool}</div></div>
+      <div class="f"><div class="fl">Confidence</div><div class="fv">${c.confNote}<div class="conf-bar"><div class="conf-fill" style="width:${pct}%;background:${fc}"></div></div></div></div>
+    </div>
+    <div class="row2">
+      <div class="f"><div class="fl">Adapter approach</div><div class="fv">${c.adapter}</div></div>
+      <div class="f"><div class="fl">Detects</div><div class="pill-row">${c.detects.map(d=>`<span class="pill">${d}</span>`).join('')}</div></div>
+    </div>
+    <div class="f" style="margin-bottom:10px"><div class="fl">Specific sub-sources (${c.subs.length})</div><div class="pill-row">${c.subs.map(s=>`<span class="pill">${s}</span>`).join('')}</div></div>
+    <button class="ask" onclick="sendPrompt('${c.prompt.replace(/'/g,"\\'")}')">Go deeper on ${c.name} adapter ↗</button>
+  `;
+}
+
+function renderCompleteness(){
+  const l=document.getElementById('comp-list');
+  l.innerHTML=COMPLETENESS.map(item=>`
+    <div class="comp-row">
+      <i class="ti ${item.icon} comp-icon" style="color:${item.color}" aria-hidden="true"></i>
+      <div>
+        <div class="comp-title">${item.title}</div>
+        <div class="comp-body">${item.body}</div>
+      </div>
+    </div>`).join('');
+}
+
+function showTab(name,btn){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('tab-map').style.display=name==='map'?'block':'none';
+  document.getElementById('tab-complete').style.display=name==='complete'?'block':'none';
+}
+
+renderGrid();
+renderCompleteness();
+</script>

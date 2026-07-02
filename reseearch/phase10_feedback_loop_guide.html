@@ -1,0 +1,2174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 10 — Build the Feedback Loop | Digital Cognitive Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg:    #06080f;
+    --s1:    #090c18;
+    --s2:    #0e1120;
+    --s3:    #131628;
+    --s4:    #181c30;
+    --b1:    #1a2038;
+    --b2:    #202640;
+    --b3:    #2a3258;
+    --teal:  #14b8a6;
+    --teal2: #2dd4bf;
+    --teal3: #5eead4;
+    --cyan:  #06b6d4;
+    --green: #22c55e;
+    --green2:#4ade80;
+    --amber: #f59e0b;
+    --amber2:#fbbf24;
+    --red:   #ef4444;
+    --red2:  #f87171;
+    --sky:   #38bdf8;
+    --purple:#a78bfa;
+    --tx:    #dce8f8;
+    --tx2:   #7888a8;
+    --tx3:   #2d3a58;
+    --mono:  'JetBrains Mono', monospace;
+    --sans:  'Inter', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--tx);
+    font-family: var(--sans);
+    font-size: 14.5px;
+    line-height: 1.75;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse at 10% 5%,  rgba(20,184,166,.06) 0%, transparent 45%),
+      radial-gradient(ellipse at 90% 90%, rgba(6,182,212,.04)  0%, transparent 45%);
+    pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(var(--b1) 1px, transparent 1px),
+      linear-gradient(90deg, var(--b1) 1px, transparent 1px);
+    background-size: 42px 42px;
+    opacity: .28;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── NAV ── */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(6,8,15,.9);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--b1);
+    height: 52px;
+    display: flex; align-items: center;
+    padding: 0 40px;
+    justify-content: space-between;
+  }
+  .nav-brand {
+    font-family: var(--mono);
+    font-size: 11px; color: var(--tx3); letter-spacing: .07em;
+  }
+  .nav-brand strong { color: var(--teal); font-weight: 600; }
+  .nav-links { display: flex; gap: 3px; list-style: none; }
+  .nav-links a {
+    font-family: var(--mono); font-size: 9.5px;
+    letter-spacing: .06em; text-transform: uppercase;
+    color: var(--tx3); text-decoration: none;
+    padding: 4px 9px; border-radius: 4px; transition: all .15s;
+  }
+  .nav-links a:hover { background: var(--s3); color: var(--teal2); }
+
+  /* ── LAYOUT ── */
+  .wrap {
+    position: relative; z-index: 1;
+    max-width: 940px; margin: 0 auto;
+    padding: 0 36px 130px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 84px 0 68px;
+    border-bottom: 1px solid var(--b1);
+    margin-bottom: 76px;
+  }
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--tx3); margin-bottom: 22px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    display: block; width: 32px; height: 1px;
+    background: linear-gradient(90deg, var(--teal), transparent);
+  }
+  .hero h1 {
+    font-size: clamp(36px, 5.5vw, 58px);
+    font-weight: 800; line-height: 1.06;
+    letter-spacing: -.025em; color: #fff;
+    margin-bottom: 22px;
+  }
+  .hero h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, var(--teal) 0%, var(--cyan) 50%, var(--sky) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .hero-sub {
+    font-size: 16px; font-weight: 300; color: var(--tx2);
+    max-width: 640px; line-height: 1.85; margin-bottom: 44px;
+  }
+  .hero-stats {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    border: 1px solid var(--b1); border-radius: 12px;
+    overflow: hidden; width: fit-content;
+    background: var(--b1); gap: 1px;
+  }
+  @media(max-width:640px){ .hero-stats { grid-template-columns: repeat(3,1fr); } }
+  .hstat {
+    background: var(--s1); padding: 18px 22px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .hstat-val {
+    font-family: var(--mono); font-size: 22px; font-weight: 600;
+    color: var(--teal); line-height: 1;
+  }
+  .hstat-lbl {
+    font-family: var(--mono); font-size: 9px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--tx3);
+  }
+
+  /* ── KEYBOX — compounding insight ── */
+  .keybox {
+    background: linear-gradient(135deg,
+      rgba(20,184,166,.08) 0%,
+      rgba(6,182,212,.05) 100%);
+    border: 1px solid rgba(20,184,166,.2);
+    border-left: 4px solid var(--teal);
+    border-radius: 0 12px 12px 0;
+    padding: 22px 28px;
+    margin: 20px 0 28px;
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--tx);
+    font-weight: 300;
+  }
+  .keybox strong { color: var(--teal2); font-weight: 600; }
+
+  /* ── SECTION ── */
+  .section { margin-bottom: 80px; }
+  .sec-head {
+    display: flex; align-items: flex-start; gap: 16px;
+    margin-bottom: 32px; padding-bottom: 20px;
+    border-bottom: 1px solid var(--b1);
+  }
+  .step-pill {
+    font-family: var(--mono); font-size: 9px; font-weight: 700;
+    letter-spacing: .15em; text-transform: uppercase;
+    padding: 5px 12px; border-radius: 5px;
+    white-space: nowrap; margin-top: 5px; flex-shrink: 0;
+    background: var(--teal); color: var(--bg);
+  }
+  .sec-text h2 {
+    font-size: 25px; font-weight: 700; color: #fff;
+    letter-spacing: -.015em; margin-bottom: 6px;
+  }
+  .sec-text p { font-size: 13.5px; color: var(--tx2); max-width: 590px; margin: 0; }
+
+  h3 {
+    font-size: 15px; font-weight: 600; color: var(--tx);
+    margin: 30px 0 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  h3::before {
+    content: ''; display: block;
+    width: 3px; height: 16px;
+    background: linear-gradient(180deg, var(--teal) 0%, var(--cyan) 100%);
+    border-radius: 2px; flex-shrink: 0;
+  }
+  h4 {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 500;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: var(--teal2); margin: 24px 0 10px;
+  }
+  p { color: var(--tx2); margin-bottom: 14px; line-height: 1.8; }
+  p strong { color: var(--tx); }
+
+  /* ── NOTES ── */
+  .note {
+    display: flex; gap: 13px;
+    padding: 15px 18px; border-radius: 8px;
+    margin: 16px 0 22px; font-size: 13.5px; line-height: 1.7;
+  }
+  .note-icon { font-size: 17px; flex-shrink: 0; padding-top: 2px; }
+  .note-body { color: var(--tx2); }
+  .note-body strong { color: var(--tx); }
+  .nteal   { background: rgba(20,184,166,.06);  border: 1px solid rgba(20,184,166,.22); }
+  .nwarn   { background: rgba(245,158,11,.06);  border: 1px solid rgba(245,158,11,.2); }
+  .ndanger { background: rgba(239,68,68,.06);   border: 1px solid rgba(239,68,68,.22); }
+  .nok     { background: rgba(34,197,94,.05);   border: 1px solid rgba(34,197,94,.2); }
+  .ninfo   { background: rgba(56,189,248,.05);  border: 1px solid rgba(56,189,248,.2); }
+
+  /* ── CODE BLOCKS ── */
+  .cb {
+    margin: 12px 0 24px; border-radius: 10px;
+    overflow: hidden; border: 1px solid var(--b2);
+  }
+  .cb-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 16px; background: var(--s2);
+    border-bottom: 1px solid var(--b1);
+  }
+  .cb-file {
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    color: var(--tx2); display: flex; align-items: center; gap: 8px;
+  }
+  .cb-file::before {
+    content: ''; width: 6px; height: 6px;
+    border-radius: 50%; background: var(--teal); opacity: .7;
+  }
+  .cb-lang {
+    font-family: var(--mono); font-size: 9px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--tx3);
+  }
+  pre {
+    margin: 0; padding: 19px 20px;
+    background: #050710; overflow-x: auto;
+    font-family: var(--mono); font-size: 12.5px;
+    line-height: 1.65; color: #c8d5f0;
+  }
+  .kw  { color: #f87171; }
+  .fn  { color: #c4b5fd; }
+  .st  { color: #86efac; }
+  .nu  { color: #93c5fd; }
+  .cm  { color: #2a3550; font-style: italic; }
+  .dc  { color: #2a3550; font-style: italic; }
+  .at  { color: #fb923c; }
+  .tl  { color: var(--teal2); }
+  .gr  { color: var(--green2); }
+  .am  { color: var(--amber2); }
+
+  /* ── TABLES ── */
+  table {
+    width: 100%; border-collapse: collapse;
+    margin: 12px 0 22px; font-size: 13px;
+  }
+  thead th {
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--tx3);
+    padding: 9px 14px; border-bottom: 1px solid var(--b2);
+    text-align: left; background: var(--s1);
+  }
+  tbody td {
+    padding: 11px 14px; border-bottom: 1px solid var(--b1);
+    vertical-align: top; color: var(--tx2); line-height: 1.65;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(255,255,255,.012); }
+  td:first-child {
+    font-family: var(--mono); font-size: 11.5px;
+    color: var(--teal2); white-space: nowrap;
+  }
+
+  code {
+    font-family: var(--mono); font-size: .84em;
+    color: var(--teal2); background: rgba(20,184,166,.09);
+    padding: 2px 6px; border-radius: 4px;
+  }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow {
+    background: var(--s2); border: 1px solid var(--b2);
+    border-radius: 11px; padding: 26px 30px;
+    margin: 12px 0 24px;
+    font-family: var(--mono); font-size: 12px;
+    line-height: 2.05; overflow-x: auto;
+  }
+  .flow .hl  { color: var(--teal2); font-weight: 600; }
+  .flow .gr  { color: var(--green2); }
+  .flow .am  { color: var(--amber2); }
+  .flow .re  { color: var(--red2); }
+  .flow .sk  { color: var(--sky); }
+  .flow .dm  { color: var(--tx3); }
+  .flow .pu  { color: var(--purple); }
+
+  /* ── FILE TREE ── */
+  .ftree {
+    background: var(--s2); border: 1px solid var(--b2);
+    border-radius: 10px; padding: 18px 22px;
+    margin: 12px 0 22px;
+    font-family: var(--mono); font-size: 12px; line-height: 2.1;
+  }
+  .ftree .dir  { color: var(--sky); }
+  .ftree .file { color: var(--tx2); }
+  .ftree .new  { color: var(--teal2); font-weight: 600; }
+  .ftree .mod  { color: var(--amber2); font-weight: 600; }
+  .ftree .dm   { color: var(--tx3); }
+
+  /* ── RESPONSIBILITY CARDS ── */
+  .resp-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px; margin: 14px 0 24px;
+  }
+  @media(max-width:680px){ .resp-grid { grid-template-columns: 1fr; } }
+  .resp-card {
+    background: var(--s2); border: 1px solid var(--b1);
+    border-top: 3px solid var(--teal);
+    border-radius: 10px; padding: 18px 20px;
+  }
+  .resp-num {
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    color: var(--teal); letter-spacing: .1em; margin-bottom: 8px;
+  }
+  .resp-title {
+    font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 8px;
+  }
+  .resp-body { font-size: 13px; color: var(--tx2); line-height: 1.65; }
+
+  /* ── BADGE ── */
+  .badge {
+    display: inline-block; font-family: var(--mono);
+    font-size: 9.5px; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 4px;
+  }
+  .bteal  { background: rgba(20,184,166,.12); color: var(--teal2);  border: 1px solid rgba(20,184,166,.28); }
+  .bgreen { background: rgba(34,197,94,.1);   color: var(--green2); border: 1px solid rgba(34,197,94,.25); }
+  .bwarn  { background: rgba(245,158,11,.1);  color: var(--amber2); border: 1px solid rgba(245,158,11,.25); }
+  .bdanger{ background: rgba(239,68,68,.1);   color: var(--red2);   border: 1px solid rgba(239,68,68,.25); }
+  .binfo  { background: rgba(56,189,248,.1);  color: var(--sky);    border: 1px solid rgba(56,189,248,.25); }
+
+  /* ── TIMELINE ── */
+  .timeline { position: relative; padding-left: 32px; margin: 16px 0 24px; }
+  .timeline::before {
+    content: ''; position: absolute;
+    left: 9px; top: 6px; bottom: 6px; width: 1px;
+    background: linear-gradient(to bottom, var(--teal), var(--cyan), transparent);
+  }
+  .tl-item { position: relative; margin-bottom: 28px; }
+  .tl-item::before {
+    content: ''; position: absolute;
+    left: -26px; top: 5px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--teal); border: 2px solid var(--bg);
+  }
+  .tl-num {
+    font-family: var(--mono); font-size: 9.5px; font-weight: 600;
+    color: var(--teal); letter-spacing: .08em;
+    text-transform: uppercase; margin-bottom: 4px;
+  }
+  .tl-title { font-size: 14px; font-weight: 600; color: var(--tx); margin-bottom: 4px; }
+  .tl-body  { font-size: 13px; color: var(--tx2); line-height: 1.65; }
+
+  /* ── MIGRATION BOX ── */
+  .migration-box {
+    background: rgba(245,158,11,.05);
+    border: 1px solid rgba(245,158,11,.2);
+    border-left: 4px solid var(--amber);
+    border-radius: 0 10px 10px 0;
+    padding: 18px 22px; margin: 16px 0 24px;
+  }
+  .migration-box h4 { color: var(--amber2); margin-top: 0; }
+  .migration-box p  { font-size: 13px; margin-bottom: 10px; }
+  .migration-box p:last-child { margin-bottom: 0; }
+
+  /* ── TEST OUTPUT ── */
+  .testout {
+    background: #040610; border: 1px solid var(--b2);
+    border-radius: 10px; padding: 18px 20px;
+    font-family: var(--mono); font-size: 12px;
+    line-height: 1.8; margin: 12px 0 24px;
+  }
+  .testout .pass { color: var(--green2); }
+  .testout .fail { color: var(--red2); }
+  .testout .info { color: var(--teal2); }
+  .testout .warn { color: var(--amber2); }
+  .testout .dim  { color: var(--tx3); }
+  .testout .sep  { color: var(--b2); }
+
+  /* ── CHECKLIST ── */
+  .checklist {
+    background: var(--s1); border: 1px solid var(--b2);
+    border-radius: 12px; padding: 28px;
+  }
+  .citem {
+    display: grid; grid-template-columns: 20px 1fr auto;
+    gap: 12px; align-items: start;
+    padding: 13px 14px; background: var(--s2);
+    border: 1px solid transparent; border-radius: 8px;
+    margin-bottom: 8px; transition: border-color .2s;
+  }
+  .citem:last-child { margin-bottom: 0; }
+  .citem:hover { border-color: var(--b1); }
+  .citem-ico { font-size: 13px; padding-top: 2px; }
+  .citem-body { display: flex; flex-direction: column; gap: 3px; }
+  .citem-title { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--tx); }
+  .citem-note  { font-size: 12px; color: var(--tx2); line-height: 1.55; }
+  .citem-note code { font-size: 10.5px; }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 3px; }
+
+  @media(max-width:640px){
+    .wrap { padding: 0 16px 80px; }
+    .nav  { padding: 0 16px; }
+    .nav-links { display: none; }
+    .hero-stats { grid-template-columns: repeat(3,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">DCA &nbsp;/&nbsp; <strong>Phase 10</strong> — Feedback Loop</div>
+  <ul class="nav-links">
+    <li><a href="#concept">Concept</a></li>
+    <li><a href="#cycle">Cycle</a></li>
+    <li><a href="#arch">Architecture</a></li>
+    <li><a href="#migration">Migration</a></li>
+    <li><a href="#consumer">Consumer</a></li>
+    <li><a href="#verifier">Verifier</a></li>
+    <li><a href="#recorder">Recorder</a></li>
+    <li><a href="#updaters">Updaters</a></li>
+    <li><a href="#api">API</a></li>
+    <li><a href="#testing">Testing</a></li>
+    <li><a href="#gate">Gate</a></li>
+  </ul>
+</nav>
+
+<div class="wrap">
+
+<!-- ══════════════ HERO ══════════════ -->
+<header class="hero">
+  <div class="hero-eyebrow">Chapter 11 &nbsp;·&nbsp; Phase 10</div>
+  <h1>Build the<br><em>Feedback Loop</em></h1>
+  <p class="hero-sub">
+    The feedback loop is the most neglected component in most cognitive architecture projects.
+    It is what separates a pipeline from an adaptive system. Without it your system can act —
+    but it cannot learn from acting. This phase closes the intelligence loop permanently:
+    every action the system takes feeds back into its memory, its knowledge graph, and its
+    decision rules, making each iteration measurably better than the last.
+  </p>
+  <div class="hero-stats">
+    <div class="hstat"><span class="hstat-val">6</span><span class="hstat-lbl">New Modules</span></div>
+    <div class="hstat"><span class="hstat-val">3</span><span class="hstat-lbl">Responsibilities</span></div>
+    <div class="hstat"><span class="hstat-val">22</span><span class="hstat-lbl">New Tests</span></div>
+    <div class="hstat"><span class="hstat-val">4</span><span class="hstat-lbl">Files Modified</span></div>
+    <div class="hstat"><span class="hstat-val">8096</span><span class="hstat-lbl">API Port</span></div>
+  </div>
+</header>
+
+<!-- ══════════════ CONCEPT ══════════════ -->
+<section id="concept" class="section">
+  <div class="sec-head">
+    <div class="step-pill">CONCEPT</div>
+    <div class="sec-text">
+      <h2>What the Feedback Loop Does &amp; Why It Matters</h2>
+      <p>Three responsibilities that transform a capable agent into a continuously improving one.</p>
+    </div>
+  </div>
+
+  <div class="keybox">
+    <strong>The Compounding Effect:</strong> Each iteration of the feedback loop makes the system
+    marginally better. After 100 cycles it is noticeably better. After 1,000 cycles it is
+    dramatically better. This is how the cognitive architecture develops genuine expertise over time —
+    not through retraining a model, but through the accumulation of structured, contextualized
+    experience across its memory systems. The LLM stays frozen. The architecture learns.
+  </div>
+
+  <div class="resp-grid">
+    <div class="resp-card">
+      <div class="resp-num">RESPONSIBILITY 1</div>
+      <div class="resp-title">Verification</div>
+      <div class="resp-body">
+        After an action is executed, verify the intended effect actually occurred.
+        Did scaling replicas reduce latency? Did restarting the service clear the error queue?
+        Verification events flow through the perception layer and update the world model.
+        The system waits a configurable delay before checking — giving the environment
+        time to reflect the action's effects.
+      </div>
+    </div>
+    <div class="resp-card">
+      <div class="resp-num">RESPONSIBILITY 2</div>
+      <div class="resp-title">Outcome Recording</div>
+      <div class="resp-body">
+        Record the action, its full context (what the world model looked like when the
+        decision was made), and its measured outcome in episodic memory. This is the
+        training data for everything that follows. Future reasoning cycles retrieve this
+        as a "past experience" — the more outcomes recorded, the richer the LLM's context.
+      </div>
+    </div>
+    <div class="resp-card">
+      <div class="resp-num">RESPONSIBILITY 3</div>
+      <div class="resp-title">Model Updating</div>
+      <div class="resp-body">
+        Update the knowledge graph and procedural memory based on the outcome.
+        A successful action reinforces the strategy that produced it. A failed action
+        weakens it. Over time the system builds an empirical understanding of what works —
+        encoded as RESOLVES edge weights in Neo4j and success_rate scores in PostgreSQL.
+      </div>
+    </div>
+  </div>
+
+  <div class="note ndanger">
+    <div class="note-icon">🚫</div>
+    <div class="note-body">
+      <strong>Without the feedback loop, the system acts but never learns.</strong>
+      The world model does not update from action results. The reasoning engine cannot
+      tell whether its recommendations worked. Procedural memory playbooks accumulate
+      no track record. The knowledge graph has no RESOLVES edges. The entire adaptive
+      quality of the architecture depends on this phase completing the loop.
+    </div>
+  </div>
+
+  <h3>How Phase 10 Connects to Every Prior Phase</h3>
+  <table>
+    <thead>
+      <tr><th>Prior Phase</th><th>What Phase 10 Reads</th><th>What Phase 10 Writes Back</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Phase 9 — Execution</td>
+        <td><code>action_completed</code> / <code>action_failed</code> events on <code>cognitive.events</code></td>
+        <td>Nothing written back to Phase 9 — it is the source of truth</td>
+      </tr>
+      <tr>
+        <td>Phase 8 — Planning</td>
+        <td><code>GET /planning/plans/{id}</code> — plan status, steps, template used</td>
+        <td>Nothing — planning is read-only in this phase</td>
+      </tr>
+      <tr>
+        <td>Phase 7 — Reasoning</td>
+        <td>Episodic record created with <code>outcome: None</code> at reasoning time</td>
+        <td>Patches <code>outcome</code>, <code>verified_at</code>, anomaly delta onto that record</td>
+      </tr>
+      <tr>
+        <td>Phase 6 — World Model</td>
+        <td><code>GET /world/anomalies</code> before + after action (to measure effect)</td>
+        <td>Nothing — world model updates itself from the event bus</td>
+      </tr>
+      <tr>
+        <td>Phase 4 — Procedural Memory</td>
+        <td>Playbooks matching the executed action (by <code>recommended_action</code> field)</td>
+        <td><code>success_count++</code>, <code>failure_count++</code>, recomputed <code>success_rate</code></td>
+      </tr>
+      <tr>
+        <td>Phase 4 — Episodic Memory</td>
+        <td>Record created by ReasoningEngine (plan_id as foreign key)</td>
+        <td>Full outcome enrichment — future reasoning retrieves this as a resolved experience</td>
+      </tr>
+      <tr>
+        <td>Phase 4 — Semantic (Neo4j)</td>
+        <td>Existing RESOLVES edges between Action nodes and Concept nodes</td>
+        <td>MERGE/strengthen on success. Weaken on failure. Min confidence 0.10.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════════ FEEDBACK CYCLE ══════════════ -->
+<section id="cycle" class="section">
+  <div class="sec-head">
+    <div class="step-pill">CYCLE</div>
+    <div class="sec-text">
+      <h2>The Precise Feedback Cycle — 7 Steps</h2>
+      <p>Understand this sequence completely before writing any code. Each step depends on the previous.</p>
+    </div>
+  </div>
+
+  <div class="flow">
+<span class="dm">─────────────────────────────────────────────────────────────</span>
+<span class="dm"> TRIGGER: action_completed OR action_failed event arrives</span>
+<span class="dm">─────────────────────────────────────────────────────────────</span>
+
+<span class="hl">① FeedbackConsumer</span> <span class="dm">reads from cognitive.events (group: feedback-loop)</span>
+  <span class="dm">Filters: event_type in {action_completed, action_failed, plan_succeeded, plan_rolling_back}</span>
+  <span class="dm">Extracts: plan_id, action name, entity_refs, raw success/fail flag</span>
+
+<span class="hl">② Plan Context Fetch</span>  <span class="dm">GET /planning/plans/{plan_id}</span>
+  <span class="dm">Retrieves: template used, goal, all step results, approval gates</span>
+  <span class="dm">Finds:     which anomaly triggered this plan (from decision_id → episodic record)</span>
+
+<span class="hl">③ OutcomeVerifier</span>     <span class="dm">waits verification_delay_s (default: 90s)</span>
+  <span class="dm">Before: count open anomalies in World Model</span>
+  <span class="am">Waits:  verification_delay_s for environment to reflect action</span>
+  <span class="dm">After:  count open anomalies again</span>
+  <span class="gr">Outcome: success (fewer) | partial (same) | failure (more)</span>
+
+<span class="hl">④ OutcomeRecorder</span>     <span class="dm">PATCH /memory/episodic/by-plan/{plan_id}</span>
+  <span class="dm">Writes:  outcome, verified_at, anomalies_before, anomalies_after</span>
+  <span class="dm">Purpose: future reasoning cycles retrieve this as a resolved past experience</span>
+
+<span class="hl">⑤ PlaybookUpdater</span>     <span class="dm">PATCH /memory/procedural/playbooks/{id}</span>
+  <span class="dm">Finds:   playbook(s) matching recommended_action</span>
+  <span class="gr">Success: success_count++ → success_rate = successes/(successes+failures)</span>
+  <span class="re">Failure: failure_count++ → success_rate decreases</span>
+
+<span class="hl">⑥ GraphUpdater</span>        <span class="dm">writes RESOLVES edges to Neo4j</span>
+  <span class="gr">Success: MERGE (Action)-[:RESOLVES {confidence+=0.04}]->(Concept:anomaly_type)</span>
+  <span class="re">Failure: MATCH (Action)-[r:RESOLVES]->() SET r.confidence -= 0.05  (min 0.10)</span>
+
+<span class="hl">⑦ FastPathSignal</span>      <span class="dm">publishes feedback_signal event to cognitive.events</span>
+  <span class="dm">Payload: action, outcome, confidence_delta, entity_refs</span>
+  <span class="dm">Purpose: ReasoningEngine RuleEngine can read cumulative outcomes at startup</span>
+<span class="dm">─────────────────────────────────────────────────────────────</span>
+  </div>
+
+  <div class="note ninfo">
+    <div class="note-icon">⏱️</div>
+    <div class="note-body">
+      <strong>Why 90 seconds for verification delay?</strong> Most infrastructure actions
+      (scaling a consumer group, restarting a connection pool) take 30–60 seconds to
+      propagate and resolve their downstream anomaly. Checking too soon gives false negatives.
+      Make this configurable per action type in <code>feedback_config.yaml</code> —
+      a pod restart needs 90s, an alert send needs only 5s.
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ ARCHITECTURE ══════════════ -->
+<section id="arch" class="section">
+  <div class="sec-head">
+    <div class="step-pill">STEP 1</div>
+    <div class="sec-text">
+      <h2>Architecture &amp; File Structure</h2>
+      <p>6 new modules in <code>feedback/</code>. 4 existing files modified. Zero new infrastructure dependencies.</p>
+    </div>
+  </div>
+
+  <div class="ftree">
+<span class="dm">cognitive_architecture/</span>
+├── <span class="dir">perception/</span>    <span class="dm">✓ Phase 1</span>
+├── <span class="dir">memory/</span>        <span class="mod">⚠ MODIFY: add PATCH endpoints + playbook stats columns</span>
+├── <span class="dir">temporal/</span>      <span class="dm">✓ Phase 5</span>
+├── <span class="dir">world_model/</span>   <span class="dm">✓ Phase 6</span>
+├── <span class="dir">reasoning/</span>     <span class="mod">⚠ MODIFY: fast_path.py — add success_rate gating</span>
+├── <span class="dir">planning/</span>      <span class="dm">✓ Phase 8</span>
+├── <span class="dir">execution/</span>     <span class="dm">✓ Phase 9</span>
+├── <span class="new">feedback/</span>      <span class="dm">◆ Phase 10 — BUILD THIS</span>
+│   ├── <span class="new">__init__.py</span>
+│   ├── <span class="new">consumer.py</span>          <span class="dm">FeedbackConsumer — Kafka listener + orchestrator</span>
+│   ├── <span class="new">verifier.py</span>          <span class="dm">OutcomeVerifier — delay + world model diff check</span>
+│   ├── <span class="new">recorder.py</span>          <span class="dm">OutcomeRecorder — enriches episodic memory record</span>
+│   ├── <span class="new">playbook_updater.py</span>  <span class="dm">PlaybookUpdater — success_rate in procedural memory</span>
+│   ├── <span class="new">graph_updater.py</span>     <span class="dm">GraphUpdater — RESOLVES edges in Neo4j</span>
+│   └── <span class="new">api.py</span>               <span class="dm">FastAPI — port 8096, metrics + outcome history</span>
+├── <span class="new">feedback_config.yaml</span>   <span class="dm">Per-action verification delays + thresholds</span>
+├── <span class="mod">migrations/</span>
+│   └── <span class="mod">add_playbook_stats.sql</span>  <span class="dm">Adds success_count, failure_count, success_rate</span>
+├── <span class="dir">tests/</span>
+│   ├── <span class="new">test_feedback_consumer.py</span>
+│   ├── <span class="new">test_outcome_verifier.py</span>
+│   ├── <span class="new">test_outcome_recorder.py</span>
+│   ├── <span class="new">test_playbook_updater.py</span>
+│   └── <span class="new">test_graph_updater.py</span>
+  </div>
+
+  <h4>Install dependencies</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">requirements.txt — Phase 10 additions</span><span class="cb-lang">TEXT</span></div>
+<pre><span class="cm"># All already present from prior phases:</span>
+<span class="cm"># aiokafka, httpx, neo4j, asyncpg, pydantic, redis</span>
+<span class="cm"># No new dependencies for Phase 10.</span>
+
+<span class="cm"># Confirm these are at these minimum versions:</span>
+neo4j>=5.14.0       <span class="cm"># async driver required for GraphUpdater</span>
+httpx>=0.27.0       <span class="cm"># async HTTP for World Model + Memory API calls</span>
+aiokafka>=0.10.0    <span class="cm"># consumer group support</span></pre>
+  </div>
+</section>
+
+<!-- ══════════════ MIGRATION ══════════════ -->
+<section id="migration" class="section">
+  <div class="sec-head">
+    <div class="step-pill">STEP 2</div>
+    <div class="sec-text">
+      <h2>Database Migrations &amp; API Extensions</h2>
+      <p>Run these before building any feedback modules. They add the storage capacity Phase 10 needs.</p>
+    </div>
+  </div>
+
+  <div class="migration-box">
+    <h4>⚠ Run migrations before starting the feedback service</h4>
+    <p>The playbook_updater will fail silently if the <code>success_count</code>, <code>failure_count</code>,
+    and <code>success_rate</code> columns don't exist. The PATCH memory endpoint will 500 if the column
+    isn't there. Run these once against your existing PostgreSQL database.</p>
+  </div>
+
+  <h4>migrations/add_playbook_stats.sql</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">migrations/add_playbook_stats.sql</span><span class="cb-lang">SQL</span></div>
+<pre><span class="cm">-- Phase 10: Add feedback tracking columns to playbooks table</span>
+<span class="kw">ALTER TABLE</span> playbooks
+  <span class="kw">ADD COLUMN IF NOT EXISTS</span> success_count         INTEGER       <span class="kw">DEFAULT</span> <span class="nu">0</span>,
+  <span class="kw">ADD COLUMN IF NOT EXISTS</span> failure_count         INTEGER       <span class="kw">DEFAULT</span> <span class="nu">0</span>,
+  <span class="kw">ADD COLUMN IF NOT EXISTS</span> success_rate          FLOAT         <span class="kw">DEFAULT</span> <span class="nu">0.5</span>,
+  <span class="kw">ADD COLUMN IF NOT EXISTS</span> recommended_action    TEXT,
+  <span class="kw">ADD COLUMN IF NOT EXISTS</span> updated_at            TIMESTAMPTZ   <span class="kw">DEFAULT</span> now();
+
+<span class="cm">-- Index for PlaybookUpdater lookups</span>
+<span class="kw">CREATE INDEX IF NOT EXISTS</span> idx_playbooks_action
+  <span class="kw">ON</span> playbooks(recommended_action);
+
+<span class="cm">-- Phase 10: Add outcome tracking to episodic_events</span>
+<span class="kw">ALTER TABLE</span> episodic_events
+  <span class="kw">ADD COLUMN IF NOT EXISTS</span> outcome              TEXT,         <span class="cm">-- success|failure|partial|null</span>
+  <span class="kw">ADD COLUMN IF NOT EXISTS</span> verified_at          TIMESTAMPTZ,
+  <span class="kw">ADD COLUMN IF NOT EXISTS</span> anomalies_before     INTEGER,
+  <span class="kw">ADD COLUMN IF NOT EXISTS</span> anomalies_after      INTEGER,
+  <span class="kw">ADD COLUMN IF NOT EXISTS</span> updated_at           TIMESTAMPTZ   <span class="kw">DEFAULT</span> now();
+
+<span class="cm">-- Index for FeedbackConsumer plan_id lookups</span>
+<span class="kw">CREATE INDEX IF NOT EXISTS</span> idx_episodic_plan_id
+  <span class="kw">ON</span> episodic_events ((payload->><span class="st">'plan_id'</span>));
+
+<span class="cm">-- Run this migration:</span>
+<span class="cm">-- psql -U cognitive -d cognitive_db -f migrations/add_playbook_stats.sql</span></pre>
+  </div>
+
+  <h4>feedback_config.yaml — per-action verification delays</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">feedback_config.yaml</span><span class="cb-lang">YAML</span></div>
+<pre><span class="cm"># Verification delay per action type.
+# How long to wait before checking World Model state after action.
+# Shorter = faster feedback but more false negatives.
+# Longer = more accurate but slower learning cycle.</span>
+
+<span class="at">defaults</span>:
+  <span class="at">verification_delay_s</span>: <span class="nu">90</span>        <span class="cm"># default for unknown actions</span>
+  <span class="at">confidence_increment</span>: <span class="nu">0.04</span>     <span class="cm"># per success on RESOLVES edge</span>
+  <span class="at">confidence_decrement</span>: <span class="nu">0.05</span>     <span class="cm"># per failure on RESOLVES edge</span>
+  <span class="at">confidence_min</span>:       <span class="nu">0.10</span>     <span class="cm"># floor — never forget a path exists</span>
+  <span class="at">confidence_max</span>:       <span class="nu">0.99</span>     <span class="cm"># cap — always allow some doubt</span>
+
+<span class="at">action_overrides</span>:
+  <span class="at">scale_consumer_group</span>:
+    <span class="at">verification_delay_s</span>: <span class="nu">60</span>      <span class="cm"># fast-propagating infra action</span>
+  <span class="at">restart_connection_pool</span>:
+    <span class="at">verification_delay_s</span>: <span class="nu">45</span>
+  <span class="at">restart_service</span>:
+    <span class="at">verification_delay_s</span>: <span class="nu">120</span>     <span class="cm"># rolling restart needs more time</span>
+  <span class="at">send_alert</span>:
+    <span class="at">verification_delay_s</span>: <span class="nu">5</span>       <span class="cm"># alerts are immediate — no propagation</span>
+  <span class="at">escalate_to_human</span>:
+    <span class="at">verification_delay_s</span>: <span class="nu">1800</span>   <span class="cm"># wait for human to act (30 min)</span>
+  <span class="at">monitor_and_wait</span>:
+    <span class="at">verification_delay_s</span>: <span class="nu">300</span>    <span class="cm"># 5-minute watch period</span>
+  <span class="at">scale_read_replicas</span>:
+    <span class="at">verification_delay_s</span>: <span class="nu">90</span>
+  <span class="at">increase_log_verbosity</span>:
+    <span class="at">verification_delay_s</span>: <span class="nu">10</span>     <span class="cm"># immediate — just config change</span></pre>
+  </div>
+
+  <h4>Extend memory/api.py with PATCH endpoints</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">memory/api.py — add these 3 endpoints</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="at">@app.patch</span>(<span class="st">"/memory/episodic/by-plan/{plan_id}"</span>)
+<span class="kw">async def</span> <span class="fn">patch_episodic_outcome</span>(plan_id: str, patch: dict):
+    <span class="dc">"""
+    Called by FeedbackConsumer.OutcomeRecorder.
+    Updates the episodic record created by ReasoningEngine with outcome data.
+    Matches on payload->>'plan_id' since plan_id is stored inside the JSONB payload.
+    """</span>
+    <span class="kw">async with</span> episodic_pool.acquire() <span class="kw">as</span> conn:
+        result = <span class="kw">await</span> conn.execute(<span class="st">"""
+            UPDATE episodic_events
+            SET
+              outcome          = $1::text,
+              verified_at      = $2::timestamptz,
+              anomalies_before = $3::integer,
+              anomalies_after  = $4::integer,
+              updated_at       = now(),
+              payload          = payload || $5::jsonb
+            WHERE payload->>'plan_id' = $6
+              AND (outcome IS NULL OR outcome = 'pending')
+        """</span>,
+        patch.get(<span class="st">"outcome"</span>),
+        patch.get(<span class="st">"verified_at"</span>),
+        patch.get(<span class="st">"anomalies_before"</span>),
+        patch.get(<span class="st">"anomalies_after"</span>),
+        json.dumps({k: v <span class="kw">for</span> k, v <span class="kw">in</span> patch.items()
+                    <span class="kw">if</span> k <span class="kw">not in</span> (<span class="st">"outcome"</span>, <span class="st">"verified_at"</span>, <span class="st">"anomalies_before"</span>, <span class="st">"anomalies_after"</span>)}),
+        plan_id,
+        )
+    <span class="kw">return</span> {<span class="st">"patched"</span>: plan_id, <span class="st">"rows"</span>: result.split()[<span class="nu">1</span>]}
+
+
+<span class="at">@app.patch</span>(<span class="st">"/memory/procedural/playbooks/{playbook_id}"</span>)
+<span class="kw">async def</span> <span class="fn">update_playbook_stats</span>(playbook_id: str, patch: dict):
+    <span class="dc">"""Called by PlaybookUpdater. Updates success/failure stats."""</span>
+    <span class="kw">async with</span> pg_pool.acquire() <span class="kw">as</span> conn:
+        <span class="kw">await</span> conn.execute(<span class="st">"""
+            UPDATE playbooks
+            SET success_count = $1, failure_count = $2,
+                success_rate  = $3, updated_at    = now()
+            WHERE id = $4
+        """</span>,
+        patch[<span class="st">"success_count"</span>], patch[<span class="st">"failure_count"</span>],
+        patch[<span class="st">"success_rate"</span>], playbook_id,
+        )
+    <span class="kw">return</span> {<span class="st">"updated"</span>: playbook_id}
+
+
+<span class="at">@app.get</span>(<span class="st">"/memory/procedural/playbooks"</span>)
+<span class="kw">async def</span> <span class="fn">list_playbooks_filtered</span>(
+    trigger_event:      str | <span class="kw">None</span> = <span class="kw">None</span>,
+    trigger_severity:   str | <span class="kw">None</span> = <span class="kw">None</span>,
+    recommended_action: str | <span class="kw">None</span> = <span class="kw">None</span>,
+    min_success_rate:   float = <span class="nu">0.0</span>,
+):
+    <span class="dc">"""
+    Used by PlaybookUpdater (filter by recommended_action) and
+    ContextBuilder in Phase 7 (filter by trigger_event + trigger_severity).
+    """</span>
+    <span class="kw">async with</span> pg_pool.acquire() <span class="kw">as</span> conn:
+        filters = [<span class="st">"success_rate >= $1"</span>]; args = [min_success_rate]
+        <span class="kw">if</span> trigger_event:
+            args.append(trigger_event)
+            filters.append(<span class="st">f"trigger_event = ${len(args)}"</span>)
+        <span class="kw">if</span> trigger_severity:
+            args.append(trigger_severity)
+            filters.append(<span class="st">f"trigger_severity = ${len(args)}"</span>)
+        <span class="kw">if</span> recommended_action:
+            args.append(recommended_action)
+            filters.append(<span class="st">f"recommended_action = ${len(args)}"</span>)
+        where = <span class="st">"WHERE "</span> + <span class="st">" AND "</span>.join(filters)
+        rows  = <span class="kw">await</span> conn.fetch(<span class="st">f"SELECT * FROM playbooks {where} ORDER BY success_rate DESC"</span>, *args)
+    <span class="kw">return</span> [<span class="fn">dict</span>(r) <span class="kw">for</span> r <span class="kw">in</span> rows]</pre>
+  </div>
+</section>
+
+<!-- ══════════════ CONSUMER ══════════════ -->
+<section id="consumer" class="section">
+  <div class="sec-head">
+    <div class="step-pill">STEP 3</div>
+    <div class="sec-text">
+      <h2>FeedbackConsumer — The Orchestrator</h2>
+      <p>Kafka listener on its own consumer group. Reads action events, orchestrates all 7 feedback steps.</p>
+    </div>
+  </div>
+
+  <div class="note nteal">
+    <div class="note-icon">🔑</div>
+    <div class="note-body">
+      <strong>Separate consumer group is critical.</strong> The feedback consumer runs under
+      group ID <code>feedback-loop</code> — not <code>world-model</code> or any other group.
+      This ensures it receives every action event independently, even if the world model
+      already consumed and committed that offset. Kafka fan-out by consumer group is the
+      correct pattern here.
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">feedback/consumer.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+FeedbackConsumer — the central orchestrator for Phase 10.
+Runs as an independent service, consuming cognitive.events
+under its own consumer group: 'feedback-loop'.
+
+On each action_completed or action_failed event:
+  1. Fetches plan context from Planning API
+  2. Runs OutcomeVerifier (waits delay, checks World Model)
+  3. Runs OutcomeRecorder, PlaybookUpdater, GraphUpdater in parallel
+  4. Emits feedback_signal back to cognitive.events for observability
+
+Non-fatal: any single sub-step failure does not crash the consumer.
+All errors are logged and the consumer continues to the next event.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+
+<span class="kw">import</span> asyncio
+<span class="kw">import</span> json
+<span class="kw">import</span> logging
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+
+<span class="kw">import</span> httpx
+<span class="kw">import</span> yaml
+<span class="kw">from</span> aiokafka <span class="kw">import</span> AIOKafkaConsumer, AIOKafkaProducer
+
+<span class="kw">from</span> .verifier <span class="kw">import</span> OutcomeVerifier
+<span class="kw">from</span> .recorder <span class="kw">import</span> OutcomeRecorder
+<span class="kw">from</span> .playbook_updater <span class="kw">import</span> PlaybookUpdater
+<span class="kw">from</span> .graph_updater <span class="kw">import</span> GraphUpdater
+
+log = logging.getLogger(<span class="st">"feedback"</span>)
+
+ACTION_EVENTS = {
+    <span class="st">"action_completed"</span>,
+    <span class="st">"action_failed"</span>,
+    <span class="st">"plan_succeeded"</span>,
+    <span class="st">"plan_rolling_back"</span>,
+}
+
+
+<span class="at">@dataclass</span>
+<span class="kw">class</span> <span class="tl">FeedbackConfig</span>:
+    kafka_bootstrap:       str   = <span class="st">"localhost:9092"</span>
+    kafka_topic:           str   = <span class="st">"cognitive.events"</span>
+    world_model_url:       str   = <span class="st">"http://localhost:8092"</span>
+    planning_url:          str   = <span class="st">"http://localhost:8094"</span>
+    memory_url:            str   = <span class="st">"http://localhost:8090"</span>
+    neo4j_uri:             str   = <span class="st">"bolt://localhost:7687"</span>
+    neo4j_user:            str   = <span class="st">"neo4j"</span>
+    neo4j_pass:            str   = <span class="st">"neo4j_secret"</span>
+    config_path:           str   = <span class="st">"feedback_config.yaml"</span>
+    default_delay_s:       int   = <span class="nu">90</span>
+
+
+<span class="kw">class</span> <span class="tl">FeedbackConsumer</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, cfg: FeedbackConfig | <span class="kw">None</span> = <span class="kw">None</span>):
+        self.cfg      = cfg <span class="kw">or</span> FeedbackConfig()
+        self._config  = self._load_config()
+        self._http    = httpx.AsyncClient(timeout=<span class="nu">10.0</span>)
+        self._producer: AIOKafkaProducer | <span class="kw">None</span> = <span class="kw">None</span>
+
+        <span class="cm"># Sub-components</span>
+        self.verifier       = OutcomeVerifier(self.cfg.world_model_url, self._config)
+        self.recorder       = OutcomeRecorder(self.cfg.memory_url)
+        self.pb_updater     = PlaybookUpdater(self.cfg.memory_url)
+        self.graph_updater  = GraphUpdater(
+            self.cfg.neo4j_uri, self.cfg.neo4j_user,
+            self.cfg.neo4j_pass, self._config
+        )
+
+    <span class="kw">def</span> <span class="fn">_load_config</span>(self) -> dict:
+        <span class="kw">try</span>:
+            <span class="kw">with</span> <span class="fn">open</span>(self.cfg.config_path) <span class="kw">as</span> f:
+                <span class="kw">return</span> yaml.safe_load(f)
+        <span class="kw">except</span> FileNotFoundError:
+            <span class="kw">return</span> {<span class="st">"defaults"</span>: {<span class="st">"verification_delay_s"</span>: self.cfg.default_delay_s}}
+
+    <span class="kw">async def</span> <span class="fn">start</span>(self):
+        self._producer = AIOKafkaProducer(bootstrap_servers=self.cfg.kafka_bootstrap)
+        <span class="kw">await</span> self._producer.start()
+        <span class="kw">await</span> self.graph_updater.connect()
+        log.info(<span class="st">"[FeedbackConsumer] Started. Listening for action events."</span>)
+
+    <span class="kw">async def</span> <span class="fn">stop</span>(self):
+        <span class="kw">if</span> self._producer:
+            <span class="kw">await</span> self._producer.stop()
+        <span class="kw">await</span> self.graph_updater.disconnect()
+        <span class="kw">await</span> self._http.aclose()
+
+    <span class="kw">async def</span> <span class="fn">run</span>(self):
+        <span class="kw">await</span> self.start()
+        consumer = AIOKafkaConsumer(
+            self.cfg.kafka_topic,
+            bootstrap_servers=self.cfg.kafka_bootstrap,
+            group_id=<span class="st">"feedback-loop"</span>,
+            auto_offset_reset=<span class="st">"earliest"</span>,
+            enable_auto_commit=<span class="kw">True</span>,
+            value_deserializer=<span class="kw">lambda</span> b: json.loads(b.decode()),
+        )
+        <span class="kw">await</span> consumer.start()
+        <span class="kw">try</span>:
+            <span class="kw">async for</span> msg <span class="kw">in</span> consumer:
+                event = msg.value
+                <span class="kw">if</span> event.get(<span class="st">"event_type"</span>) <span class="kw">in</span> ACTION_EVENTS:
+                    <span class="cm"># Non-blocking — process each event independently</span>
+                    asyncio.create_task(self._process_safe(event))
+        <span class="kw">finally</span>:
+            <span class="kw">await</span> consumer.stop()
+            <span class="kw">await</span> self.stop()
+
+    <span class="kw">async def</span> <span class="fn">_process_safe</span>(self, event: dict) -> <span class="kw">None</span>:
+        <span class="dc">"""Wrap the full feedback cycle with top-level error isolation."""</span>
+        <span class="kw">try</span>:
+            <span class="kw">await</span> self._process(event)
+        <span class="kw">except</span> Exception <span class="kw">as</span> e:
+            log.error(<span class="st">f"[FeedbackConsumer] Unhandled error in feedback cycle: {e}"</span>)
+
+    <span class="kw">async def</span> <span class="fn">_process</span>(self, event: dict) -> <span class="kw">None</span>:
+        <span class="dc">"""Full 7-step feedback cycle for one action event."""</span>
+        payload    = event.get(<span class="st">"payload"</span>, {})
+        plan_id    = payload.get(<span class="st">"plan_id"</span>)
+        action     = payload.get(<span class="st">"action"</span>)
+        event_type = event.get(<span class="st">"event_type"</span>)
+
+        <span class="kw">if not</span> plan_id <span class="kw">or not</span> action:
+            log.debug(<span class="st">f"[FeedbackConsumer] Skipping event without plan_id/action: {event_type}"</span>)
+            <span class="kw">return</span>
+
+        log.info(<span class="st">f"[FeedbackConsumer] Processing feedback for plan={plan_id} action={action}"</span>)
+
+        <span class="cm"># Step ③ — verify (includes async delay, non-blocking for other events)</span>
+        verification = <span class="kw">await</span> self.verifier.verify(plan_id, action, event)
+
+        <span class="cm"># Steps ④ ⑤ ⑥ — all in parallel, all non-fatal</span>
+        results = <span class="kw">await</span> asyncio.gather(
+            self.recorder.record(event, verification),
+            self.pb_updater.update(action, verification.outcome),
+            self.graph_updater.update(action, payload, verification.outcome),
+            return_exceptions=<span class="kw">True</span>,
+        )
+
+        <span class="kw">for</span> i, r <span class="kw">in</span> <span class="fn">enumerate</span>(results):
+            <span class="kw">if isinstance</span>(r, Exception):
+                log.warning(<span class="st">f"[FeedbackConsumer] Sub-step {i+4} failed: {r}"</span>)
+
+        <span class="cm"># Step ⑦ — emit feedback_signal to cognitive.events</span>
+        <span class="kw">await</span> self._emit_feedback_signal(action, verification.outcome, plan_id)
+
+        log.info(<span class="st">f"[FeedbackConsumer] Cycle complete: plan={plan_id} outcome={verification.outcome}"</span>)
+
+    <span class="kw">async def</span> <span class="fn">_emit_feedback_signal</span>(
+        self, action: str, outcome: str, plan_id: str
+    ) -> <span class="kw">None</span>:
+        <span class="dc">"""Publish feedback_signal for observability and potential fast-path updates."""</span>
+        signal = {
+            <span class="st">"event_type"</span>:  <span class="st">"reasoning_completed"</span>,
+            <span class="st">"source_type"</span>: <span class="st">"agent_event"</span>,
+            <span class="st">"source_id"</span>:   <span class="st">"agent:feedback-loop"</span>,
+            <span class="st">"severity"</span>:    <span class="st">"info"</span>,
+            <span class="st">"confidence"</span>:  <span class="nu">1.0</span>,
+            <span class="st">"entity_refs"</span>: [<span class="st">"agent:feedback-loop"</span>],
+            <span class="st">"payload"</span>: {
+                <span class="st">"action"</span>:  action,
+                <span class="st">"outcome"</span>: outcome,
+                <span class="st">"plan_id"</span>: plan_id,
+                <span class="st">"signal"</span>:  <span class="st">"feedback_completed"</span>,
+            },
+            <span class="st">"timestamp"</span>: datetime.now(timezone.utc).isoformat(),
+        }
+        <span class="kw">await</span> self._producer.send_and_wait(
+            <span class="st">"cognitive.events"</span>, json.dumps(signal).encode()
+        )</pre>
+  </div>
+</section>
+
+<!-- ══════════════ VERIFIER ══════════════ -->
+<section id="verifier" class="section">
+  <div class="sec-head">
+    <div class="step-pill">STEP 4</div>
+    <div class="sec-text">
+      <h2>OutcomeVerifier — Did It Work?</h2>
+      <p>Waits per-action delay then compares World Model anomaly state before vs after. Returns a typed VerificationResult.</p>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">feedback/verifier.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+OutcomeVerifier — measures the effect of an action on the world.
+
+Verification strategy:
+  BEFORE: snapshot the World Model anomaly count at event receive time
+  WAIT:   per-action configurable delay from feedback_config.yaml
+  AFTER:  re-query World Model anomaly count
+
+  fewer anomalies  → success
+  same anomalies   → partial (action did not resolve the situation)
+  more anomalies   → failure (action may have made things worse)
+
+Entity-specific verification (advanced):
+  If the action payload contains entity_refs, we also check the
+  specific entity's health_status before vs after.
+  Gives higher-precision outcome for targeted actions.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+
+<span class="kw">import</span> asyncio
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, field
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">from</span> typing <span class="kw">import</span> Literal
+
+<span class="kw">import</span> httpx
+
+
+<span class="at">@dataclass</span>
+<span class="kw">class</span> <span class="tl">VerificationResult</span>:
+    plan_id:           str
+    action:            str
+    outcome:           Literal[<span class="st">"success"</span>, <span class="st">"partial"</span>, <span class="st">"failure"</span>]
+    anomalies_before:  int
+    anomalies_after:   int
+    entity_health_before: str | <span class="kw">None</span> = <span class="kw">None</span>
+    entity_health_after:  str | <span class="kw">None</span> = <span class="kw">None</span>
+    verified_at:       str = field(
+        default_factory=<span class="kw">lambda</span>: datetime.now(timezone.utc).isoformat()
+    )
+    delay_used_s:      int = <span class="nu">90</span>
+    notes:             str = <span class="st">""</span>
+
+
+<span class="kw">class</span> <span class="tl">OutcomeVerifier</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, world_model_url: str, config: dict):
+        self._wm_url = world_model_url
+        self._config = config
+
+    <span class="kw">def</span> <span class="fn">_get_delay</span>(self, action: str) -> int:
+        overrides = self._config.get(<span class="st">"action_overrides"</span>, {})
+        defaults  = self._config.get(<span class="st">"defaults"</span>, {})
+        <span class="kw">return</span> (
+            overrides.get(action, {}).get(<span class="st">"verification_delay_s"</span>)
+            <span class="kw">or</span> defaults.get(<span class="st">"verification_delay_s"</span>, <span class="nu">90</span>)
+        )
+
+    <span class="kw">async def</span> <span class="fn">verify</span>(
+        self, plan_id: str, action: str, event: dict
+    ) -> VerificationResult:
+        delay = self._get_delay(action)
+        entity_refs = event.get(<span class="st">"payload"</span>, {}).get(<span class="st">"entity_refs"</span>, [])
+        primary_entity = entity_refs[<span class="nu">0</span>] <span class="kw">if</span> entity_refs <span class="kw">else None</span>
+
+        <span class="cm"># Snapshot BEFORE</span>
+        before_count  = <span class="kw">await</span> self._count_anomalies()
+        before_health = <span class="kw">await</span> self._get_entity_health(primary_entity)
+
+        <span class="cm"># Wait for environment to propagate action effects</span>
+        <span class="kw">await</span> asyncio.sleep(delay)
+
+        <span class="cm"># Snapshot AFTER</span>
+        after_count  = <span class="kw">await</span> self._count_anomalies()
+        after_health = <span class="kw">await</span> self._get_entity_health(primary_entity)
+
+        <span class="cm"># Determine outcome</span>
+        <span class="kw">if</span> after_count < before_count:
+            outcome = <span class="st">"success"</span>
+        <span class="kw">elif</span> after_count == before_count:
+            <span class="cm"># Secondary signal: entity health improvement counts as partial success</span>
+            <span class="kw">if</span> before_health == <span class="st">"critical"</span> <span class="kw">and</span> after_health <span class="kw">in</span> (<span class="st">"degraded"</span>, <span class="st">"healthy"</span>):
+                outcome = <span class="st">"partial"</span>
+            <span class="kw">elif</span> before_health == <span class="st">"degraded"</span> <span class="kw">and</span> after_health == <span class="st">"healthy"</span>:
+                outcome = <span class="st">"success"</span>
+            <span class="kw">else</span>:
+                outcome = <span class="st">"partial"</span>
+        <span class="kw">else</span>:
+            outcome = <span class="st">"failure"</span>
+
+        <span class="kw">return</span> VerificationResult(
+            plan_id=plan_id,
+            action=action,
+            outcome=outcome,
+            anomalies_before=before_count,
+            anomalies_after=after_count,
+            entity_health_before=before_health,
+            entity_health_after=after_health,
+            delay_used_s=delay,
+            notes=(
+                <span class="st">f"Anomalies: {before_count}→{after_count} | "</span>
+                <span class="st">f"Entity health: {before_health}→{after_health} | "</span>
+                <span class="st">f"Delay: {delay}s"</span>
+            ),
+        )
+
+    <span class="kw">async def</span> <span class="fn">_count_anomalies</span>(self) -> int:
+        <span class="kw">try</span>:
+            <span class="kw">async with</span> httpx.AsyncClient(timeout=<span class="nu">5</span>) <span class="kw">as</span> c:
+                r = <span class="kw">await</span> c.get(<span class="st">f"{self._wm_url}/world/anomalies"</span>)
+                <span class="kw">if</span> r.status_code == <span class="nu">200</span>:
+                    <span class="kw">return</span> <span class="fn">len</span>(r.json())
+        <span class="kw">except</span> Exception:
+            <span class="kw">pass</span>
+        <span class="kw">return</span> <span class="nu">0</span>
+
+    <span class="kw">async def</span> <span class="fn">_get_entity_health</span>(self, entity_id: str | <span class="kw">None</span>) -> str | <span class="kw">None</span>:
+        <span class="kw">if not</span> entity_id:
+            <span class="kw">return None</span>
+        <span class="kw">try</span>:
+            <span class="kw">async with</span> httpx.AsyncClient(timeout=<span class="nu">5</span>) <span class="kw">as</span> c:
+                r = <span class="kw">await</span> c.get(<span class="st">f"{self._wm_url}/world/entity/{entity_id}"</span>)
+                <span class="kw">if</span> r.status_code == <span class="nu">200</span>:
+                    <span class="kw">return</span> r.json().get(<span class="st">"health_status"</span>)
+        <span class="kw">except</span> Exception:
+            <span class="kw">pass</span>
+        <span class="kw">return None</span></pre>
+  </div>
+</section>
+
+<!-- ══════════════ RECORDER ══════════════ -->
+<section id="recorder" class="section">
+  <div class="sec-head">
+    <div class="step-pill">STEP 5</div>
+    <div class="sec-text">
+      <h2>OutcomeRecorder — Enriching Episodic Memory</h2>
+      <p>Patches the episodic record created by ReasoningEngine (Phase 7) with the verified outcome. This makes past experiences retrievable as resolved situations.</p>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">feedback/recorder.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+OutcomeRecorder — finalises episodic memory records.
+
+When the ReasoningEngine (Phase 7) makes a decision, it stores an episodic
+record with outcome: None. This is intentional — the outcome is unknown at
+decision time. OutcomeRecorder fills that gap.
+
+Future reasoning cycles call GET /memory/episodic/search with a query string
+similar to the current situation. The returned records are "past experiences".
+Records with outcome: 'success' are the most valuable — they show the LLM
+a situation that was resolved and exactly how.
+
+This module also writes a BEFORE snapshot of the world model state,
+giving Phase 10 (and Phase 11 multi-agent coordination) a diff view of
+how the world changed as a result of each action cycle.
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+
+<span class="kw">import</span> json
+<span class="kw">import</span> logging
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+
+<span class="kw">import</span> httpx
+<span class="kw">from</span> .verifier <span class="kw">import</span> VerificationResult
+
+log = logging.getLogger(<span class="st">"feedback.recorder"</span>)
+
+
+<span class="kw">class</span> <span class="tl">OutcomeRecorder</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, memory_url: str):
+        self._memory_url = memory_url
+
+    <span class="kw">async def</span> <span class="fn">record</span>(self, action_event: dict, verification: VerificationResult) -> <span class="kw">None</span>:
+        <span class="dc">"""
+        PATCH the episodic record whose payload.plan_id matches.
+        If no record exists (e.g. fast-path decisions), create a minimal one.
+        """</span>
+        plan_id = action_event.get(<span class="st">"payload"</span>, {}).get(<span class="st">"plan_id"</span>)
+        <span class="kw">if not</span> plan_id:
+            <span class="kw">return</span>
+
+        patch = {
+            <span class="st">"outcome"</span>:             verification.outcome,
+            <span class="st">"verified_at"</span>:         verification.verified_at,
+            <span class="st">"anomalies_before"</span>:    verification.anomalies_before,
+            <span class="st">"anomalies_after"</span>:     verification.anomalies_after,
+            <span class="st">"entity_health_before"</span>: verification.entity_health_before,
+            <span class="st">"entity_health_after"</span>:  verification.entity_health_after,
+            <span class="st">"verification_delay_s"</span>: verification.delay_used_s,
+            <span class="st">"verification_notes"</span>:   verification.notes,
+            <span class="st">"resolved_at"</span>:         datetime.now(timezone.utc).isoformat(),
+        }
+
+        <span class="kw">async with</span> httpx.AsyncClient(timeout=<span class="nu">10</span>) <span class="kw">as</span> client:
+            <span class="kw">try</span>:
+                r = <span class="kw">await</span> client.patch(
+                    <span class="st">f"{self._memory_url}/memory/episodic/by-plan/{plan_id}"</span>,
+                    json=patch,
+                )
+                <span class="kw">if</span> r.status_code == <span class="nu">200</span>:
+                    log.info(
+                        <span class="st">f"[OutcomeRecorder] Patched plan={plan_id} outcome={verification.outcome}"</span>
+                    )
+                <span class="kw">else</span>:
+                    log.warning(
+                        <span class="st">f"[OutcomeRecorder] PATCH returned {r.status_code} for plan={plan_id}"</span>
+                    )
+            <span class="kw">except</span> Exception <span class="kw">as</span> e:
+                log.error(<span class="st">f"[OutcomeRecorder] Failed to patch record: {e}"</span>)</pre>
+  </div>
+</section>
+
+<!-- ══════════════ UPDATERS ══════════════ -->
+<section id="updaters" class="section">
+  <div class="sec-head">
+    <div class="step-pill">STEP 6</div>
+    <div class="sec-text">
+      <h2>PlaybookUpdater &amp; GraphUpdater — The Learning Core</h2>
+      <p>These two modules are where the system actually becomes smarter. They update the two durable long-term knowledge stores.</p>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">feedback/playbook_updater.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+PlaybookUpdater — updates procedural memory playbook success rates.
+
+The success_rate field controls how confidently the Reasoning Engine's
+fast path applies a rule. After Phase 10 is running:
+  - Rules that consistently work get confidence reinforced
+  - Rules that consistently fail get demoted (success_rate drops)
+  - The fast_path.py RuleEngine can gate rules on: success_rate >= threshold
+
+A playbook with success_rate < 0.40 should be:
+  - Removed from the fast path (requires LLM reasoning instead)
+  - Flagged for review by an operator
+
+Example lifecycle:
+  Initial state:  success_count=0, failure_count=0, success_rate=0.50
+  After 5 wins:   success_count=5, failure_count=0, success_rate=1.00
+  After 2 fails:  success_count=5, failure_count=2, success_rate=0.71
+  After 5 fails:  success_count=5, failure_count=7, success_rate=0.42 ← demote
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+
+<span class="kw">import</span> logging
+<span class="kw">import</span> httpx
+
+log = logging.getLogger(<span class="st">"feedback.playbook"</span>)
+
+
+<span class="kw">class</span> <span class="tl">PlaybookUpdater</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, memory_url: str):
+        self._url = memory_url
+
+    <span class="kw">async def</span> <span class="fn">update</span>(self, action: str, outcome: str) -> <span class="kw">None</span>:
+        <span class="dc">"""
+        Find all playbooks that recommend this action and update their stats.
+        success_rate = success_count / (success_count + failure_count)
+        """</span>
+        success = outcome == <span class="st">"success"</span>
+
+        <span class="kw">async with</span> httpx.AsyncClient(timeout=<span class="nu">10</span>) <span class="kw">as</span> client:
+            <span class="kw">try</span>:
+                r = <span class="kw">await</span> client.get(
+                    <span class="st">f"{self._url}/memory/procedural/playbooks"</span>,
+                    params={<span class="st">"recommended_action"</span>: action},
+                )
+                <span class="kw">if</span> r.status_code != <span class="nu">200</span>:
+                    <span class="kw">return</span>
+
+                playbooks = r.json()
+                <span class="kw">if not</span> playbooks:
+                    log.debug(<span class="st">f"[PlaybookUpdater] No playbooks for action={action}"</span>)
+                    <span class="kw">return</span>
+
+                <span class="kw">for</span> pb <span class="kw">in</span> playbooks:
+                    pb_id = pb.get(<span class="st">"id"</span>)
+                    s_cnt = pb.get(<span class="st">"success_count"</span>, <span class="nu">0</span>)
+                    f_cnt = pb.get(<span class="st">"failure_count"</span>, <span class="nu">0</span>)
+
+                    s_cnt = s_cnt + <span class="nu">1</span> <span class="kw">if</span> success <span class="kw">else</span> s_cnt
+                    f_cnt = f_cnt + <span class="nu">1</span> <span class="kw">if not</span> success <span class="kw">else</span> f_cnt
+                    total = s_cnt + f_cnt
+                    new_rate = <span class="fn">round</span>(s_cnt / total, <span class="nu">4</span>) <span class="kw">if</span> total > <span class="nu">0</span> <span class="kw">else</span> <span class="nu">0.5</span>
+
+                    <span class="kw">await</span> client.patch(
+                        <span class="st">f"{self._url}/memory/procedural/playbooks/{pb_id}"</span>,
+                        json={
+                            <span class="st">"success_count"</span>: s_cnt,
+                            <span class="st">"failure_count"</span>: f_cnt,
+                            <span class="st">"success_rate"</span>:  new_rate,
+                        },
+                    )
+                    log.info(
+                        <span class="st">f"[PlaybookUpdater] pb={pb_id} action={action} "</span>
+                        <span class="st">f"outcome={outcome} rate={new_rate:.3f} ({s_cnt}W/{f_cnt}L)"</span>
+                    )
+            <span class="kw">except</span> Exception <span class="kw">as</span> e:
+                log.error(<span class="st">f"[PlaybookUpdater] Error: {e}"</span>)</pre>
+  </div>
+
+  <h3>Update reasoning/fast_path.py — gate rules on success_rate</h3>
+  <div class="note nwarn">
+    <div class="note-icon">✏️</div>
+    <div class="note-body">
+      <strong>This is the most important architectural modification in Phase 10.</strong>
+      The fast path rules from Phase 7 currently have hardcoded confidence values.
+      After Phase 10 is running, rules should be dynamically gated by the
+      <code>success_rate</code> from procedural memory. Add this optional check to
+      <code>RuleEngine.evaluate()</code> — it makes the fast path adaptive.
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">reasoning/fast_path.py — modify RuleEngine (add rate-gating)</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="cm"># Add this to RuleEngine.__init__:</span>
+<span class="kw">class</span> <span class="tl">RuleEngine</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, playbook_success_rates: dict[str, float] | <span class="kw">None</span> = <span class="kw">None</span>):
+        self.rules = sorted(RULES, key=<span class="kw">lambda</span> r: r.priority, reverse=<span class="kw">True</span>)
+        <span class="cm"># Optional: dict of action → success_rate loaded from procedural memory at startup</span>
+        self._rates = playbook_success_rates <span class="kw">or</span> {}
+        self.MIN_SUCCESS_RATE = <span class="nu">0.40</span>  <span class="cm"># rules below this go to LLM instead</span>
+
+    <span class="kw">def</span> <span class="fn">evaluate</span>(self, situation: dict) -> DecisionObject | <span class="kw">None</span>:
+        <span class="kw">for</span> rule <span class="kw">in</span> self.rules:
+            <span class="kw">try</span>:
+                <span class="kw">if not</span> rule.condition(situation):
+                    <span class="kw">continue</span>
+
+                <span class="cm"># Phase 10 gate: skip rules whose historical success rate is too low</span>
+                rate = self._rates.get(rule.action, <span class="nu">1.0</span>)  <span class="cm"># 1.0 = no data yet</span>
+                <span class="kw">if</span> rate < self.MIN_SUCCESS_RATE:
+                    <span class="cm"># Rule exists but has a bad track record — route to LLM</span>
+                    <span class="kw">continue</span>
+
+                params = rule.parameters(situation)
+                <span class="cm"># Use actual success_rate as confidence instead of hardcoded value</span>
+                effective_confidence = <span class="fn">min</span>(rule.confidence, rate) <span class="kw">if</span> rate < <span class="nu">1.0</span> <span class="kw">else</span> rule.confidence
+                <span class="kw">return</span> DecisionObject(
+                    situation_assessment=<span class="st">f"Fast path: {rule.name} (rate={rate:.2f})"</span>,
+                    root_cause_hypothesis=RootCauseHypothesis(
+                        hypothesis=rule.rationale, confidence=effective_confidence
+                    ),
+                    recommended_action=rule.action,
+                    action_parameters=params,
+                    confidence=effective_confidence,
+                    requires_human_approval=(effective_confidence < <span class="nu">0.65</span>),
+                    alternative_actions=[],
+                    reasoning_trace=(
+                        <span class="st">f"[FAST PATH] Rule '{rule.name}' matched. "</span>
+                        <span class="st">f"Historical success rate: {rate:.2f}. LLM skipped."</span>
+                    ),
+                )
+            <span class="kw">except</span> Exception:
+                <span class="kw">continue</span>
+        <span class="kw">return None</span>
+
+
+<span class="cm"># Add to ReasoningEngine.__init__ (reasoning/engine.py):</span>
+<span class="kw">async def</span> <span class="fn">_load_success_rates</span>(self) -> dict[str, float]:
+    <span class="dc">"""Load historical success rates from procedural memory at startup."""</span>
+    <span class="kw">try</span>:
+        r = <span class="kw">await</span> self._http.get(<span class="st">f"{self.cfg.memory_api_url}/memory/procedural/playbooks"</span>)
+        <span class="kw">if</span> r.status_code == <span class="nu">200</span>:
+            <span class="kw">return</span> {
+                pb[<span class="st">"recommended_action"</span>]: pb[<span class="st">"success_rate"</span>]
+                <span class="kw">for</span> pb <span class="kw">in</span> r.json()
+                <span class="kw">if</span> pb.get(<span class="st">"recommended_action"</span>) <span class="kw">and</span> pb.get(<span class="st">"success_rate"</span>) <span class="kw">is not None</span>
+            }
+    <span class="kw">except</span> Exception:
+        <span class="kw">pass</span>
+    <span class="kw">return</span> {}</pre>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">feedback/graph_updater.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+GraphUpdater — writes RESOLVES edges to Neo4j.
+
+Knowledge accumulated here:
+  (Action {id:'action:scale_consumer_group'})
+      -[:RESOLVES {confidence:0.91, success_count:23, failure_count:2}]->
+  (Concept {id:'concept:consumer_lag_critical', type:'anomaly_type'})
+
+The Reasoning Engine's CausalEngine (Phase 6) traverses these edges when
+building the root_cause_hypothesis. High-confidence RESOLVES edges give
+the LLM strong prior evidence that a specific action resolves a specific pattern.
+
+Confidence bounds:
+  INCREMENT: +0.04 per success (configurable in feedback_config.yaml)
+  DECREMENT: -0.05 per failure
+  MIN: 0.10 — never completely forget that a path exists
+  MAX: 0.99 — never be absolutely certain
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+
+<span class="kw">import</span> logging
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">from</span> neo4j <span class="kw">import</span> AsyncGraphDatabase
+
+log = logging.getLogger(<span class="st">"feedback.graph"</span>)
+
+
+<span class="kw">class</span> <span class="tl">GraphUpdater</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, uri: str, user: str, password: str, config: dict):
+        self._uri    = uri
+        self._user   = user
+        self._pass   = password
+        cfg          = config.get(<span class="st">"defaults"</span>, {})
+        self._inc    = cfg.get(<span class="st">"confidence_increment"</span>, <span class="nu">0.04</span>)
+        self._dec    = cfg.get(<span class="st">"confidence_decrement"</span>, <span class="nu">0.05</span>)
+        self._min    = cfg.get(<span class="st">"confidence_min"</span>,       <span class="nu">0.10</span>)
+        self._max    = cfg.get(<span class="st">"confidence_max"</span>,       <span class="nu">0.99</span>)
+        self._driver = <span class="kw">None</span>
+
+    <span class="kw">async def</span> <span class="fn">connect</span>(self):
+        self._driver = AsyncGraphDatabase.driver(self._uri, auth=(self._user, self._pass))
+        log.info(<span class="st">"[GraphUpdater] Connected to Neo4j"</span>)
+
+    <span class="kw">async def</span> <span class="fn">disconnect</span>(self):
+        <span class="kw">if</span> self._driver:
+            <span class="kw">await</span> self._driver.close()
+
+    <span class="kw">async def</span> <span class="fn">update</span>(self, action: str, payload: dict, outcome: str) -> <span class="kw">None</span>:
+        <span class="dc">"""Write or update RESOLVES edge. Success = strengthen. Failure = weaken."""</span>
+        <span class="cm"># Infer anomaly type from payload (what triggered this plan)</span>
+        anomaly_type = (
+            payload.get(<span class="st">"anomaly_type"</span>)
+            <span class="kw">or</span> payload.get(<span class="st">"event_type"</span>)
+            <span class="kw">or</span> <span class="st">"unknown_anomaly"</span>
+        )
+        now     = datetime.now(timezone.utc).isoformat()
+        success = outcome == <span class="st">"success"</span>
+
+        <span class="kw">async with</span> self._driver.session() <span class="kw">as</span> session:
+            <span class="kw">if</span> success:
+                <span class="kw">await</span> session.run(<span class="st">"""
+                    MERGE (a:Action {id: $action_id})
+                      ON CREATE SET a.name = $action, a.created_at = $now
+                    MERGE (c:Concept {id: $concept_id})
+                      ON CREATE SET
+                        c.name = $anomaly_type,
+                        c.type = 'anomaly_type',
+                        c.created_at = $now
+                    MERGE (a)-[r:RESOLVES]->(c)
+                    ON CREATE SET
+                      r.confidence    = 0.60,
+                      r.success_count = 1,
+                      r.failure_count = 0,
+                      r.first_seen    = $now,
+                      r.last_seen     = $now
+                    ON MATCH SET
+                      r.confidence = CASE
+                        WHEN r.confidence + $inc > $max THEN $max
+                        ELSE r.confidence + $inc END,
+                      r.success_count = r.success_count + 1,
+                      r.last_seen     = $now
+                """</span>,
+                action_id   = <span class="st">f"action:{action}"</span>,
+                action      = action,
+                concept_id  = <span class="st">f"concept:{anomaly_type}"</span>,
+                anomaly_type= anomaly_type,
+                now=now, inc=self._inc, max=self._max,
+                )
+                log.info(<span class="st">f"[GraphUpdater] Strengthened RESOLVES: {action} → {anomaly_type}"</span>)
+            <span class="kw">else</span>:
+                <span class="kw">await</span> session.run(<span class="st">"""
+                    MATCH (a:Action {id: $action_id})-[r:RESOLVES]->(c:Concept {id: $concept_id})
+                    SET r.confidence = CASE
+                          WHEN r.confidence - $dec < $min THEN $min
+                          ELSE r.confidence - $dec END,
+                        r.failure_count = coalesce(r.failure_count, 0) + 1,
+                        r.last_seen     = $now
+                """</span>,
+                action_id  = <span class="st">f"action:{action}"</span>,
+                concept_id = <span class="st">f"concept:{anomaly_type}"</span>,
+                now=now, dec=self._dec, min=self._min,
+                )
+                log.info(<span class="st">f"[GraphUpdater] Weakened RESOLVES: {action} → {anomaly_type}"</span>)</pre>
+  </div>
+</section>
+
+<!-- ══════════════ API ══════════════ -->
+<section id="api" class="section">
+  <div class="sec-head">
+    <div class="step-pill">STEP 7</div>
+    <div class="sec-text">
+      <h2>Feedback API &amp; Entry Point — Port 8096</h2>
+      <p>FastAPI server exposing feedback metrics and the run loop. Start this alongside the existing service stack.</p>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">feedback/api.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="dc">"""
+Feedback Loop API — port 8096
+Provides observability into the feedback cycle:
+  GET  /feedback/metrics         — outcome counts, success rates by action
+  GET  /feedback/outcomes        — paginated outcome history
+  POST /feedback/trigger/{plan_id} — manually trigger feedback for a plan (testing)
+  GET  /health
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> asyncio
+<span class="kw">from</span> contextlib <span class="kw">import</span> asynccontextmanager
+<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, BackgroundTasks
+<span class="kw">import</span> httpx
+<span class="kw">from</span> .consumer <span class="kw">import</span> FeedbackConsumer, FeedbackConfig
+
+cfg      = FeedbackConfig()
+consumer = FeedbackConsumer(cfg)
+_metrics = {<span class="st">"total_processed"</span>: <span class="nu">0</span>, <span class="st">"successes"</span>: <span class="nu">0</span>, <span class="st">"failures"</span>: <span class="nu">0</span>, <span class="st">"partials"</span>: <span class="nu">0</span>}
+
+
+<span class="at">@asynccontextmanager</span>
+<span class="kw">async def</span> <span class="fn">lifespan</span>(app: FastAPI):
+    <span class="cm"># Start the Kafka consumer loop as a background task</span>
+    bg = asyncio.create_task(consumer.run())
+    <span class="kw">yield</span>
+    bg.cancel()
+
+app = FastAPI(title=<span class="st">"Feedback Loop API"</span>, lifespan=lifespan)
+
+
+<span class="at">@app.get</span>(<span class="st">"/feedback/metrics"</span>)
+<span class="kw">async def</span> <span class="fn">get_metrics</span>():
+    <span class="dc">"""Outcome statistics and per-action success rates from procedural memory."""</span>
+    playbook_rates = []
+    <span class="kw">try</span>:
+        <span class="kw">async with</span> httpx.AsyncClient(timeout=<span class="nu">5</span>) <span class="kw">as</span> client:
+            r = <span class="kw">await</span> client.get(<span class="st">f"{cfg.memory_url}/memory/procedural/playbooks"</span>)
+            <span class="kw">if</span> r.status_code == <span class="nu">200</span>:
+                playbook_rates = [
+                    {<span class="st">"action"</span>: pb.get(<span class="st">"recommended_action"</span>),
+                     <span class="st">"success_rate"</span>: pb.get(<span class="st">"success_rate"</span>),
+                     <span class="st">"total"</span>: pb.get(<span class="st">"success_count"</span>,<span class="nu">0</span>) + pb.get(<span class="st">"failure_count"</span>,<span class="nu">0</span>)}
+                    <span class="kw">for</span> pb <span class="kw">in</span> r.json() <span class="kw">if</span> pb.get(<span class="st">"recommended_action"</span>)
+                ]
+    <span class="kw">except</span> Exception:
+        <span class="kw">pass</span>
+    <span class="kw">return</span> {**_metrics, <span class="st">"action_rates"</span>: playbook_rates}
+
+
+<span class="at">@app.get</span>(<span class="st">"/feedback/resolves"</span>)
+<span class="kw">async def</span> <span class="fn">get_resolves_edges</span>():
+    <span class="dc">"""Query Neo4j for all RESOLVES edges — shows learned causal knowledge."""</span>
+    <span class="kw">async with</span> consumer.graph_updater._driver.session() <span class="kw">as</span> session:
+        result = <span class="kw">await</span> session.run(<span class="st">"""
+            MATCH (a:Action)-[r:RESOLVES]->(c:Concept)
+            RETURN a.name AS action, c.name AS anomaly_type,
+                   r.confidence AS confidence,
+                   r.success_count AS wins, r.failure_count AS losses
+            ORDER BY r.confidence DESC
+        """</span>)
+        rows = <span class="kw">await</span> result.data()
+    <span class="kw">return</span> rows
+
+
+<span class="at">@app.post</span>(<span class="st">"/feedback/trigger/{plan_id}"</span>, status_code=<span class="nu">202</span>)
+<span class="kw">async def</span> <span class="fn">trigger_feedback</span>(plan_id: str, bg: BackgroundTasks):
+    <span class="dc">"""Manually trigger a feedback cycle — useful for testing."""</span>
+    fake_event = {
+        <span class="st">"event_type"</span>: <span class="st">"action_completed"</span>,
+        <span class="st">"payload"</span>: {<span class="st">"plan_id"</span>: plan_id, <span class="st">"action"</span>: <span class="st">"manual_trigger"</span>},
+    }
+    bg.add_task(consumer._process_safe, fake_event)
+    <span class="kw">return</span> {<span class="st">"triggered"</span>: plan_id}
+
+
+<span class="at">@app.get</span>(<span class="st">"/health"</span>)
+<span class="kw">async def</span> <span class="fn">health</span>(): <span class="kw">return</span> {<span class="st">"status"</span>: <span class="st">"ok"</span>}</pre>
+  </div>
+
+  <h4>Start the feedback service</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">Terminal</span><span class="cb-lang">BASH</span></div>
+<pre><span class="cm"># Run migration first</span>
+psql -U cognitive -d cognitive_db -f migrations/add_playbook_stats.sql
+
+<span class="cm"># Start the feedback loop service</span>
+uvicorn feedback.api:app --host 0.0.0.0 --port 8096 --reload</pre>
+  </div>
+</section>
+
+<!-- ══════════════ TESTING ══════════════ -->
+<section id="testing" class="section">
+  <div class="sec-head">
+    <div class="step-pill">STEP 8</div>
+    <div class="sec-text">
+      <h2>Testing — 22 New Tests</h2>
+      <p>5 test files. All offline — no live Kafka, Neo4j or HTTP calls in the unit suite.</p>
+    </div>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">tests/test_outcome_verifier.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="kw">import</span> pytest
+<span class="kw">from</span> unittest.mock <span class="kw">import</span> AsyncMock, patch
+<span class="kw">from</span> feedback.verifier <span class="kw">import</span> OutcomeVerifier
+
+CONFIG = {<span class="st">"defaults"</span>: {<span class="st">"verification_delay_s"</span>: <span class="nu">0</span>},
+          <span class="st">"action_overrides"</span>: {<span class="st">"send_alert"</span>: {<span class="st">"verification_delay_s"</span>: <span class="nu">0</span>}}}
+
+
+<span class="at">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">verifier</span>():
+    <span class="kw">return</span> OutcomeVerifier(<span class="st">"http://localhost:8092"</span>, CONFIG)
+
+
+<span class="kw">def</span> <span class="fn">make_event</span>(action=<span class="st">"scale_consumer_group"</span>):
+    <span class="kw">return</span> {<span class="st">"payload"</span>: {<span class="st">"action"</span>: action, <span class="st">"entity_refs"</span>: [<span class="st">"queue:orders"</span>]}}
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_success_when_anomaly_count_drops</span>(verifier):
+    <span class="kw">with</span> patch.object(OutcomeVerifier, <span class="st">"_count_anomalies"</span>,
+                      AsyncMock(side_effect=[<span class="nu">4</span>, <span class="nu">1</span>])), \
+         patch.object(OutcomeVerifier, <span class="st">"_get_entity_health"</span>,
+                      AsyncMock(side_effect=[<span class="st">"critical"</span>, <span class="st">"healthy"</span>])):
+        r = <span class="kw">await</span> verifier.verify(<span class="st">"plan_1"</span>, <span class="st">"scale_consumer_group"</span>, make_event())
+    <span class="kw">assert</span> r.outcome == <span class="st">"success"</span>
+    <span class="kw">assert</span> r.anomalies_before == <span class="nu">4</span>
+    <span class="kw">assert</span> r.anomalies_after  == <span class="nu">1</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_partial_when_anomaly_count_unchanged</span>(verifier):
+    <span class="kw">with</span> patch.object(OutcomeVerifier, <span class="st">"_count_anomalies"</span>, AsyncMock(side_effect=[<span class="nu">3</span>, <span class="nu">3</span>])), \
+         patch.object(OutcomeVerifier, <span class="st">"_get_entity_health"</span>, AsyncMock(side_effect=[<span class="st">"degraded"</span>, <span class="st">"degraded"</span>])):
+        r = <span class="kw">await</span> verifier.verify(<span class="st">"plan_2"</span>, <span class="st">"restart_connection_pool"</span>, make_event())
+    <span class="kw">assert</span> r.outcome == <span class="st">"partial"</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_failure_when_anomaly_count_rises</span>(verifier):
+    <span class="kw">with</span> patch.object(OutcomeVerifier, <span class="st">"_count_anomalies"</span>, AsyncMock(side_effect=[<span class="nu">1</span>, <span class="nu">5</span>])), \
+         patch.object(OutcomeVerifier, <span class="st">"_get_entity_health"</span>, AsyncMock(return_value=<span class="kw">None</span>)):
+        r = <span class="kw">await</span> verifier.verify(<span class="st">"plan_3"</span>, <span class="st">"restart_service"</span>, make_event())
+    <span class="kw">assert</span> r.outcome == <span class="st">"failure"</span>
+    <span class="kw">assert</span> r.anomalies_after > r.anomalies_before
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_entity_health_upgrade_counts_as_success</span>(verifier):
+    <span class="kw">with</span> patch.object(OutcomeVerifier, <span class="st">"_count_anomalies"</span>, AsyncMock(side_effect=[<span class="nu">2</span>, <span class="nu">2</span>])), \
+         patch.object(OutcomeVerifier, <span class="st">"_get_entity_health"</span>,
+                      AsyncMock(side_effect=[<span class="st">"degraded"</span>, <span class="st">"healthy"</span>])):
+        r = <span class="kw">await</span> verifier.verify(<span class="st">"plan_4"</span>, <span class="st">"scale_read_replicas"</span>, make_event())
+    <span class="kw">assert</span> r.outcome == <span class="st">"success"</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_config_delay_applied_per_action</span>(verifier):
+    <span class="kw">assert</span> verifier._get_delay(<span class="st">"send_alert"</span>) == <span class="nu">0</span>         <span class="cm"># from overrides</span>
+    <span class="kw">assert</span> verifier._get_delay(<span class="st">"unknown_action"</span>) == <span class="nu">0</span>     <span class="cm"># falls to default (set to 0 in test config)</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_result_contains_all_required_fields</span>(verifier):
+    <span class="kw">with</span> patch.object(OutcomeVerifier, <span class="st">"_count_anomalies"</span>, AsyncMock(side_effect=[<span class="nu">2</span>, <span class="nu">0</span>])), \
+         patch.object(OutcomeVerifier, <span class="st">"_get_entity_health"</span>, AsyncMock(return_value=<span class="st">"healthy"</span>)):
+        r = <span class="kw">await</span> verifier.verify(<span class="st">"plan_5"</span>, <span class="st">"scale_consumer_group"</span>, make_event())
+    <span class="kw">assert</span> r.plan_id == <span class="st">"plan_5"</span>
+    <span class="kw">assert</span> r.verified_at <span class="kw">is not None</span>
+    <span class="kw">assert</span> <span class="st">"→"</span> <span class="kw">in</span> r.notes</pre>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">tests/test_playbook_updater.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="kw">import</span> pytest
+<span class="kw">from</span> unittest.mock <span class="kw">import</span> AsyncMock, patch
+<span class="kw">import</span> httpx
+<span class="kw">from</span> feedback.playbook_updater <span class="kw">import</span> PlaybookUpdater
+
+
+<span class="at">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">updater</span>(): <span class="kw">return</span> PlaybookUpdater(<span class="st">"http://localhost:8090"</span>)
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_success_increments_success_count</span>(updater):
+    playbooks = [{<span class="st">"id"</span>: <span class="st">"pb_1"</span>, <span class="st">"success_count"</span>: <span class="nu">3</span>, <span class="st">"failure_count"</span>: <span class="nu">1</span>}]
+    get_resp  = AsyncMock(status_code=<span class="nu">200</span>); get_resp.json = lambda: playbooks
+    patch_resp= AsyncMock(status_code=<span class="nu">200</span>)
+    patched   = {}
+
+    <span class="kw">async def</span> <span class="fn">mock_patch</span>(url, json=<span class="kw">None</span>, **kw): patched.update(json <span class="kw">or</span> {}); <span class="kw">return</span> patch_resp
+
+    <span class="kw">with</span> patch(<span class="st">"httpx.AsyncClient"</span>) <span class="kw">as</span> MockClient:
+        mc = AsyncMock()
+        mc.__aenter__ = AsyncMock(return_value=mc)
+        mc.__aexit__  = AsyncMock(return_value=<span class="kw">False</span>)
+        mc.get   = AsyncMock(return_value=get_resp)
+        mc.patch = mock_patch
+        MockClient.return_value = mc
+        <span class="kw">await</span> updater.update(<span class="st">"scale_consumer_group"</span>, <span class="st">"success"</span>)
+
+    <span class="kw">assert</span> patched[<span class="st">"success_count"</span>] == <span class="nu">4</span>
+    <span class="kw">assert</span> patched[<span class="st">"failure_count"</span>] == <span class="nu">1</span>
+    <span class="kw">assert</span> <span class="fn">abs</span>(patched[<span class="st">"success_rate"</span>] - <span class="nu">4</span>/<span class="nu">5</span>) < <span class="nu">0.001</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_failure_increments_failure_count</span>(updater):
+    playbooks = [{<span class="st">"id"</span>: <span class="st">"pb_2"</span>, <span class="st">"success_count"</span>: <span class="nu">5</span>, <span class="st">"failure_count"</span>: <span class="nu">0</span>}]
+    get_resp  = AsyncMock(status_code=<span class="nu">200</span>); get_resp.json = lambda: playbooks
+    patched   = {}
+
+    <span class="kw">with</span> patch(<span class="st">"httpx.AsyncClient"</span>) <span class="kw">as</span> MockClient:
+        mc = AsyncMock()
+        mc.__aenter__ = AsyncMock(return_value=mc)
+        mc.__aexit__  = AsyncMock(return_value=<span class="kw">False</span>)
+        mc.get   = AsyncMock(return_value=get_resp)
+        mc.patch = AsyncMock(side_effect=<span class="kw">lambda</span> url, json=<span class="kw">None</span>, **kw: (patched.update(json <span class="kw">or</span> {}), AsyncMock(status_code=<span class="nu">200</span>))[<span class="nu">1</span>])
+        MockClient.return_value = mc
+        <span class="kw">await</span> updater.update(<span class="st">"restart_service"</span>, <span class="st">"failure"</span>)
+
+    <span class="kw">assert</span> patched[<span class="st">"failure_count"</span>] == <span class="nu">1</span>
+    <span class="kw">assert</span> patched[<span class="st">"success_count"</span>] == <span class="nu">5</span>
+    <span class="kw">assert</span> <span class="fn">abs</span>(patched[<span class="st">"success_rate"</span>] - <span class="nu">5</span>/<span class="nu">6</span>) < <span class="nu">0.001</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_no_playbooks_does_not_crash</span>(updater):
+    get_resp = AsyncMock(status_code=<span class="nu">200</span>); get_resp.json = lambda: []
+    <span class="kw">with</span> patch(<span class="st">"httpx.AsyncClient"</span>) <span class="kw">as</span> MockClient:
+        mc = AsyncMock()
+        mc.__aenter__ = AsyncMock(return_value=mc)
+        mc.__aexit__  = AsyncMock(return_value=<span class="kw">False</span>)
+        mc.get = AsyncMock(return_value=get_resp)
+        MockClient.return_value = mc
+        <span class="kw">await</span> updater.update(<span class="st">"unknown_action"</span>, <span class="st">"success"</span>)  <span class="cm"># must not raise</span></pre>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">tests/test_graph_updater.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="kw">import</span> pytest
+<span class="kw">from</span> unittest.mock <span class="kw">import</span> AsyncMock, MagicMock
+<span class="kw">from</span> feedback.graph_updater <span class="kw">import</span> GraphUpdater
+
+CONFIG = {<span class="st">"defaults"</span>: {
+    <span class="st">"confidence_increment"</span>: <span class="nu">0.04</span>, <span class="st">"confidence_decrement"</span>: <span class="nu">0.05</span>,
+    <span class="st">"confidence_min"</span>: <span class="nu">0.10</span>, <span class="st">"confidence_max"</span>: <span class="nu">0.99</span>
+}}
+
+
+<span class="at">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">updater</span>():
+    u = GraphUpdater.__new__(GraphUpdater)
+    u._inc = <span class="nu">0.04</span>; u._dec = <span class="nu">0.05</span>; u._min = <span class="nu">0.10</span>; u._max = <span class="nu">0.99</span>
+    mock_session = AsyncMock(); mock_session.run = AsyncMock()
+    driver = MagicMock()
+    driver.session.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+    driver.session.return_value.__aexit__  = AsyncMock(return_value=<span class="kw">False</span>)
+    u._driver = driver; u._mock_session = mock_session
+    <span class="kw">return</span> u
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_success_calls_merge_with_increment</span>(updater):
+    <span class="kw">await</span> updater.update(<span class="st">"scale_consumer_group"</span>,
+                         {<span class="st">"anomaly_type"</span>: <span class="st">"consumer_lag_critical"</span>}, <span class="st">"success"</span>)
+    updater._mock_session.run.assert_called_once()
+    cypher = updater._mock_session.run.call_args[<span class="nu">0</span>][<span class="nu">0</span>]
+    <span class="kw">assert</span> <span class="st">"MERGE"</span>         <span class="kw">in</span> cypher
+    <span class="kw">assert</span> <span class="st">"RESOLVES"</span>      <span class="kw">in</span> cypher
+    <span class="kw">assert</span> <span class="st">"success_count"</span> <span class="kw">in</span> cypher
+    kwargs = updater._mock_session.run.call_args.kwargs
+    <span class="kw">assert</span> kwargs[<span class="st">"inc"</span>] == <span class="nu">0.04</span>
+    <span class="kw">assert</span> kwargs[<span class="st">"max"</span>] == <span class="nu">0.99</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_failure_calls_match_with_decrement</span>(updater):
+    <span class="kw">await</span> updater.update(<span class="st">"restart_service"</span>,
+                         {<span class="st">"event_type"</span>: <span class="st">"service_health_degraded"</span>}, <span class="st">"failure"</span>)
+    cypher = updater._mock_session.run.call_args[<span class="nu">0</span>][<span class="nu">0</span>]
+    <span class="kw">assert</span> <span class="st">"MATCH"</span>          <span class="kw">in</span> cypher
+    <span class="kw">assert</span> <span class="st">"failure_count"</span>  <span class="kw">in</span> cypher
+    kwargs = updater._mock_session.run.call_args.kwargs
+    <span class="kw">assert</span> kwargs[<span class="st">"dec"</span>] == <span class="nu">0.05</span>
+    <span class="kw">assert</span> kwargs[<span class="st">"min"</span>] == <span class="nu">0.10</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_anomaly_type_falls_back_to_event_type</span>(updater):
+    <span class="kw">await</span> updater.update(<span class="st">"monitor_and_wait"</span>,
+                         {<span class="st">"event_type"</span>: <span class="st">"cpu_spike"</span>}, <span class="st">"success"</span>)
+    kwargs = updater._mock_session.run.call_args.kwargs
+    <span class="kw">assert</span> <span class="st">"cpu_spike"</span> <span class="kw">in</span> kwargs[<span class="st">"concept_id"</span>]
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_unknown_anomaly_type_uses_fallback</span>(updater):
+    <span class="kw">await</span> updater.update(<span class="st">"send_alert"</span>, {}, <span class="st">"success"</span>)
+    kwargs = updater._mock_session.run.call_args.kwargs
+    <span class="kw">assert</span> <span class="st">"unknown_anomaly"</span> <span class="kw">in</span> kwargs[<span class="st">"concept_id"</span>]</pre>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">tests/test_feedback_consumer.py</span><span class="cb-lang">PYTHON</span></div>
+<pre><span class="kw">import</span> pytest
+<span class="kw">from</span> unittest.mock <span class="kw">import</span> AsyncMock, MagicMock, patch
+<span class="kw">from</span> feedback.consumer <span class="kw">import</span> FeedbackConsumer, FeedbackConfig
+<span class="kw">from</span> feedback.verifier <span class="kw">import</span> VerificationResult
+
+
+<span class="at">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">consumer</span>():
+    cfg = FeedbackConfig(config_path=<span class="st">"feedback_config.yaml"</span>)
+    c   = FeedbackConsumer.__new__(FeedbackConsumer)
+    c.verifier      = AsyncMock()
+    c.recorder      = AsyncMock()
+    c.pb_updater    = AsyncMock()
+    c.graph_updater = AsyncMock()
+    c._producer     = AsyncMock(); c._producer.send_and_wait = AsyncMock()
+    <span class="kw">return</span> c
+
+
+<span class="kw">def</span> <span class="fn">make_vr</span>(outcome=<span class="st">"success"</span>) -> VerificationResult:
+    <span class="kw">return</span> VerificationResult(plan_id=<span class="st">"plan_1"</span>, action=<span class="st">"scale_consumer_group"</span>,
+                              outcome=outcome, anomalies_before=<span class="nu">3</span>, anomalies_after=<span class="nu">1</span>)
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_process_calls_all_substeps</span>(consumer):
+    consumer.verifier.verify   = AsyncMock(return_value=make_vr())
+    consumer.recorder.record   = AsyncMock()
+    consumer.pb_updater.update = AsyncMock()
+    consumer.graph_updater.update = AsyncMock()
+
+    event = {<span class="st">"event_type"</span>: <span class="st">"action_completed"</span>,
+             <span class="st">"payload"</span>: {<span class="st">"plan_id"</span>: <span class="st">"plan_1"</span>, <span class="st">"action"</span>: <span class="st">"scale_consumer_group"</span>}}
+    <span class="kw">await</span> consumer._process(event)
+
+    consumer.verifier.verify.assert_called_once()
+    consumer.recorder.record.assert_called_once()
+    consumer.pb_updater.update.assert_called_once_with(<span class="st">"scale_consumer_group"</span>, <span class="st">"success"</span>)
+    consumer.graph_updater.update.assert_called_once()
+    consumer._producer.send_and_wait.assert_called_once()  <span class="cm"># feedback_signal</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_skips_events_without_plan_id</span>(consumer):
+    event = {<span class="st">"event_type"</span>: <span class="st">"action_completed"</span>, <span class="st">"payload"</span>: {<span class="st">"action"</span>: <span class="st">"send_alert"</span>}}
+    <span class="kw">await</span> consumer._process(event)
+    consumer.verifier.verify.assert_not_called()
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_substep_failure_does_not_crash_consumer</span>(consumer):
+    consumer.verifier.verify      = AsyncMock(return_value=make_vr())
+    consumer.recorder.record      = AsyncMock(side_effect=Exception(<span class="st">"DB timeout"</span>))
+    consumer.pb_updater.update    = AsyncMock()
+    consumer.graph_updater.update = AsyncMock()
+
+    event = {<span class="st">"event_type"</span>: <span class="st">"action_completed"</span>,
+             <span class="st">"payload"</span>: {<span class="st">"plan_id"</span>: <span class="st">"plan_2"</span>, <span class="st">"action"</span>: <span class="st">"restart_service"</span>}}
+    <span class="kw">await</span> consumer._process_safe(event)   <span class="cm"># must not raise</span>
+    consumer.pb_updater.update.assert_called_once()  <span class="cm"># other steps still run</span>
+
+
+<span class="at">@pytest.mark.asyncio</span>
+<span class="kw">async def</span> <span class="fn">test_feedback_signal_emitted_with_correct_outcome</span>(consumer):
+    consumer.verifier.verify      = AsyncMock(return_value=make_vr(<span class="st">"failure"</span>))
+    consumer.recorder.record      = AsyncMock()
+    consumer.pb_updater.update    = AsyncMock()
+    consumer.graph_updater.update = AsyncMock()
+
+    <span class="kw">await</span> consumer._process({
+        <span class="st">"event_type"</span>: <span class="st">"action_failed"</span>,
+        <span class="st">"payload"</span>: {<span class="st">"plan_id"</span>: <span class="st">"plan_3"</span>, <span class="st">"action"</span>: <span class="st">"restart_service"</span>},
+    })
+    call_args = consumer._producer.send_and_wait.call_args[<span class="nu">0</span>]
+    <span class="kw">import</span> json
+    payload = json.loads(call_args[<span class="nu">1</span>])
+    <span class="kw">assert</span> payload[<span class="st">"payload"</span>][<span class="st">"outcome"</span>] == <span class="st">"failure"</span></pre>
+  </div>
+
+  <h3>Expected Test Run — Full Cumulative Suite</h3>
+  <div class="testout">
+<span class="dim">$ python3 -m pytest --tb=short -q</span>
+
+<span class="dim">── Phases 1–9 (128 existing) ─────────────────────────────────────</span>
+<span class="info">  tests/test_normalizers.py ........          tests/test_episodic_memory.py ...</span>
+<span class="info">  tests/test_semantic_memory.py ...           tests/test_temporal_detector.py ........</span>
+<span class="info">  tests/test_temporal_predictor.py ......     tests/test_entity_registry.py .....</span>
+<span class="info">  tests/test_anomaly_registry.py .....        tests/test_situation_assessor.py ....</span>
+<span class="info">  tests/test_causal_engine.py ...             tests/test_reasoning_schema.py .....</span>
+<span class="info">  tests/test_fast_path.py ......              tests/test_llm_client.py .....</span>
+<span class="info">  tests/test_reasoning_engine.py ....         tests/test_plan_schema.py .....</span>
+<span class="info">  tests/test_plan_generator.py ....           tests/test_plan_monitor.py .....</span>
+<span class="info">  tests/test_plan_runner.py .....             tests/test_action_handlers.py .......</span>
+
+<span class="dim">── Phase 10 (22 new) ─────────────────────────────────────────────</span>
+<span class="pass">  tests/test_outcome_verifier.py ......</span>      <span class="dim">[ 6 tests ]</span>
+<span class="pass">  tests/test_playbook_updater.py ...</span>         <span class="dim">[ 3 tests ]</span>
+<span class="pass">  tests/test_graph_updater.py ....</span>           <span class="dim">[ 4 tests ]</span>
+<span class="pass">  tests/test_outcome_recorder.py ....</span>        <span class="dim">[ 4 tests ]</span>
+<span class="pass">  tests/test_feedback_consumer.py ....</span>       <span class="dim">[ 4 tests ]</span>
+
+<span class="sep">──────────────────────────────────────────────────────────────────</span>
+<span class="pass">150 passed</span><span class="dim">, 5 warnings in ~80s</span>
+  </div>
+
+  <h3>Manual End-to-End Verification</h3>
+  <h4>1. Start the full stack including feedback</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">Terminal</span><span class="cb-lang">BASH</span></div>
+<pre>docker-compose up -d
+psql -U cognitive -d cognitive_db -f migrations/add_playbook_stats.sql
+
+uvicorn world_model.api:app  --port 8092 &amp;
+uvicorn reasoning.api:app    --port 8093 &amp;
+uvicorn planning.api:app     --port 8094 &amp;
+uvicorn execution.api:app    --port 8095 &amp;
+uvicorn feedback.api:app     --port 8096 --reload</pre>
+  </div>
+
+  <h4>2. Run a full perception → decision → execution → feedback cycle</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">Full cycle E2E test</span><span class="cb-lang">BASH</span></div>
+<pre><span class="cm"># Inject consumer lag → triggers fast path → generates plan → executes → feedback</span>
+curl -s -X POST http://localhost:8080/perception/prometheus-alerts \
+  -H "Content-Type: application/json" \
+  -d '{"alerts":[{"status":"firing",
+      "labels":{"alertname":"KafkaConsumerLagHigh","job":"order-processor"},
+      "annotations":{"value":"20000"},
+      "startsAt":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+  }]}'
+
+sleep 5   <span class="cm"># World Model update</span>
+
+<span class="cm"># Trigger reasoning</span>
+DECISION=$(curl -s -X POST http://localhost:8093/reasoning/reason)
+ACTION=$(echo $DECISION | jq -r '.recommended_action')
+echo "Action: $ACTION"   <span class="cm"># Expected: scale_consumer_group</span>
+
+<span class="cm"># Generate + execute plan</span>
+PLAN=$(curl -s -X POST http://localhost:8094/planning/generate \
+  -H "Content-Type: application/json" -d "$DECISION")
+PLAN_ID=$(echo $PLAN | jq -r '.plan_id')
+
+curl -s -X POST http://localhost:8095/execution/execute \
+  -H "Content-Type: application/json" -d "$PLAN"
+
+<span class="cm"># Wait for feedback cycle to complete (verification_delay + processing)</span>
+echo "Waiting for feedback cycle..."
+sleep 120
+
+<span class="cm"># Check what the feedback loop learned</span>
+curl -s http://localhost:8096/feedback/metrics | jq '.action_rates'
+curl -s http://localhost:8096/feedback/resolves | jq .</pre>
+  </div>
+
+  <h4>3. Verify learning occurred</h4>
+  <div class="cb">
+    <div class="cb-head"><span class="cb-file">Expected outputs after one full cycle</span><span class="cb-lang">BASH</span></div>
+<pre><span class="cm"># 1. Playbook stats updated in PostgreSQL</span>
+psql -U cognitive -d cognitive_db -c \
+  "SELECT name, recommended_action, success_count, failure_count, success_rate
+   FROM playbooks WHERE recommended_action IS NOT NULL;"
+
+<span class="cm"># Expected output:</span>
+<span class="cm"># name                  | recommended_action     | success_count | failure_count | success_rate</span>
+<span class="cm"># consumer_lag_playbook | scale_consumer_group   |             1 |             0 |          1.0</span>
+
+<span class="cm"># 2. RESOLVES edge in Neo4j (check via Feedback API)</span>
+curl -s http://localhost:8096/feedback/resolves | jq '.[0]'
+<span class="cm"># Expected:</span>
+<span class="cm"># { "action": "scale_consumer_group",</span>
+<span class="cm">#   "anomaly_type": "consumer_lag_critical",</span>
+<span class="cm">#   "confidence": 0.64,   ← 0.60 initial + 0.04 increment</span>
+<span class="cm">#   "wins": 1, "losses": 0 }</span>
+
+<span class="cm"># 3. Episodic record patched with outcome</span>
+curl -s "http://localhost:8090/memory/episodic/search?q=scale_consumer_group" | jq '.[0].outcome'
+<span class="cm"># Expected: "success"</span></pre>
+  </div>
+</section>
+
+<!-- ══════════════ COMPLETION GATE ══════════════ -->
+<section id="gate" class="section">
+  <div class="sec-head">
+    <div class="step-pill">DONE</div>
+    <div class="sec-text">
+      <h2>Phase 10 Completion Gate</h2>
+      <p>All items must be green before Phase 11. Phase 11 extends the feedback loop to multi-agent scenarios.</p>
+    </div>
+  </div>
+
+  <div class="checklist">
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">Database migration applied successfully</span>
+        <span class="citem-note"><code>psql -c "\d playbooks"</code> shows <code>success_count</code>, <code>failure_count</code>, <code>success_rate</code> columns. <code>\d episodic_events</code> shows <code>outcome</code>, <code>verified_at</code> columns.</span>
+      </div>
+      <span class="badge bteal">INFRA</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">FeedbackConsumer subscribes to cognitive.events under group 'feedback-loop'</span>
+        <span class="citem-note">Redpanda Console → Consumer Groups → shows <code>feedback-loop</code> group with lag = 0 after startup. Distinct from <code>world-model</code> group.</span>
+      </div>
+      <span class="badge bteal">RUNTIME</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">OutcomeVerifier produces correct outcome for injected events</span>
+        <span class="citem-note">After a successful execution cycle, <code>GET /feedback/metrics</code> shows <code>successes: 1</code>. Outcome field in episodic record is <code>"success"</code>.</span>
+      </div>
+      <span class="badge bteal">FUNCTIONAL</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">PlaybookUpdater increments success_count in PostgreSQL</span>
+        <span class="citem-note">After one successful cycle, the matching playbook has <code>success_count = 1</code>, <code>success_rate = 1.0</code>. After a failure cycle, <code>failure_count</code> increments and <code>success_rate</code> drops.</span>
+      </div>
+      <span class="badge bteal">FUNCTIONAL</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">GraphUpdater writes RESOLVES edge to Neo4j</span>
+        <span class="citem-note"><code>GET /feedback/resolves</code> returns at least one edge with <code>confidence > 0.60</code> (initial 0.60 + first success increment 0.04 = 0.64) after one cycle.</span>
+      </div>
+      <span class="badge bteal">FUNCTIONAL</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">Reasoning Engine fast_path gating uses success_rate</span>
+        <span class="citem-note">Add a playbook with <code>success_rate = 0.30</code>. Confirm the corresponding fast-path rule is skipped and falls through to LLM. <code>reasoning_trace</code> from the LLM decision should not contain <code>"FAST PATH"</code> for that action.</span>
+      </div>
+      <span class="badge bwarn">ADAPTIVE</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">150 tests pass (128 existing + 22 new Phase 10 tests)</span>
+        <span class="citem-note"><code>python3 -m pytest</code> exits with 150 passed, 0 failed. All feedback tests run offline with no live services.</span>
+      </div>
+      <span class="badge bgreen">REQUIRED</span>
+    </div>
+    <div class="citem">
+      <div class="citem-ico">☐</div>
+      <div class="citem-body">
+        <span class="citem-title">FeedbackConsumer survives substep failures without crashing</span>
+        <span class="citem-note">Kill the Memory API mid-cycle. The consumer logs a warning and continues processing the next event. The Kafka consumer group does not fall behind.</span>
+      </div>
+      <span class="badge bgreen">STABILITY</span>
+    </div>
+  </div>
+
+  <div class="note nok" style="margin-top: 28px;">
+    <div class="note-icon">✅</div>
+    <div class="note-body">
+      <strong>When all 8 items are green, Phase 10 is complete.</strong>
+      Your architecture now has a closed intelligence loop: it perceives, remembers, models,
+      reasons, plans, acts, and — crucially — <em>learns from acting</em>. Every action taken
+      by the system strengthens or weakens the causal knowledge encoded in its Neo4j graph
+      and procedural memory, without retraining any model. Phase 11 (Multi-Agent Coordination)
+      extends this loop across multiple specialised agents running in parallel, each contributing
+      to the same shared world model and the same shared learning accumulation.
+    </div>
+  </div>
+
+  <h3>What the System Can Now Do That It Couldn't Before Phase 10</h3>
+  <table>
+    <thead>
+      <tr><th>Capability</th><th>Before Phase 10</th><th>After Phase 10</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Action effectiveness</td>
+        <td>Unknown — no measurement</td>
+        <td>Quantified: verified success/partial/failure per cycle</td>
+      </tr>
+      <tr>
+        <td>Past experience quality</td>
+        <td>Records have <code>outcome: null</code> — LLM receives no resolution data</td>
+        <td>Records enriched — LLM retrieves "situation X was resolved with action Y"</td>
+      </tr>
+      <tr>
+        <td>Fast path confidence</td>
+        <td>Static hardcoded values — never updates</td>
+        <td>Dynamic — gated by empirical <code>success_rate</code> from procedural memory</td>
+      </tr>
+      <tr>
+        <td>Knowledge graph</td>
+        <td>RESOLVES edges absent or zero confidence</td>
+        <td>Confidence grows per success, shrinks per failure — self-calibrating causal map</td>
+      </tr>
+      <tr>
+        <td>Adaptation over time</td>
+        <td>Same decisions regardless of track record</td>
+        <td>Consistently failing strategies get demoted. Consistently working ones get promoted.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+</div><!-- /wrap -->
+</body>
+</html>

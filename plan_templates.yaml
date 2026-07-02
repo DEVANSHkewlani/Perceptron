@@ -1,0 +1,96 @@
+# Plan templates — one per action type in actions.yaml.
+# Each template becomes a concrete Plan when parameterised.
+templates:
+
+  scale_consumer_group:
+    goal: "Reduce consumer lag on {queue_id} below 1000 within 5 minutes"
+    preconditions:
+      - "entity:{queue_id} health != unknown"
+      - "anomaly:consumer_lag_critical exists"
+    steps:
+      - id: s1
+        action: scale_consumer_group
+        description: "Add {instance_delta} consumer instances to {consumer_group}"
+        timeout_s: 60
+        expected_outcome: "consumer_lag decreasing"
+        on_failure: rollback
+      - id: s2
+        action: send_alert
+        description: "Notify team of auto-scaling action"
+        depends_on: [s1]
+        timeout_s: 15
+        on_failure: continue
+    success_criteria:
+      - type: world_model_query
+        check: "anomaly:consumer_lag_critical resolved"
+        timeout_s: 300
+    rollback:
+      - action: scale_consumer_group
+        description: "Remove added consumers"
+        parameters: {instance_delta: "-{instance_delta}"}
+    approval_gates: []
+
+  restart_connection_pool:
+    goal: "Restore connection pool health for {service_id}"
+    preconditions:
+      - "entity:{service_id} exists"
+    steps:
+      - id: s1
+        action: increase_log_verbosity
+        description: "Enable debug logging before restart"
+        timeout_s: 10
+        on_failure: continue
+      - id: s2
+        action: restart_connection_pool
+        description: "Restart connection pool for {service_id}"
+        depends_on: [s1]
+        timeout_s: 30
+        on_failure: rollback
+    success_criteria:
+      - type: world_model_query
+        check: "anomaly:connection_pool_exhausted resolved"
+        timeout_s: 120
+    rollback:
+      - action: send_alert
+        description: "Alert: pool restart failed, manual intervention required"
+        parameters: {severity: critical, message: "Connection pool restart failed on {service_id}"}
+    approval_gates: []
+
+  restart_service:
+    goal: "Restore healthy status for {service_id}"
+    preconditions:
+      - "entity:{service_id} exists"
+      - "human_approval:granted"
+    steps:
+      - id: s0
+        action: human_handoff
+        description: "Confirm service restart for {service_id}"
+        timeout_s: 300
+        on_failure: abort
+        is_approval_gate: true
+      - id: s1
+        action: restart_service
+        description: "Rolling restart of {service_id}"
+        depends_on: [s0]
+        timeout_s: 120
+        on_failure: rollback
+    success_criteria:
+      - type: world_model_query
+        check: "entity:{service_id} health == healthy"
+        timeout_s: 180
+    approval_gates: [s0]
+
+  escalate_to_human:
+    goal: "Deliver situation brief to human operator"
+    preconditions: []
+    steps:
+      - id: s1
+        action: human_handoff
+        description: "Present situation to operator and await decision"
+        timeout_s: 1800
+        on_failure: continue
+    success_criteria:
+      - type: event_received
+        check: "action_approved OR action_rejected"
+        timeout_s: 1800
+    approval_gates: [s1]

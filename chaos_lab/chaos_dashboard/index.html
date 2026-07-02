@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>ShopCore Chaos Lab | Port 9099</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-container": "#838487",
+                        "on-secondary-fixed-variant": "#46464e",
+                        "tertiary": "#000000",
+                        "surface-bright": "#1a1c1c",
+                        "primary": "#ffffff",
+                        "primary-container": "#1b1b1b",
+                        "on-secondary-fixed": "#1a1b22",
+                        "on-primary-fixed": "#1b1b1b",
+                        "surface-tint": "#5e5e5e",
+                        "on-primary-container": "#848484",
+                        "secondary-container": "#e3e1ec",
+                        "inverse-surface": "#f9f9f9",
+                        "inverse-primary": "#000000",
+                        "tertiary-fixed": "#e2e2e5",
+                        "background": "#000000",
+                        "surface-container-low": "#0a0a0a",
+                        "on-error": "#ffffff",
+                        "surface-container-highest": "#222222",
+                        "on-surface-variant": "#c6c6c6",
+                        "surface": "#000000",
+                        "on-tertiary-fixed": "#1a1c1e",
+                        "tertiary-fixed-dim": "#c6c6c9",
+                        "secondary-fixed-dim": "#c6c5cf",
+                        "secondary": "#a1a1aa",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#454749",
+                        "outline-variant": "#333333",
+                        "secondary-fixed": "#e3e1ec",
+                        "on-surface": "#f9f9f9",
+                        "error-container": "#440000",
+                        "surface-variant": "#1a1a1a",
+                        "surface-container": "#111111",
+                        "on-secondary": "#000000",
+                        "primary-fixed-dim": "#c6c6c6",
+                        "on-primary-fixed-variant": "#474747",
+                        "on-secondary-container": "#63646c",
+                        "primary-fixed": "#e2e2e2",
+                        "on-primary": "#000000",
+                        "surface-container-high": "#181818",
+                        "inverse-on-surface": "#1a1c1c",
+                        "tertiary-container": "#1a1c1e",
+                        "on-tertiary": "#ffffff",
+                        "on-background": "#f9f9f9",
+                        "outline": "#4c4546",
+                        "surface-dim": "#121212",
+                        "surface-container-lowest": "#000000",
+                        "on-error-container": "#ffdad6"
+                    },
+                    fontFamily: {
+                        sans: ["Inter", "sans-serif"],
+                        mono: ["Space Mono", "monospace"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+        }
+        .pulsing-purple {
+            animation: pulse-purple 2s infinite;
+        }
+        @keyframes pulse-purple {
+            0% { box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(147, 51, 234, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(147, 51, 234, 0); }
+        }
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333333; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #444444; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-sans min-h-screen flex flex-col">
+    <!-- Header Component -->
+    <header class="bg-surface-container-lowest border-b border-outline-variant flex justify-between items-center w-full px-6 py-4 z-40">
+        <div class="flex items-center gap-6">
+            <div class="flex flex-col">
+                <h1 class="text-xl font-bold tracking-tight text-primary">ShopCore Chaos Lab</h1>
+                <p class="text-[10px] font-mono font-medium text-on-surface-variant uppercase tracking-widest">v13.0.0-alpha // SECURE_NODE_9099</p>
+            </div>
+            <div class="flex items-center gap-2 bg-surface-container-low border border-outline-variant px-2.5 py-1 rounded">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500" id="engine-status-dot"></span>
+                <span class="font-mono text-[10px] font-semibold text-on-surface-variant uppercase" id="engine-status-text">Engine Connected: 9091</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="loadScenarios()" class="text-on-surface-variant hover:text-primary font-medium text-xs px-3 py-1.5 transition-colors">
+                Refresh Status
+            </button>
+            <button onclick="stopAllChaos()" class="bg-error text-on-error font-bold text-xs uppercase px-5 py-2.5 rounded border border-error hover:bg-red-700 transition-all shadow-sm">
+                STOP ALL CHAOS
+            </button>
+        </div>
+    </header>
+    <main class="flex-grow flex flex-col overflow-hidden">
+        <!-- Anomaly Matrix (Slidable) -->
+        <section class="border-b border-outline-variant bg-surface-container-lowest">
+            <div class="px-6 py-3 border-b border-outline-variant flex justify-between items-center">
+                <h2 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Anomaly Matrix (18 Scenarios)</h2>
+                <div class="flex gap-4 text-[10px] font-mono font-semibold uppercase">
+                    <div class="flex items-center gap-2 text-on-surface-variant">
+                        <span class="w-2 h-2 rounded-full bg-green-500"></span> Idle
+                    </div>
+                    <div class="flex items-center gap-2 text-on-surface-variant">
+                        <span class="w-2 h-2 rounded-full bg-purple-500 pulsing-purple"></span> Active
+                    </div>
+                </div>
+            </div>
+            <div class="flex overflow-x-auto p-6 gap-4 custom-scrollbar bg-surface-container-low/30" id="anomaly-container">
+                <div style="padding: 20px; color: var(--secondary);">Loading failure injections...</div>
+            </div>
+        </section>
+        
+        <!-- Main Body: Timeline and Metrics -->
+        <div class="flex flex-grow overflow-hidden">
+            <!-- Chaos Gauntlet Timeline -->
+            <section class="flex-[7] flex flex-col border-r border-outline-variant bg-surface-container-low/10">
+                <div class="px-6 py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Chaos Gauntlet Timeline</h3>
+                    <div class="flex gap-2">
+                        <button onclick="startGauntlet()" class="bg-primary text-on-primary text-[10px] font-bold uppercase px-3 py-1.5 rounded hover:opacity-90 transition-colors">Run Sequence</button>
+                        <button onclick="stopAllChaos()" class="bg-surface-container-lowest border border-outline-variant text-on-surface text-[10px] font-bold uppercase px-3 py-1.5 rounded hover:bg-surface-container-high transition-colors">Reset</button>
+                    </div>
+                </div>
+                <div class="flex-grow overflow-y-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-surface-container-lowest text-[10px] font-mono font-bold text-on-surface-variant uppercase border-b border-outline-variant sticky top-0 z-10">
+                            <tr>
+                                <th class="px-6 py-3 font-semibold">Step</th>
+                                <th class="px-6 py-3 font-semibold">Anomaly</th>
+                                <th class="px-6 py-3 font-semibold">Target Metric</th>
+                                <th class="px-6 py-3 font-semibold">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-xs font-medium text-on-surface" id="gauntlet-timeline-body">
+                            <tr>
+                                <td colspan="4" class="px-6 py-8 text-center text-zinc-500 font-mono">
+                                    Loading gauntlet scenarios...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            <!-- Health Status Meters & Live Console Column -->
+            <section class="flex-[3] flex flex-col bg-surface-container-lowest border-l border-outline-variant overflow-hidden">
+                <!-- Health Status Meters -->
+                <div class="p-6 flex-grow overflow-y-auto custom-scrollbar">
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-6">Real-Time SLO Meters</h3>
+                    <div class="space-y-6">
+                        <!-- Metric 1: Gateway Availability -->
+                        <div>
+                            <div class="flex justify-between items-baseline mb-2">
+                                <span class="text-[10px] font-bold uppercase text-on-surface-variant">Gateway Availability</span>
+                                <span class="text-lg font-bold text-on-surface" id="availability-val">99.98%</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                                <div class="h-full bg-green-500 w-[99.98%]" id="availability-bar"></div>
+                            </div>
+                        </div>
+                        <!-- Metric 2: p95 Latency -->
+                        <div>
+                            <div class="flex justify-between items-baseline mb-2">
+                                <span class="text-[10px] font-bold uppercase text-on-surface-variant">p95 Latency</span>
+                                <span class="text-lg font-bold text-on-surface" id="p95-latency-val">12ms</span>
+                            </div>
+                            <div class="flex items-end gap-0.5 h-10 w-full bg-surface-container rounded p-1" id="latency-sparkline">
+                                <div class="w-full h-[20%] bg-zinc-800"></div>
+                                <div class="w-full h-[25%] bg-zinc-800"></div>
+                                <div class="w-full h-[20%] bg-zinc-800"></div>
+                                <div class="w-full h-[30%] bg-zinc-800"></div>
+                                <div class="w-full h-[25%] bg-zinc-800"></div>
+                                <div class="w-full h-[40%] bg-zinc-700"></div>
+                                <div class="w-full h-[20%] bg-zinc-800"></div>
+                                <div class="w-full h-[15%] bg-zinc-800"></div>
+                            </div>
+                        </div>
+                        <!-- Metric 3: HTTP 5xx Rate -->
+                        <div>
+                            <div class="flex justify-between items-baseline mb-2">
+                                <span class="text-[10px] font-bold uppercase text-on-surface-variant">HTTP 5xx Rate</span>
+                                <span class="text-lg font-bold text-on-surface" id="error-rate-val">0.00%</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                                <div class="h-full bg-error w-0" id="error-rate-bar"></div>
+                            </div>
+                        </div>
+                        <!-- Metric 4: Kafka Consumer Lag -->
+                        <div>
+                            <div class="flex justify-between items-baseline mb-2">
+                                <span class="text-[10px] font-bold uppercase text-on-surface-variant">Kafka Consumer Lag</span>
+                                <span class="text-lg font-bold text-on-surface" id="consumer-lag-val">0</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                                <div class="h-full bg-yellow-500 w-0" id="consumer-lag-bar"></div>
+                            </div>
+                        </div>
+                        <!-- Metric 5: Redis Memory Load -->
+                        <div>
+                            <div class="flex justify-between items-baseline mb-2">
+                                <span class="text-[10px] font-bold uppercase text-on-surface-variant">Redis Memory Load</span>
+                                <span class="text-lg font-bold text-on-surface" id="redis-memory-val">12%</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                                <div class="h-full bg-primary w-[12%]" id="redis-memory-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Live Console Panel (stacked in sidebar below metrics) -->
+                <div class="h-80 flex flex-col bg-black text-zinc-400 font-mono text-[10px] border-t border-outline-variant shrink-0">
+                    <div class="flex items-center justify-between px-4 py-2 bg-surface-container border-b border-outline-variant">
+                        <div class="flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
+                            <span class="font-bold uppercase tracking-wider text-zinc-100">Live Event Console</span>
+                        </div>
+                        <button class="text-[8px] hover:text-zinc-100 transition-colors uppercase font-bold" onclick="document.getElementById('console-output').innerHTML=''">CLEAR</button>
+                    </div>
+                    <div class="flex-grow overflow-y-auto p-4 custom-scrollbar" id="console-output">
+                        <p class="text-zinc-600">[09:00:01] CHAOS_ENGINE_INIT: PORT 9091</p>
+                        <p class="text-zinc-600">[09:00:02] CORE_SERVICES: HANDSHAKE OK</p>
+                        <div class="flex items-center" id="cursor-line">
+                            <span class="mr-1 text-zinc-100">&gt;</span>
+                            <span class="bg-zinc-100 w-1.5 h-2.5 animate-[pulse_1s_infinite]"></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        const ENGINE_BASE = 'http://localhost:9091';
+        const GATEWAY_BASE = 'http://localhost:8010';
+
+        const TIER_COLORS = {
+            gateway: { bg: 'bg-purple-900/40', text: 'text-purple-300', border: 'border-purple-500/50' },
+            database: { bg: 'bg-blue-900/40', text: 'text-blue-300', border: 'border-blue-500/50' },
+            cache: { bg: 'bg-orange-900/40', text: 'text-orange-300', border: 'border-orange-500/50' },
+            queue: { bg: 'bg-yellow-900/40', text: 'text-yellow-300', border: 'border-yellow-500/50' },
+            config: { bg: 'bg-cyan-900/40', text: 'text-cyan-300', border: 'border-cyan-500/50' },
+            host: { bg: 'bg-red-900/40', text: 'text-red-300', border: 'border-red-500/50' }
+        };
+
+        function appendLog(category, msg) {
+            const consoleEl = document.getElementById('console-output');
+            if (!consoleEl) return;
+            
+            const time = new Date().toLocaleTimeString();
+            const colors = {
+                'ACTION': 'text-purple-400',
+                'SUCCESS': 'text-green-400',
+                'ERROR': 'text-red-400',
+                'INFO': 'text-zinc-500'
+            };
+            const categoryColor = colors[category] || 'text-zinc-300';
+            
+            const p = document.createElement('p');
+            p.className = 'text-zinc-300';
+            p.innerHTML = `<span class="text-zinc-500">[${time}]</span> <span class="${categoryColor} font-bold">[${category}]</span> ${msg}`;
+            
+            const cursor = document.getElementById('cursor-line');
+            if (cursor) {
+                consoleEl.insertBefore(p, cursor);
+            } else {
+                consoleEl.appendChild(p);
+            }
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+            
+            if (consoleEl.children.length > 150) consoleEl.removeChild(consoleEl.firstChild);
+        }
+
+        async function loadScenarios() {
+            try {
+                const res = await fetch(`${ENGINE_BASE}/scenarios`);
+                if (!res.ok) throw new Error("Could not fetch scenarios");
+                const scenarios = await res.json();
+                
+                // Set Connection Status UI
+                document.getElementById('engine-status-dot').className = 'w-1.5 h-1.5 rounded-full bg-green-500';
+                document.getElementById('engine-status-text').textContent = 'Engine Connected: 9091';
+
+                const container = document.getElementById('anomaly-container');
+                container.innerHTML = scenarios.map(s => {
+                    const active = s.active;
+                    const tier = TIER_COLORS[s.category] || TIER_COLORS.gateway;
+                    const borderClass = active ? tier.border : 'border-outline-variant hover:border-on-surface-variant';
+                    const badgeClass = active ? tier.bg + ' ' + tier.text : 'bg-surface-variant text-on-surface';
+                    
+                    let controlsHtml = '';
+                    if (s.id === 'gateway_latency_spike' || s.id === 'slow_database_query' || s.id === 'order_processing_delay' || s.id === 'replication_lag') {
+                        let defaultVal = 1500;
+                        if (s.id === 'slow_database_query') defaultVal = 2000;
+                        if (s.id === 'order_processing_delay') defaultVal = 3000;
+                        if (s.id === 'replication_lag') defaultVal = 1000;
+                        
+                        let val = defaultVal;
+                        if (s.params) {
+                            val = s.params.latency_ms || s.params.delay_ms || defaultVal;
+                        }
+                        
+                        const inputAccent = active ? 'accent-purple-500 bg-purple-900/30' : 'accent-primary';
+                        const labelColor = active ? tier.text : 'text-on-surface-variant';
+                        
+                        controlsHtml = `
+                            <div class="space-y-1.5">
+                                <div class="flex justify-between text-[10px] font-mono font-bold uppercase ${labelColor}">
+                                    <span>Latency</span>
+                                    <span id="val-${s.id}">${val}ms</span>
+                                </div>
+                                <input id="input-${s.id}" class="w-full h-1 bg-surface-container-highest ${inputAccent} appearance-none rounded-full cursor-pointer" 
+                                    max="5000" min="${s.id === 'replication_lag' ? '100' : '500'}" step="100" type="range" value="${val}" 
+                                    oninput="document.getElementById('val-${s.id}').textContent = this.value + 'ms'"/>
+                            </div>`;
+                    } else if (s.id === 'gateway_error_rate') {
+                        let val = 0.3;
+                        if (s.params && s.params.fail_rate !== undefined) {
+                            val = s.params.fail_rate;
+                        }
+                        const inputAccent = active ? 'accent-purple-500 bg-purple-900/30' : 'accent-primary';
+                        const labelColor = active ? tier.text : 'text-on-surface-variant';
+                        
+                        controlsHtml = `
+                            <div class="space-y-1.5">
+                                <div class="flex justify-between text-[10px] font-mono font-bold uppercase ${labelColor}">
+                                    <span>Fail Rate</span>
+                                    <span id="val-${s.id}">${val}</span>
+                                </div>
+                                <input id="input-${s.id}" class="w-full h-1 bg-surface-container-highest ${inputAccent} appearance-none rounded-full cursor-pointer" 
+                                    max="1.0" min="0.0" step="0.05" type="range" value="${val}" 
+                                    oninput="document.getElementById('val-${s.id}').textContent = this.value"/>
+                            </div>`;
+                    } else if (s.id === 'redis_memory_full') {
+                        let val = 1;
+                        if (s.params && s.params.maxmemory !== undefined) {
+                            val = parseInt(s.params.maxmemory) || 1;
+                        }
+                        const inputAccent = active ? 'accent-purple-500 bg-purple-900/30' : 'accent-primary';
+                        const labelColor = active ? tier.text : 'text-on-surface-variant';
+                        
+                        controlsHtml = `
+                            <div class="space-y-1.5">
+                                <div class="flex justify-between text-[10px] font-mono font-bold uppercase ${labelColor}">
+                                    <span>Max Memory</span>
+                                    <span id="val-${s.id}">${val}MB</span>
+                                </div>
+                                <input id="input-${s.id}" class="w-full h-1 bg-surface-container-highest ${inputAccent} appearance-none rounded-full cursor-pointer" 
+                                    max="256" min="1" step="5" type="range" value="${val}" 
+                                    oninput="document.getElementById('val-${s.id}').textContent = this.value + 'MB'"/>
+                            </div>`;
+                    } else if (s.id === 'kafka_consumer_lag') {
+                        let val = 15000;
+                        if (s.params && s.params.lag_threshold !== undefined) {
+                            val = s.params.lag_threshold;
+                        }
+                        const inputAccent = active ? 'accent-purple-500 bg-purple-900/30' : 'accent-primary';
+                        const labelColor = active ? tier.text : 'text-on-surface-variant';
+                        
+                        controlsHtml = `
+                            <div class="space-y-1.5">
+                                <div class="flex justify-between text-[10px] font-mono font-bold uppercase ${labelColor}">
+                                    <span>Lag Threshold</span>
+                                    <span id="val-${s.id}">${val >= 1000 ? (val/1000)+'k' : val}</span>
+                                </div>
+                                <input id="input-${s.id}" class="w-full h-1 bg-surface-container-highest ${inputAccent} appearance-none rounded-full cursor-pointer" 
+                                    max="50000" min="1000" step="1000" type="range" value="${val}" 
+                                    oninput="document.getElementById('val-${s.id}').textContent = (this.value >= 1000 ? (this.value/1000)+'k' : this.value)"/>
+                            </div>`;
+                    } else if (s.id === 'network_packet_loss') {
+                        let val = 20;
+                        if (s.params && s.params.loss_pct !== undefined) {
+                            val = s.params.loss_pct;
+                        }
+                        const inputAccent = active ? 'accent-purple-500 bg-purple-900/30' : 'accent-primary';
+                        const labelColor = active ? tier.text : 'text-on-surface-variant';
+                        
+                        controlsHtml = `
+                            <div class="space-y-1.5">
+                                <div class="flex justify-between text-[10px] font-mono font-bold uppercase ${labelColor}">
+                                    <span>Loss %</span>
+                                    <span id="val-${s.id}">${val}%</span>
+                                </div>
+                                <input id="input-${s.id}" class="w-full h-1 bg-surface-container-highest ${inputAccent} appearance-none rounded-full cursor-pointer" 
+                                    max="100" min="1" step="1" type="range" value="${val}" 
+                                    oninput="document.getElementById('val-${s.id}').textContent = this.value + '%'"/>
+                            </div>`;
+                    } else if (s.id === 'idle_in_transaction') {
+                        let val = 10;
+                        if (s.params && s.params.idle_timeout !== undefined) {
+                            val = s.params.idle_timeout;
+                        }
+                        const inputAccent = active ? 'accent-purple-500 bg-purple-900/30' : 'accent-primary';
+                        const labelColor = active ? tier.text : 'text-on-surface-variant';
+                        
+                        controlsHtml = `
+                            <div class="space-y-1.5">
+                                <div class="flex justify-between text-[10px] font-mono font-bold uppercase ${labelColor}">
+                                    <span>Idle Timeout</span>
+                                    <span id="val-${s.id}">${val}s</span>
+                                </div>
+                                <input id="input-${s.id}" class="w-full h-1 bg-surface-container-highest ${inputAccent} appearance-none rounded-full cursor-pointer" 
+                                    max="60" min="1" step="1" type="range" value="${val}" 
+                                    oninput="document.getElementById('val-${s.id}').textContent = this.value + 's'"/>
+                            </div>`;
+                    } else if (s.id === 'ssl_cert_near_expiry') {
+                        let val = 2;
+                        if (s.params && s.params.expiry_days !== undefined) {
+                            val = s.params.expiry_days;
+                        }
+                        const inputAccent = active ? 'accent-purple-500 bg-purple-900/30' : 'accent-primary';
+                        const labelColor = active ? tier.text : 'text-on-surface-variant';
+                        
+                        controlsHtml = `
+                            <div class="space-y-1.5">
+                                <div class="flex justify-between text-[10px] font-mono font-bold uppercase ${labelColor}">
+                                    <span>Expiry Days</span>
+                                    <span id="val-${s.id}">${val} Days</span>
+                                </div>
+                                <input id="input-${s.id}" class="w-full h-1 bg-surface-container-highest ${inputAccent} appearance-none rounded-full cursor-pointer" 
+                                    max="10" min="1" step="1" type="range" value="${val}" 
+                                    oninput="document.getElementById('val-${s.id}').textContent = this.value + ' Days'"/>
+                            </div>`;
+                    } else if (s.id === 'db_pool_exhaustion' || s.id === 'memory_pressure' || s.id === 'cpu_spike') {
+                        let labelText = 'Randomize Delay';
+                        if (s.id === 'memory_pressure') labelText = 'Aggressive Allocation';
+                        if (s.id === 'cpu_spike') labelText = 'Stress All Cores';
+                        
+                        let toggleState = true;
+                        if (s.params) {
+                            if (s.id === 'db_pool_exhaustion') toggleState = s.params.random_delay !== false;
+                            if (s.id === 'memory_pressure') toggleState = s.params.aggressive !== false;
+                            if (s.id === 'cpu_spike') toggleState = s.params.stress_all !== false;
+                        }
+                        
+                        const labelColor = active ? tier.text : 'text-on-surface-variant';
+                        const toggleBg = active ? 'bg-purple-900/40 border border-purple-500/50' : 'bg-surface-container-highest';
+                        const dotColor = active ? 'bg-purple-400' : 'bg-zinc-400';
+                        
+                        controlsHtml = `
+                            <div class="flex items-center justify-between py-1">
+                                <span class="text-[10px] font-mono font-bold uppercase ${labelColor}">${labelText}</span>
+                                <button id="input-${s.id}" data-value="${toggleState}" onclick="this.setAttribute('data-value', this.getAttribute('data-value') === 'true' ? 'false' : 'true'); this.querySelector('span').classList.toggle('left-0.5'); this.querySelector('span').classList.toggle('right-0.5');" 
+                                    class="w-8 h-4 ${toggleBg} rounded-full relative transition-colors cursor-pointer">
+                                    <span class="absolute ${toggleState ? 'right-0.5' : 'left-0.5'} top-0.5 w-3 h-3 ${dotColor} rounded-full transition-all"></span>
+                                </button>
+                            </div>`;
+                    } else {
+                        controlsHtml = `<div class="py-2 text-[10px] font-mono text-on-surface-variant uppercase">Toggle Failure Only</div>`;
+                    }
+
+                    return `
+                        <div class="flex-shrink-0 w-72 bg-surface-container border ${borderClass} p-4 rounded shadow-sm group">
+                            <div class="flex justify-between items-start mb-3">
+                                <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${badgeClass}">${s.category.toUpperCase()}</span>
+                                <div class="w-2 h-2 rounded-full ${active ? 'bg-purple-500 pulsing-purple' : 'bg-green-500'}"></div>
+                            </div>
+                            <h4 class="font-bold text-sm mb-1 text-on-surface">${s.name}</h4>
+                            <p class="text-[11px] text-on-surface-variant mb-4 leading-relaxed h-8 overflow-hidden">${s.description}</p>
+                            <div class="space-y-4 mb-4">
+                                ${controlsHtml}
+                            </div>
+                            <div class="flex gap-2">
+                                ${active 
+                                    ? `<button onclick="stopChaos('${s.id}')" class="flex-grow border border-outline-variant text-on-surface-variant text-[10px] font-bold uppercase py-2 rounded hover:bg-surface-container-high transition-colors">Stop Chaos</button>`
+                                    : `<button onclick="injectChaos('${s.id}')" class="flex-grow bg-primary text-on-primary text-[10px] font-bold uppercase py-2 rounded hover:opacity-90 transition-colors">Inject Chaos</button>`
+                                }
+                            </div>
+                        </div>`;
+                }).join('');
+            } catch (err) {
+                document.getElementById('engine-status-dot').className = 'w-1.5 h-1.5 rounded-full bg-red-500';
+                document.getElementById('engine-status-text').textContent = 'Engine Offline';
+                appendLog('ERROR', `Failed to load anomalies: ${err.message}`);
+            }
+        }
+
+        async function injectChaos(id) {
+            const inputEl = document.getElementById(`input-${id}`);
+            const payload = {};
+            
+            if (inputEl) {
+                const val = inputEl.value;
+                if (id === 'gateway_latency_spike' || id === 'replication_lag') {
+                    payload['latency_ms'] = parseInt(val);
+                } else if (id === 'slow_database_query' || id === 'order_processing_delay') {
+                    payload['delay_ms'] = parseInt(val);
+                } else if (id === 'gateway_error_rate') {
+                    payload['fail_rate'] = parseFloat(val);
+                } else if (id === 'redis_memory_full') {
+                    payload['maxmemory'] = `${val}mb`;
+                } else if (id === 'kafka_consumer_lag') {
+                    payload['lag_threshold'] = parseInt(val);
+                } else if (id === 'network_packet_loss') {
+                    payload['loss_pct'] = parseInt(val);
+                } else if (id === 'idle_in_transaction') {
+                    payload['idle_timeout'] = parseInt(val);
+                } else if (id === 'ssl_cert_near_expiry') {
+                    payload['expiry_days'] = parseInt(val);
+                } else if (id === 'db_pool_exhaustion') {
+                    payload['random_delay'] = inputEl.getAttribute('data-value') === 'true';
+                } else if (id === 'memory_pressure') {
+                    payload['aggressive'] = inputEl.getAttribute('data-value') === 'true';
+                } else if (id === 'cpu_spike') {
+                    payload['stress_all'] = inputEl.getAttribute('data-value') === 'true';
+                }
+            }
+
+            appendLog('ACTION', `Activating scenario '${id}'...`);
+            try {
+                const res = await fetch(`${ENGINE_BASE}/scenarios/${id}/activate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ params: payload })
+                });
+                if (res.ok) {
+                    appendLog('SUCCESS', `Scenario '${id}' injected successfully.`);
+                    await loadScenarios();
+                } else {
+                    const detail = await res.json();
+                    throw new Error(detail.detail || `HTTP ${res.status}`);
+                }
+            } catch (err) {
+                appendLog('ERROR', `Failed to inject chaos: ${err.message}`);
+            }
+        }
+
+        async function stopChaos(id) {
+            appendLog('ACTION', `Deactivating scenario '${id}'...`);
+            try {
+                const res = await fetch(`${ENGINE_BASE}/scenarios/${id}/deactivate`, { method: 'POST' });
+                if (res.ok) {
+                    appendLog('SUCCESS', `Scenario '${id}' stopped.`);
+                    await loadScenarios();
+                } else {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+            } catch (err) {
+                appendLog('ERROR', `Failed to deactivate chaos: ${err.message}`);
+            }
+        }
+
+        async function stopAllChaos() {
+            appendLog('ACTION', `Emergency Reset. Deactivating all scenarios...`);
+            try {
+                const res = await fetch(`${ENGINE_BASE}/scenarios/reset`, { method: 'POST' });
+                if (res.ok) {
+                    appendLog('SUCCESS', `All active anomalies cleared.`);
+                    await loadScenarios();
+                    await checkGauntlet();
+                }
+            } catch (err) {
+                appendLog('ERROR', `Emergency reset failed: ${err.message}`);
+            }
+        }
+
+        async function startGauntlet() {
+            appendLog('ACTION', `Starting Automated Test Gauntlet...`);
+            try {
+                const res = await fetch(`${ENGINE_BASE}/gauntlet/start`, { method: 'POST' });
+                if (res.ok) {
+                    appendLog('SUCCESS', `Gauntlet suite running.`);
+                    await checkGauntlet();
+                }
+            } catch (err) {
+                appendLog('ERROR', `Failed to run gauntlet: ${err.message}`);
+            }
+        }
+
+        async function checkGauntlet() {
+            const tbody = document.getElementById('gauntlet-timeline-body');
+            if (!tbody) return;
+            try {
+                const res = await fetch(`${ENGINE_BASE}/gauntlet/status`);
+                if (!res.ok) throw new Error("Status API offline");
+                const data = await res.json();
+                
+                if (data.steps && data.steps.length > 0) {
+                    tbody.innerHTML = data.steps.map((step, idx) => {
+                        let badge = '';
+                        let rowClass = 'border-b border-outline-variant/30 hover:bg-surface-container-high/50 transition-colors';
+                        
+                        if (step.status === 'active') {
+                            badge = '<span class="px-2 py-0.5 rounded bg-purple-900/30 text-purple-400 text-[10px] font-bold uppercase pulsing-purple">Active</span>';
+                            rowClass = 'border-b border-outline-variant/30 bg-purple-900/10 hover:bg-purple-900/20 transition-colors font-bold';
+                        } else if (step.status === 'healed') {
+                            badge = '<span class="px-2 py-0.5 rounded bg-green-900/30 text-green-400 text-[10px] font-bold uppercase">Healed</span>';
+                        } else if (step.status === 'failed') {
+                            badge = '<span class="px-2 py-0.5 rounded bg-red-900/30 text-red-400 text-[10px] font-bold uppercase">Failed</span>';
+                        } else {
+                            badge = `<span class="px-2 py-0.5 rounded bg-surface-container-highest text-on-surface-variant text-[10px] font-bold uppercase">${step.status.toUpperCase()}</span>`;
+                        }
+
+                        let targetMetric = 'p95 < 200ms';
+                        if (step.scenario.includes('db') || step.scenario.includes('lock') || step.scenario.includes('transaction')) targetMetric = 'Pool Wait < 2s';
+                        if (step.scenario.includes('lag') || step.scenario.includes('delay')) targetMetric = 'Lag < 100';
+                        if (step.scenario.includes('error')) targetMetric = '5xx Rate < 1%';
+                        if (step.scenario.includes('crash') || step.scenario.includes('breaker')) targetMetric = 'Availability = 100%';
+
+                        return `
+                            <tr class="${rowClass}">
+                                <td class="px-6 py-4 font-mono text-[10px] text-on-surface-variant">${(idx+1).toString().padStart(2, '0')}</td>
+                                <td class="px-6 py-4">${step.scenario.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</td>
+                                <td class="px-6 py-4 text-secondary">${targetMetric}</td>
+                                <td class="px-6 py-4">${badge}</td>
+                            </tr>`;
+                    }).join('');
+                }
+            } catch (err) {
+                console.warn("Could not check gauntlet status", err);
+                tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-zinc-500 font-mono">Engine offline. Awaiting connection...</td></tr>`;
+            }
+        }
+
+        // Poll Metrics and Sparkline Render
+        const latencyHistory = [12, 15, 14, 18, 12, 16, 11, 15, 14, 13, 15];
+        async function pollMetrics() {
+            let elapsed = 0;
+            let gatewayOk = false;
+            try {
+                const start = performance.now();
+                // Add a cache buster parameter to avoid browser caching of requests
+                const res = await fetch(`${GATEWAY_BASE}/products?t=${Date.now()}`);
+                elapsed = Math.round(performance.now() - start);
+                gatewayOk = res.ok;
+            } catch (err) {
+                console.warn("Gateway products check failed", err);
+            }
+
+            document.getElementById('p95-latency-val').textContent = `${elapsed}ms`;
+            latencyHistory.push(Math.min(elapsed, 5000));
+            if (latencyHistory.length > 15) latencyHistory.shift();
+            renderSparkline();
+
+            try {
+                const res = await fetch(`${ENGINE_BASE}/metrics/live`);
+                if (res.ok) {
+                    const data = await res.json();
+                    
+                    const availability = data.availability !== undefined ? data.availability : 100.00;
+                    document.getElementById('availability-val').textContent = `${availability.toFixed(2)}%`;
+                    document.getElementById('availability-bar').style.width = `${availability}%`;
+                    
+                    const error_rate = data.error_rate !== undefined ? data.error_rate : 0.00;
+                    document.getElementById('error-rate-val').textContent = `${error_rate.toFixed(2)}%`;
+                    document.getElementById('error-rate-bar').style.width = `${error_rate}%`;
+                    
+                    const lag = data.kafka_consumer_lag !== undefined ? data.kafka_consumer_lag : 0;
+                    // Format consumer lag nicely (e.g. 1.2k)
+                    const formattedLag = lag >= 1000 ? (lag / 1000).toFixed(1) + 'k' : lag;
+                    document.getElementById('consumer-lag-val').textContent = formattedLag;
+                    // Map lag of 100 to 100% bar width
+                    const lagPct = Math.min(100, Math.round((lag / 100) * 100));
+                    document.getElementById('consumer-lag-bar').style.width = `${lagPct}%`;
+                    
+                    const redis_load = data.redis_memory_load !== undefined ? data.redis_memory_load : 0;
+                    document.getElementById('redis-memory-val').textContent = `${redis_load}%`;
+                    document.getElementById('redis-memory-bar').style.width = `${redis_load}%`;
+                }
+            } catch (err) {
+                console.warn("Failed to poll live metrics from engine", err);
+            }
+            
+            // Check gauntlet status
+            await checkGauntlet();
+        }
+
+        function renderSparkline() {
+            const sparkline = document.getElementById('latency-sparkline');
+            if (!sparkline) return;
+            const maxVal = Math.max(...latencyHistory, 20);
+            sparkline.innerHTML = latencyHistory.map(v => {
+                const pct = Math.round((v / maxVal) * 100);
+                const color = v > 200 ? 'bg-error' : 'bg-primary';
+                return `<div class="w-full ${color} transition-all duration-300" style="height:${pct}%"></div>`;
+            }).join('');
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadScenarios();
+            pollMetrics();
+            setInterval(pollMetrics, 3000);
+            appendLog('INFO', 'Chaos Lab Dashboard Engine Connection Handshake OK.');
+        });
+    </script>
+</body>
+</html>
